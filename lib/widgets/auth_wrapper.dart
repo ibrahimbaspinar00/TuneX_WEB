@@ -35,7 +35,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           child: CircularProgressIndicator(
             strokeWidth: 4,
             valueColor: AlwaysStoppedAnimation<Color>(
-              const Color(0xFFD4AF37),
+              const Color(0xFFFF6A00),
             ),
           ),
         ),

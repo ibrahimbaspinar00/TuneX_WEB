@@ -152,14 +152,14 @@ class _ProfessionalImageUploaderState extends State<ProfessionalImageUploader> {
             width: widget.width ?? double.infinity,
             height: widget.height ?? 200,
             decoration: BoxDecoration(
-              color: _imageUrl != null ? Colors.transparent : const Color(0xFFFAFBFC),
+              color: _imageUrl != null ? Colors.transparent : const Color(0xFF0B0D10),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _errorMessage != null
                     ? Colors.red
                     : _imageUrl != null
                         ? Colors.transparent
-                        : const Color(0xFFE8E8E8),
+                        : const Color(0xFF2A3340),
                 width: 2,
               ),
             ),
@@ -257,7 +257,7 @@ class _ProfessionalImageUploaderState extends State<ProfessionalImageUploader> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF6A6A6A),
+                              color: const Color(0xFFC7CDD6),
                             ),
                           ),
                           const SizedBox(height: 4),

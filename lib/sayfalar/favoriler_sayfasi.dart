@@ -295,7 +295,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                         border: Border(
                           bottom: BorderSide(
                             color: _tabController.index == 1 
-                                ? const Color(0xFFFF6000) 
+                                ? const Color(0xFFFF6A00) 
                                 : Colors.transparent,
                             width: 2.5,
                           ),
@@ -307,8 +307,8 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                           Icon(
                             Icons.collections,
                             color: _tabController.index == 1 
-                                ? const Color(0xFFFF6000) 
-                                : const Color(0xFF9CA3AF),
+                                ? const Color(0xFFFF6A00) 
+                                : const Color(0xFF8E98A8),
                             size: 16,
                           ),
                           const SizedBox(width: 5),
@@ -318,8 +318,8 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                               color: _tabController.index == 1 
-                                  ? const Color(0xFFFF6000) 
-                                  : const Color(0xFF9CA3AF),
+                                  ? const Color(0xFFFF6A00) 
+                                  : const Color(0xFF8E98A8),
                             ),
                           ),
                         ],
@@ -359,33 +359,33 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                           : 'Koleksiyonlarımda Ara',
                       hintStyle: GoogleFonts.inter(
                         fontSize: 14,
-                        color: const Color(0xFF9CA3AF),
+                        color: const Color(0xFF8E98A8),
                       ),
                       prefixIcon: const Icon(
                         Icons.search,
-                        color: Color(0xFF6A6A6A),
+                        color: Color(0xFFC7CDD6),
                         size: 20,
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFFAFBFC),
+                      fillColor: const Color(0xFF0B0D10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                          color: const Color(0xFFE8E8E8),
+                          color: const Color(0xFF2A3340),
                           width: 1,
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                          color: const Color(0xFFE8E8E8),
+                          color: const Color(0xFF2A3340),
                           width: 1,
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
-                          color: const Color(0xFFFF6000),
+                          color: const Color(0xFFFF6A00),
                           width: 2,
                         ),
                       ),
@@ -403,7 +403,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                                   });
                                 }
                               },
-                              icon: const Icon(Icons.clear, color: Color(0xFF6A6A6A), size: 18),
+                              icon: const Icon(Icons.clear, color: Color(0xFFC7CDD6), size: 18),
                             )
                           : null,
                     ),
@@ -450,13 +450,13 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  _buildFilterButton('Tümü', const Color(0xFFD4AF37)),
+                  _buildFilterButton('Tümü', const Color(0xFFFF6A00)),
                   const SizedBox(width: 8),
                   _buildFilterButton('Kuponlu Ürünler', const Color(0xFFEC4899)),
                   const SizedBox(width: 8),
                   _buildFilterButton('Fiyatı Düşenler', const Color(0xFFEF4444)),
                   const SizedBox(width: 8),
-                  _buildFilterButton('Avantajlı Ürünler', const Color(0xFF3B82F6)),
+                  _buildFilterButton('Avantajlı Ürünler', const Color(0xFF00D1FF)),
                 ],
               ),
             ),
@@ -553,7 +553,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: const Color(0xFFE8E8E8),
+            color: const Color(0xFF2A3340),
             width: 1,
           ),
         ),
@@ -569,7 +569,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAFBFC),
+                      color: const Color(0xFF0B0D10),
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
                     ),
                     child: ClipRRect(
@@ -590,7 +590,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
+                          color: const Color(0xFF18C964),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -650,7 +650,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                         ),
                         child: Icon(
                           isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite ? const Color(0xFFEF4444) : const Color(0xFF6A6A6A),
+                          color: isFavorite ? const Color(0xFFEF4444) : const Color(0xFFC7CDD6),
                           size: 18,
                         ),
                       ),
@@ -665,7 +665,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6),
+                          color: const Color(0xFF00D1FF),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -724,7 +724,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                                 : '$favoriteCount',
                             style: GoogleFonts.inter(
                               fontSize: 10,
-                              color: const Color(0xFF6A6A6A),
+                              color: const Color(0xFFC7CDD6),
                               fontWeight: FontWeight.w500,
                             ),
                             maxLines: 1,
@@ -735,14 +735,14 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                           Icon(
                             Icons.star,
                             size: 12,
-                            color: const Color(0xFFD4AF37),
+                            color: const Color(0xFFFF6A00),
                           ),
                           const SizedBox(width: 2),
                           Text(
                             product.averageRating.toStringAsFixed(1),
                             style: GoogleFonts.inter(
                               fontSize: 10,
-                              color: const Color(0xFF6A6A6A),
+                              color: const Color(0xFFC7CDD6),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -901,7 +901,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF6000),
+                  backgroundColor: const Color(0xFFFF6A00),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                   shape: RoundedRectangleBorder(
@@ -1198,12 +1198,12 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6000).withOpacity(0.1),
+                        color: const Color(0xFFFF6A00).withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.bookmark,
-                        color: Color(0xFFFF6000),
+                        color: Color(0xFFFF6A00),
                         size: 24,
                       ),
                     ),
@@ -1269,7 +1269,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFFF6000), width: 2),
+                        borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 2),
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       filled: true,
@@ -1384,7 +1384,7 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF6000),
+                    backgroundColor: const Color(0xFFFF6A00),
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -1424,14 +1424,14 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
     
     if (label == 'Tümü') {
       icon = Icons.favorite;
-      iconColor = const Color(0xFFFF6000);
+      iconColor = const Color(0xFFFF6A00);
       backgroundColor = isSelected 
           ? const Color(0xFFFFF4E6) // Açık turuncu
           : const Color(0xFFFFF4E6);
       borderColor = isSelected 
-          ? const Color(0xFFFF6000) // Turuncu border
-          : const Color(0xFFFF6000);
-      textColor = const Color(0xFFFF6000);
+          ? const Color(0xFFFF6A00) // Turuncu border
+          : const Color(0xFFFF6A00);
+      textColor = const Color(0xFFFF6A00);
     } else if (label == 'Kuponlu Ürünler') {
       icon = Icons.local_offer;
       iconColor = const Color(0xFFEC4899);
@@ -1458,21 +1458,21 @@ class _FavorilerSayfasiState extends State<FavorilerSayfasi> with TickerProvider
           : const Color(0xFF0F0F0F);
     } else if (label == 'Avantajlı Ürünler') {
       icon = Icons.star;
-      iconColor = const Color(0xFF3B82F6);
+      iconColor = const Color(0xFF00D1FF);
       backgroundColor = isSelected 
           ? const Color(0xFFEFF6FF).withOpacity(0.8) // Seçiliyse biraz daha koyu
           : const Color(0xFFEFF6FF); // Açık mavi
       borderColor = isSelected 
-          ? const Color(0xFF3B82F6) // Seçiliyse mavi border
+          ? const Color(0xFF00D1FF) // Seçiliyse mavi border
           : Colors.transparent;
       textColor = isSelected 
-          ? const Color(0xFF3B82F6) // Seçiliyse mavi text
+          ? const Color(0xFF00D1FF) // Seçiliyse mavi text
           : const Color(0xFF0F0F0F);
     } else {
       icon = Icons.filter_list;
-      iconColor = const Color(0xFF6A6A6A);
+      iconColor = const Color(0xFFC7CDD6);
       backgroundColor = Colors.white;
-      borderColor = const Color(0xFFE8E8E8);
+      borderColor = const Color(0xFF2A3340);
       textColor = const Color(0xFF0F0F0F);
     }
     

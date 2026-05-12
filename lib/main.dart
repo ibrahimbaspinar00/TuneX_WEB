@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:web/web.dart' as web;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 
 import 'model/product.dart';
@@ -16,6 +16,12 @@ import 'config/app_routes.dart';
 import 'sayfalar/main_screen.dart';
 import 'sayfalar/giris_sayfasi.dart';
 import 'sayfalar/profil_sayfasi.dart';
+import 'providers/theme_provider.dart';
+import 'services/theme_service.dart';
+import 'theme/app_design_system.dart';
+import 'theme/app_theme.dart';
+import 'utils/page_reloader.dart'
+    if (dart.library.js_interop) 'utils/page_reloader_web.dart';
 import 'utils/responsive_helper.dart';
 import 'widgets/optimized_image.dart';
 
@@ -23,14 +29,17 @@ import 'widgets/optimized_image.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 /// App brand icon (square logo).
-const String kBrandIconAsset = 'assets/images/Baspinar_auto_garge.png';
+const String kBrandIconAsset = 'assets/images/tunex_icon.png';
 
-/// Wide wordmark logo used where the old "tuning." text appeared.
-/// Place the provided image here (recommended).
-const String kBrandWordmarkAsset = 'assets/images/baspinar_wordmark_elite.png';
+/// Wide brand banner for the landing hero.
+const String kBrandBannerAsset = 'assets/images/tunex_banner.png';
 
-/// White wordmark for dark hero sections.
-const String kBrandWordmarkWhiteAsset = 'assets/images/baspinar_wordmark_elite_white.png';
+/// Wide TuneX wordmark for light surfaces.
+const String kBrandWordmarkAsset = 'assets/images/tunex_wordmark.png';
+
+/// White TuneX wordmark for dark performance surfaces.
+const String kBrandWordmarkWhiteAsset =
+    'assets/images/tunex_wordmark_white.png';
 
 // Sepet yönetimi
 class CartItem {
@@ -42,18 +51,20 @@ class CartItem {
   double get total => product.price * quantity;
 }
 
-final ValueNotifier<List<CartItem>> cartItems = ValueNotifier<List<CartItem>>([]);
+final ValueNotifier<List<CartItem>> cartItems =
+    ValueNotifier<List<CartItem>>([]);
 
 void addToCart(Product product) {
   final currentItems = cartItems.value;
-  final existingIndex = currentItems.indexWhere((item) => item.product.id == product.id);
-  
+  final existingIndex =
+      currentItems.indexWhere((item) => item.product.id == product.id);
+
   if (existingIndex != -1) {
     currentItems[existingIndex].quantity++;
   } else {
     currentItems.add(CartItem(product: product, quantity: 1));
   }
-  
+
   cartItems.value = List.from(currentItems);
 }
 
@@ -68,10 +79,11 @@ void updateCartQuantity(Product product, int quantity) {
     removeFromCart(product);
     return;
   }
-  
+
   final currentItems = cartItems.value;
-  final existingIndex = currentItems.indexWhere((item) => item.product.id == product.id);
-  
+  final existingIndex =
+      currentItems.indexWhere((item) => item.product.id == product.id);
+
   if (existingIndex != -1) {
     currentItems[existingIndex].quantity = quantity;
     cartItems.value = List.from(currentItems);
@@ -88,7 +100,7 @@ double getCartTotal() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Global error handler - Beyaz ekran sorununu önlemek için
   FlutterError.onError = (FlutterErrorDetails details) {
     // Web'de presentError sorun çıkarabilir, sadece log yap
@@ -105,14 +117,14 @@ void main() async {
       debugPrint('Error handler exception: $e');
     }
   };
-  
+
   // Platform error handler
   PlatformDispatcher.instance.onError = (error, stack) {
     debugPrint('Platform Error: $error');
     debugPrint('Stack trace: $stack');
     return true;
   };
-  
+
   // Firebase'i başlat - Hata yakalama ile
   try {
     await Firebase.initializeApp(
@@ -131,386 +143,118 @@ void main() async {
     // Firebase hatası olsa bile uygulamayı başlat
     // Kullanıcı giriş yapamaz ama uygulama çalışır
   }
-  
+
   // Performans optimizasyonları - Önce UI optimizasyonları
   // Image cache ayarları - Web için optimize edilmiş
-  PaintingBinding.instance.imageCache.maximumSize = 50; // 100'den 50'ye düşürüldü
-  PaintingBinding.instance.imageCache.maximumSizeBytes = 50 << 20; // 50 MB (100 MB'dan düşürüldü)
-  
+  PaintingBinding.instance.imageCache.maximumSize =
+      50; // 100'den 50'ye düşürüldü
+  PaintingBinding.instance.imageCache.maximumSizeBytes =
+      50 << 20; // 50 MB (100 MB'dan düşürüldü)
+
   // Uygulamayı başlat
-  runApp(const TuningWebApp());
+  await ThemeService.loadTheme();
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeProvider(initialThemeMode: ThemeService.themeMode),
+      child: const TuneXApp(),
+    ),
+  );
 }
 
-class TuningWebApp extends StatelessWidget {
-  const TuningWebApp({super.key});
+class TuneXApp extends StatelessWidget {
+  const TuneXApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final baseTextTheme = Theme.of(context).textTheme;
-
-    return MaterialApp(
-      navigatorKey: navigatorKey,
-      debugShowCheckedModeBanner: false,
-      title: 'Başpınar Auto Garage',
-      // Error handling - Beyaz ekran sorununu önlemek için
-      builder: (context, widget) {
-        Widget errorWidget = widget!;
-        if (widget is ErrorWidget) {
-          // Hata durumunda sayfayı otomatik yenileme - kullanıcı manuel yenilesin
-          errorWidget = Scaffold(
-            backgroundColor: const Color(0xFFFAFBFC),
-            body: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.orange),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Bir hata oluştu',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Lütfen sayfayı manuel olarak yenileyin',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            // Ana sayfaya dön
-                            Navigator.of(context).pushNamedAndRemoveUntil(
-                              AppRoutes.main,
-                              (route) => false,
-                            );
-                          },
-                          icon: const Icon(Icons.home),
-                          label: const Text('Ana Sayfaya Dön'),
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, _) => MaterialApp(
+        navigatorKey: navigatorKey,
+        debugShowCheckedModeBanner: false,
+        title: AppDesignSystem.brandName,
+        // Error handling - Beyaz ekran sorununu önlemek için
+        builder: (context, widget) {
+          Widget errorWidget = widget!;
+          if (widget is ErrorWidget) {
+            final colors = context.appTheme;
+            // Hata durumunda sayfayı otomatik yenileme - kullanıcı manuel yenilesin
+            errorWidget = Scaffold(
+              backgroundColor: colors.background,
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: colors.warning,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Bir hata oluştu',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colors.textPrimary,
                         ),
-                        const SizedBox(width: 12),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            // Sayfayı yenile (sadece kullanıcı isterse)
-                            if (kIsWeb) {
-                              web.window.location.reload();
-                            }
-                          },
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Sayfayı Yenile'),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Lütfen sayfayı manuel olarak yenileyin',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.textSecondary,
                         ),
-                      ],
-                    ),
-                  ],
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 24),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Ana sayfaya dön
+                              Navigator.of(context).pushNamedAndRemoveUntil(
+                                AppRoutes.main,
+                                (route) => false,
+                              );
+                            },
+                            icon: const Icon(Icons.home),
+                            label: const Text('Ana Sayfaya Dön'),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              // Sayfayı yenile (sadece kullanıcı isterse)
+                              if (kIsWeb) {
+                                reloadPage();
+                              }
+                            },
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Sayfayı Yenile'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          );
-        }
-        return errorWidget;
-      },
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFD4AF37),
-          brightness: Brightness.light,
-          // Modern web-first renk paleti - Premium görünüm
-          primary: const Color(0xFF0F0F0F),
-          onPrimary: Colors.white,
-          primaryContainer: const Color(0xFF1A1A1A),
-          onPrimaryContainer: Colors.white,
-          secondary: const Color(0xFFD4AF37),
-          onSecondary: const Color(0xFF0F0F0F),
-          secondaryContainer: const Color(0xFFFFF8E8),
-          onSecondaryContainer: const Color(0xFF1A1A1A),
-          tertiary: const Color(0xFF6366F1),
-          onTertiary: Colors.white,
-          error: const Color(0xFFEF4444),
-          onError: Colors.white,
-          surface: const Color(0xFFFFFFFF),
-          onSurface: const Color(0xFF0F0F0F),
-          surfaceContainerHighest: const Color(0xFFF8F9FA),
-          surfaceContainer: const Color(0xFFFAFBFC),
-          outline: const Color(0xFFE8E8E8),
-          outlineVariant: const Color(0xFFF0F0F0),
-        ),
-        scaffoldBackgroundColor: const Color(0xFFFAFBFC),
-        // Web-optimize edilmiş tipografi - Desktop-first yaklaşım
-        textTheme: GoogleFonts.interTextTheme(baseTextTheme).copyWith(
-          displayLarge: GoogleFonts.poppins(
-            fontWeight: FontWeight.w800,
-            fontSize: 96, // Web için daha büyük
-            letterSpacing: -3,
-            color: const Color(0xFF1A1A1A),
-            height: 1.1,
-          ),
-          displayMedium: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            fontSize: 72, // Web için daha büyük
-            letterSpacing: -2,
-            color: const Color(0xFF1A1A1A),
-            height: 1.2,
-          ),
-          displaySmall: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            fontSize: 56, // Web için daha büyük
-            letterSpacing: -1.5,
-            color: const Color(0xFF1A1A1A),
-            height: 1.2,
-          ),
-          headlineLarge: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            fontSize: 48, // Web için daha büyük
-            letterSpacing: -1,
-            color: const Color(0xFF1A1A1A),
-            height: 1.3,
-          ),
-          headlineMedium: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 36, // Web için daha büyük
-            letterSpacing: -0.5,
-            color: const Color(0xFF1A1A1A),
-            height: 1.3,
-          ),
-          headlineSmall: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 28, // Web için daha büyük
-            letterSpacing: -0.3,
-            color: const Color(0xFF1A1A1A),
-            height: 1.4,
-          ),
-          titleLarge: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 24, // Web için daha büyük
-            letterSpacing: 0,
-            color: const Color(0xFF1A1A1A),
-            height: 1.4,
-          ),
-          titleMedium: GoogleFonts.inter(
-            fontWeight: FontWeight.w600,
-            fontSize: 20, // Web için daha büyük
-            letterSpacing: 0.1,
-            color: const Color(0xFF1A1A1A),
-            height: 1.4,
-          ),
-          titleSmall: GoogleFonts.inter(
-            fontWeight: FontWeight.w500,
-            fontSize: 18, // Web için daha büyük
-            letterSpacing: 0.1,
-            color: const Color(0xFF1A1A1A),
-            height: 1.4,
-          ),
-          bodyLarge: GoogleFonts.inter(
-            fontWeight: FontWeight.w400,
-            fontSize: 20, // Web için daha büyük
-            letterSpacing: 0.15,
-            color: const Color(0xFF4A4A4A),
-            height: 1.7, // Web için daha geniş satır aralığı
-          ),
-          bodyMedium: GoogleFonts.inter(
-            fontWeight: FontWeight.w400,
-            fontSize: 18, // Web için daha büyük
-            letterSpacing: 0.25,
-            color: const Color(0xFF6A6A6A),
-            height: 1.6, // Web için daha geniş satır aralığı
-          ),
-          bodySmall: GoogleFonts.inter(
-            fontWeight: FontWeight.w400,
-            fontSize: 16, // Web için daha büyük
-            letterSpacing: 0.4,
-            color: const Color(0xFF8A8A8A),
-            height: 1.5,
-          ),
-          labelLarge: GoogleFonts.inter(
-            fontWeight: FontWeight.w500,
-            fontSize: 16,
-            letterSpacing: 0.1,
-            color: const Color(0xFF1A1A1A),
-            height: 1.4,
-          ),
-          labelMedium: GoogleFonts.inter(
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-            letterSpacing: 0.5,
-            color: const Color(0xFF1A1A1A),
-            height: 1.4,
-          ),
-          labelSmall: GoogleFonts.inter(
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
-            letterSpacing: 0.5,
-            color: const Color(0xFF6A6A6A),
-            height: 1.4,
-          ),
-        ),
-        // Modern Web AppBar teması - Premium ve şık tasarım
-        appBarTheme: AppBarTheme(
-          elevation: 0,
-          scrolledUnderElevation: 4,
-          surfaceTintColor: Colors.transparent,
-          backgroundColor: Colors.white,
-          foregroundColor: const Color(0xFF0F0F0F),
-          shadowColor: Colors.black.withOpacity(0.12),
-          centerTitle: false,
-          titleTextStyle: GoogleFonts.inter(
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F0F0F),
-            letterSpacing: -0.5,
-          ),
-          iconTheme: const IconThemeData(
-            color: Color(0xFF0F0F0F),
-            size: 26,
-          ),
-          toolbarHeight: 80,
-        ),
-        // Web-optimize edilmiş Button temaları - Premium ve büyük
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 24), // Web için daha büyük
-            minimumSize: const Size(140, 64), // Web için minimum boyut
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            ),
-            textStyle: GoogleFonts.inter(
-              fontSize: 19, // Web için daha büyük
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
-        elevatedButtonTheme: ElevatedButtonThemeData(
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            padding: const EdgeInsets.symmetric(horizontal: 56, vertical: 24), // Web için daha büyük
-            minimumSize: const Size(140, 64), // Web için minimum boyut
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            ),
-            textStyle: GoogleFonts.inter(
-              fontSize: 19, // Web için daha büyük
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.3,
-            ),
-          ),
-        ),
-        outlinedButtonTheme: OutlinedButtonThemeData(
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20), // Web için daha büyük
-            minimumSize: const Size(120, 56), // Web için minimum boyut
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16), // Web için daha yuvarlak
-            ),
-            side: BorderSide(
-              color: const Color(0xFFE5E5E5),
-              width: 2, // Web için daha kalın
-            ),
-            textStyle: GoogleFonts.inter(
-              fontSize: 18, // Web için daha büyük
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        textButtonTheme: TextButtonThemeData(
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16), // Web için daha büyük
-            minimumSize: const Size(80, 48), // Web için minimum boyut
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12), // Web için daha yuvarlak
-            ),
-            textStyle: GoogleFonts.inter(
-              fontSize: 18, // Web için daha büyük
-              fontWeight: FontWeight.w600,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-        // Web-optimize edilmiş Input temaları - Premium ve büyük
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFFFAFBFC),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 26), // Web için daha büyük
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            borderSide: BorderSide(
-              color: const Color(0xFFE8E8E8),
-              width: 1.5, // İnce border
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            borderSide: BorderSide(
-              color: const Color(0xFFE8E8E8),
-              width: 1.5, // İnce border
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            borderSide: const BorderSide(
-              color: Color(0xFFD4AF37),
-              width: 2.5, // Focus için kalın
-            ),
-          ),
-          errorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            borderSide: const BorderSide(
-              color: Color(0xFFEF4444),
-              width: 1.5,
-            ),
-          ),
-          focusedErrorBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18), // Web için daha yuvarlak
-            borderSide: const BorderSide(
-              color: Color(0xFFEF4444),
-              width: 2.5,
-            ),
-          ),
-          labelStyle: GoogleFonts.inter(
-            fontSize: 17, // Web için daha büyük
-            fontWeight: FontWeight.w600,
-            color: const Color(0xFF6A6A6A),
-          ),
-          hintStyle: GoogleFonts.inter(
-            fontSize: 17, // Web için daha büyük
-            fontWeight: FontWeight.w400,
-            color: const Color(0xFFB0B0B0),
-          ),
-        ),
-        // Modern Divider teması
-        dividerTheme: DividerThemeData(
-          color: const Color(0xFFE5E5E5),
-          thickness: 1,
-          space: 1,
-        ),
-        // Modern Chip teması
-        chipTheme: ChipThemeData(
-          backgroundColor: const Color(0xFFF5F5F5),
-          selectedColor: const Color(0xFFD4AF37),
-          disabledColor: const Color(0xFFF0F0F0),
-          labelStyle: GoogleFonts.inter(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-        ),
+            );
+          }
+          return errorWidget;
+        },
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: themeProvider.themeMode,
+        themeAnimationCurve: Curves.easeInOutCubic,
+        themeAnimationDuration: const Duration(milliseconds: 320),
+        initialRoute: AppRoutes.splash,
+        onGenerateRoute: AppRoutes.generateRoute,
       ),
-      initialRoute: AppRoutes.splash,
-      onGenerateRoute: AppRoutes.generateRoute,
     );
   }
 }
-
 
 class LandingPage extends StatefulWidget {
   const LandingPage({super.key});
@@ -519,41 +263,43 @@ class LandingPage extends StatefulWidget {
   State<LandingPage> createState() => _LandingPageState();
 }
 
-class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin {
+class _LandingPageState extends State<LandingPage>
+    with TickerProviderStateMixin {
   late AnimationController _mainAnimationController;
   late AnimationController _heroAnimationController;
   // Floating animation kaldırıldı - performans için
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
   late Animation<double> _scaleAnimation;
+  Timer? _testimonialTimer;
   int _currentTestimonialIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    
+
     // Main animation controller - daha hızlı başlat
     _mainAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800), // 1500'den 800'e düşürüldü
       vsync: this,
     );
-    
+
     // Hero animation controller - daha hızlı başlat
     _heroAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1000), // 2000'den 1000'e düşürüldü
       vsync: this,
     );
-    
+
     // Floating animation controller (infinite) - Kaldırıldı performans için
     // _floatingAnimationController = AnimationController(
     //   duration: const Duration(milliseconds: 3000),
     //   vsync: this,
     // )..repeat(reverse: true);
-    
+
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _mainAnimationController, curve: Curves.easeOut),
     );
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -561,20 +307,21 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       parent: _mainAnimationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _heroAnimationController, curve: Curves.elasticOut),
+      CurvedAnimation(
+          parent: _heroAnimationController, curve: Curves.elasticOut),
     );
-    
+
     // _floatingAnimation = Tween<double>(begin: -10.0, end: 10.0).animate(
     //   CurvedAnimation(parent: _floatingAnimationController, curve: Curves.easeInOut),
     // );
-    
+
     _mainAnimationController.forward();
     _heroAnimationController.forward();
-    
+
     // Auto-rotate testimonials
-    Future.delayed(const Duration(seconds: 3), () {
+    _testimonialTimer = Timer(const Duration(seconds: 3), () {
       if (mounted) {
         _rotateTestimonials();
       }
@@ -586,7 +333,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       setState(() {
         _currentTestimonialIndex = (_currentTestimonialIndex + 1) % 3;
       });
-      Future.delayed(const Duration(seconds: 5), () {
+      _testimonialTimer = Timer(const Duration(seconds: 5), () {
         if (mounted) {
           _rotateTestimonials();
         }
@@ -596,6 +343,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
 
   @override
   void dispose() {
+    _testimonialTimer?.cancel();
     _mainAnimationController.dispose();
     _heroAnimationController.dispose();
     // _floatingAnimationController.dispose();
@@ -610,8 +358,9 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isDesktop = constraints.maxWidth >= 1024;
-          final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1024;
-          
+          final isTablet =
+              constraints.maxWidth >= 768 && constraints.maxWidth < 1024;
+
           return Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -628,7 +377,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               children: [
                 // Animated background elements
                 _buildAnimatedBackground(),
-                
+
                 // Main content
                 SafeArea(
                   child: SingleChildScrollView(
@@ -641,52 +390,105 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                           children: [
                             // Hero Section - Full width with gradient
                             _buildHeroSection(isDesktop, isTablet, textTheme),
-                            
+
                             // Features Section
                             Padding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 80 : isTablet ? 40 : 24,
-                                vertical: isDesktop ? 80 : isTablet ? 60 : 48,
+                                horizontal: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 40
+                                        : 24,
+                                vertical: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 60
+                                        : 48,
                               ),
-                              child: _buildFeaturesSection(isDesktop, isTablet, textTheme),
+                              child: _buildFeaturesSection(
+                                  isDesktop, isTablet, textTheme),
                             ),
-                            
+
                             // Popular Products Preview
                             Padding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 80 : isTablet ? 40 : 24,
-                                vertical: isDesktop ? 60 : isTablet ? 48 : 40,
+                                horizontal: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 40
+                                        : 24,
+                                vertical: isDesktop
+                                    ? 60
+                                    : isTablet
+                                        ? 48
+                                        : 40,
                               ),
-                              child: _buildPopularProductsSection(isDesktop, isTablet, textTheme),
+                              child: _buildPopularProductsSection(
+                                  isDesktop, isTablet, textTheme),
                             ),
-                            
+
                             // Testimonials Section
                             Padding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 80 : isTablet ? 40 : 24,
-                                vertical: isDesktop ? 60 : isTablet ? 48 : 40,
+                                horizontal: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 40
+                                        : 24,
+                                vertical: isDesktop
+                                    ? 60
+                                    : isTablet
+                                        ? 48
+                                        : 40,
                               ),
-                              child: _buildTestimonialsSection(isDesktop, isTablet, textTheme),
+                              child: _buildTestimonialsSection(
+                                  isDesktop, isTablet, textTheme),
                             ),
-                            
+
                             // Stats Section
                             Padding(
                               padding: EdgeInsets.symmetric(
-                                horizontal: isDesktop ? 80 : isTablet ? 40 : 24,
-                                vertical: isDesktop ? 60 : isTablet ? 48 : 40,
+                                horizontal: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 40
+                                        : 24,
+                                vertical: isDesktop
+                                    ? 60
+                                    : isTablet
+                                        ? 48
+                                        : 40,
                               ),
-                              child: _buildStatsSection(isDesktop, isTablet, textTheme),
+                              child: _buildStatsSection(
+                                  isDesktop, isTablet, textTheme),
                             ),
-                            
+
                             // CTA Section
                             Padding(
                               padding: EdgeInsets.only(
-                                left: isDesktop ? 80 : isTablet ? 40 : 24,
-                                right: isDesktop ? 80 : isTablet ? 40 : 24,
-                                top: isDesktop ? 60 : isTablet ? 48 : 40,
-                                bottom: isDesktop ? 80 : isTablet ? 60 : 48,
+                                left: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 40
+                                        : 24,
+                                right: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 40
+                                        : 24,
+                                top: isDesktop
+                                    ? 60
+                                    : isTablet
+                                        ? 48
+                                        : 40,
+                                bottom: isDesktop
+                                    ? 80
+                                    : isTablet
+                                        ? 60
+                                        : 48,
                               ),
-                              child: _buildCTASection(isDesktop, isTablet, textTheme),
+                              child: _buildCTASection(
+                                  isDesktop, isTablet, textTheme),
                             ),
                           ],
                         ),
@@ -725,144 +527,266 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     final availableHeight = viewportHeight - safe.top - safe.bottom;
     final minHeroHeight = availableHeight < 520 ? 520.0 : availableHeight;
 
-    final horizontalPadding = isDesktop ? 100.0 : isTablet ? 60.0 : 24.0;
-    final verticalPadding = isDesktop ? 72.0 : isTablet ? 60.0 : 44.0;
-    final logoHeight = isDesktop ? 300.0 : isTablet ? 240.0 : 190.0;
-    final gapS = isDesktop ? 16.0 : isTablet ? 14.0 : 12.0;
-    final gapM = isDesktop ? 24.0 : isTablet ? 20.0 : 16.0;
-    final gapL = isDesktop ? 40.0 : isTablet ? 32.0 : 26.0;
+    final horizontalPadding = isDesktop
+        ? 100.0
+        : isTablet
+            ? 60.0
+            : 24.0;
+    final verticalPadding = isDesktop
+        ? 72.0
+        : isTablet
+            ? 60.0
+            : 44.0;
+    final logoHeight = isDesktop
+        ? 160.0
+        : isTablet
+            ? 128.0
+            : 96.0;
+    final logoMaxWidth = isDesktop
+        ? 980.0
+        : isTablet
+            ? 820.0
+            : 460.0;
+    final gapS = isDesktop
+        ? 16.0
+        : isTablet
+            ? 14.0
+            : 12.0;
+    final gapM = isDesktop
+        ? 24.0
+        : isTablet
+            ? 20.0
+            : 16.0;
+    final gapL = isDesktop
+        ? 40.0
+        : isTablet
+            ? 32.0
+            : 26.0;
 
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: minHeroHeight),
       child: Container(
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
           horizontal: horizontalPadding,
           vertical: verticalPadding,
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Premium Badge with glassmorphism
-          ScaleTransition(
-            scale: _scaleAnimation,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(100),
-                border: Border.all(
-                  color: const Color(0xFFD4AF37).withOpacity(0.3),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 30,
-                    spreadRadius: 0,
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Premium Badge with glassmorphism
+            ScaleTransition(
+              scale: _scaleAnimation,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(100),
+                  border: Border.all(
+                    color: const Color(0xFFFF6A00).withOpacity(0.3),
+                    width: 1,
                   ),
-                ],
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.3),
+                      blurRadius: 30,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF6A00), Color(0xFF00D1FF)],
+                        ),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.workspace_premium_rounded,
+                        size: 16,
+                        color: Color(0xFF0A0A0A),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'PREMIUM TUNİNG PLATFORM',
+                      style: GoogleFonts.inter(
+                        color: const Color(0xFFFF6A00),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
+            ),
+            SizedBox(height: gapM),
+
+            ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: logoMaxWidth),
+              child: SizedBox(
+                height: logoHeight,
+                child: Image.asset(
+                  kBrandBannerAsset,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Text(
+                    'TuneX',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: isDesktop
+                          ? 56
+                          : isTablet
+                              ? 44
+                              : 34,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: gapM),
+
+            // Subtitle - Minimal
+            Text(
+              'Performansın Mükemmellikle Buluştuğu Yer',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: isDesktop
+                    ? 20
+                    : isTablet
+                        ? 18
+                        : 16,
+                color: Colors.white.withOpacity(0.7),
+                height: 1.5,
+                letterSpacing: 0.5,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            SizedBox(height: gapS),
+            Text(
+              'Premium otomotiv parçaları ve aksesuarları',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: isDesktop
+                    ? 16
+                    : isTablet
+                        ? 14
+                        : 13,
+                color: Colors.white.withOpacity(0.6),
+                height: 1.5,
+                letterSpacing: 0.3,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            SizedBox(height: gapL),
+
+            // Premium CTA Buttons
+            Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.center,
+              children: [
+                // Primary CTA - Glassmorphism
+                ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                        colors: [Color(0xFFFF6A00), Color(0xFF00D1FF)],
                       ),
-                      shape: BoxShape.circle,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFFF6A00).withOpacity(0.4),
+                          blurRadius: 30,
+                          offset: const Offset(0, 15),
+                          spreadRadius: 0,
+                        ),
+                      ],
                     ),
-                    child: const Icon(
-                      Icons.workspace_premium_rounded,
-                      size: 16,
-                      color: Color(0xFF0A0A0A),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          final user = FirebaseAuth.instance.currentUser;
+                          if (user != null) {
+                            Navigator.of(context).pushReplacement(
+                              MaterialPageRoute(
+                                  builder: (_) => const MainScreen()),
+                            );
+                          } else {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const GirisSayfasi()),
+                            );
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isDesktop
+                                ? 48
+                                : isTablet
+                                    ? 40
+                                    : 32,
+                            vertical: isDesktop
+                                ? 20
+                                : isTablet
+                                    ? 18
+                                    : 16,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'KOLEKSİYONU KEŞFET',
+                                style: GoogleFonts.inter(
+                                  fontSize: isDesktop
+                                      ? 15
+                                      : isTablet
+                                          ? 14
+                                          : 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0A0A0A),
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Icon(
+                                Icons.arrow_forward_rounded,
+                                size: 20,
+                                color: Color(0xFF0A0A0A),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Text(
-                    'PREMIUM TUNİNG PLATFORM',
-                    style: GoogleFonts.inter(
-                      color: const Color(0xFFD4AF37),
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          SizedBox(height: gapM),
-          
-          // Brand wordmark (replaces "ELİTE TUNİNG")
-          SizedBox(
-            height: logoHeight,
-            child: Image.asset(
-              kBrandWordmarkWhiteAsset,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => Text(
-                'BAŞPINAR AUTO GARAGE',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                  fontSize: isDesktop ? 56 : isTablet ? 44 : 34,
-                  fontWeight: FontWeight.w800,
-                color: Colors.white,
-                  letterSpacing: -1.5,
-              ),
-            ),
-          ),
-          ),
-          SizedBox(height: gapM),
-          
-          // Subtitle - Minimal
-          Text(
-            'Performansın Mükemmellikle Buluştuğu Yer',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: isDesktop ? 20 : isTablet ? 18 : 16,
-              color: Colors.white.withOpacity(0.7),
-              height: 1.5,
-              letterSpacing: 0.5,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          SizedBox(height: gapS),
-          Text(
-            'Premium otomotiv parçaları ve aksesuarları',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: isDesktop ? 16 : isTablet ? 14 : 13,
-              color: Colors.white.withOpacity(0.6),
-              height: 1.5,
-              letterSpacing: 0.3,
-              fontWeight: FontWeight.w400,
-            ),
-          ),
-          SizedBox(height: gapL),
-          
-          // Premium CTA Buttons
-          Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            alignment: WrapAlignment.center,
-            children: [
-              // Primary CTA - Glassmorphism
-              ScaleTransition(
-                scale: _scaleAnimation,
-                child: Container(
+                ),
+
+                // Secondary CTA - Glassmorphism
+                Container(
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                    ),
+                    color: Colors.white.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.2),
+                      width: 1.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withOpacity(0.4),
-                        blurRadius: 30,
-                        offset: const Offset(0, 15),
-                        spreadRadius: 0,
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 25,
+                        offset: const Offset(0, 12),
                       ),
                     ],
                   ),
@@ -870,40 +794,46 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: () {
-                        final user = FirebaseAuth.instance.currentUser;
-                        if (user != null) {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(builder: (_) => const MainScreen()),
-                          );
-                        } else {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => const GirisSayfasi()),
-                          );
-                        }
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const GirisSayfasi()),
+                        );
                       },
                       borderRadius: BorderRadius.circular(16),
                       child: Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isDesktop ? 48 : isTablet ? 40 : 32,
-                          vertical: isDesktop ? 20 : isTablet ? 18 : 16,
+                          horizontal: isDesktop
+                              ? 48
+                              : isTablet
+                                  ? 40
+                                  : 32,
+                          vertical: isDesktop
+                              ? 20
+                              : isTablet
+                                  ? 18
+                                  : 16,
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              'KOLEKSİYONU KEŞFET',
+                              'HEMEN KATIL',
                               style: GoogleFonts.inter(
-                                fontSize: isDesktop ? 15 : isTablet ? 14 : 13,
+                                fontSize: isDesktop
+                                    ? 15
+                                    : isTablet
+                                        ? 14
+                                        : 13,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFF0A0A0A),
+                                color: Colors.white,
                                 letterSpacing: 1,
                               ),
                             ),
                             const SizedBox(width: 12),
                             const Icon(
-                              Icons.arrow_forward_rounded,
+                              Icons.person_add_rounded,
                               size: 20,
-                              color: Color(0xFF0A0A0A),
+                              color: Colors.white,
                             ),
                           ],
                         ),
@@ -911,77 +841,22 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     ),
                   ),
                 ),
-              ),
-              
-              // Secondary CTA - Glassmorphism
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.2),
-                    width: 1.5,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.3),
-                      blurRadius: 25,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const GirisSayfasi()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isDesktop ? 48 : isTablet ? 40 : 32,
-                        vertical: isDesktop ? 20 : isTablet ? 18 : 16,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'HEMEN KATIL',
-                            style: GoogleFonts.inter(
-                              fontSize: isDesktop ? 15 : isTablet ? 14 : 13,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white,
-                              letterSpacing: 1,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          const Icon(
-                            Icons.person_add_rounded,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildFeaturesSection(bool isDesktop, bool isTablet, TextTheme textTheme) {
+  Widget _buildFeaturesSection(
+      bool isDesktop, bool isTablet, TextTheme textTheme) {
     final features = [
       {
         'icon': Icons.local_shipping_rounded,
         'title': 'HIZLI TESLİMAT',
-        'subtitle': '24 saat içinde kargo garantisi\nTürkiye geneli premium hizmet',
+        'subtitle':
+            '24 saat içinde kargo garantisi\nTürkiye geneli premium hizmet',
         'number': '01',
       },
       {
@@ -1011,47 +886,73 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             Text(
               'NEDEN BİZİ SEÇMELİSİNİZ',
               style: GoogleFonts.poppins(
-                fontSize: isDesktop ? 14 : isTablet ? 12 : 11,
+                fontSize: isDesktop
+                    ? 14
+                    : isTablet
+                        ? 12
+                        : 11,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFD4AF37),
+                color: const Color(0xFFFF6A00),
                 letterSpacing: 4,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: isDesktop ? 16 : isTablet ? 12 : 8),
+            SizedBox(
+                height: isDesktop
+                    ? 16
+                    : isTablet
+                        ? 12
+                        : 8),
             Text(
               'Her Detayda Mükemmellik',
               style: GoogleFonts.poppins(
-                fontSize: isDesktop ? 48 : isTablet ? 40 : 28,
+                fontSize: isDesktop
+                    ? 48
+                    : isTablet
+                        ? 40
+                        : 28,
                 fontWeight: FontWeight.w900,
                 color: Colors.white,
                 letterSpacing: -1.5,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: isDesktop ? 56 : isTablet ? 44 : 32),
+            SizedBox(
+                height: isDesktop
+                    ? 56
+                    : isTablet
+                        ? 44
+                        : 32),
             if (isDesktop)
               Row(
-                children: features.map((feature) => 
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: _buildFeatureCard(feature, isDesktop, isTablet, textTheme),
-                    ),
-                  ),
-                ).toList(),
+                children: features
+                    .map(
+                      (feature) => Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: _buildFeatureCard(
+                              feature, isDesktop, isTablet, textTheme),
+                        ),
+                      ),
+                    )
+                    .toList(),
               )
             else
               Wrap(
                 spacing: 20,
                 runSpacing: 20,
                 alignment: WrapAlignment.center,
-                children: features.map((feature) => 
-                  SizedBox(
-                    width: isTablet ? (constraints.maxWidth - 80) / 2 : double.infinity,
-                    child: _buildFeatureCard(feature, isDesktop, isTablet, textTheme),
-                  ),
-                ).toList(),
+                children: features
+                    .map(
+                      (feature) => SizedBox(
+                        width: isTablet
+                            ? (constraints.maxWidth - 80) / 2
+                            : double.infinity,
+                        child: _buildFeatureCard(
+                            feature, isDesktop, isTablet, textTheme),
+                      ),
+                    )
+                    .toList(),
               ),
           ],
         );
@@ -1059,105 +960,162 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildFeatureCard(Map<String, dynamic> feature, bool isDesktop, bool isTablet, TextTheme textTheme) {
+  Widget _buildFeatureCard(Map<String, dynamic> feature, bool isDesktop,
+      bool isTablet, TextTheme textTheme) {
     // AnimatedBuilder kaldırıldı - performans için
     return Container(
-            padding: EdgeInsets.all(isDesktop ? 40 : isTablet ? 32 : 24),
+      padding: EdgeInsets.all(isDesktop
+          ? 40
+          : isTablet
+              ? 32
+              : 24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.1),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 30,
+            offset: const Offset(0, 15),
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Number badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.05),
-              borderRadius: BorderRadius.circular(24),
+              color: const Color(0xFFFF6A00).withOpacity(0.2),
+              borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: Colors.white.withOpacity(0.1),
+                color: const Color(0xFFFF6A00).withOpacity(0.4),
                 width: 1,
               ),
+            ),
+            child: Text(
+              feature['number'] as String,
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFFFF6A00),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+          SizedBox(
+              height: isDesktop
+                  ? 24
+                  : isTablet
+                      ? 20
+                      : 16),
+          // Icon
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFF6A00), Color(0xFF00D1FF)],
+              ),
+              shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
-                  spreadRadius: 0,
+                  color: const Color(0xFFFF6A00).withOpacity(0.4),
+                  blurRadius: 25,
+                  spreadRadius: 1,
                 ),
               ],
             ),
-            child: Column(
-              children: [
-                // Number badge
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4AF37).withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFD4AF37).withOpacity(0.4),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    feature['number'] as String,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFFD4AF37),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-                SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
-                // Icon
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                    ),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFD4AF37).withOpacity(0.4),
-                        blurRadius: 25,
-                        spreadRadius: 1,
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    feature['icon'] as IconData,
-                    size: isDesktop ? 36 : isTablet ? 32 : 28,
-                    color: const Color(0xFF0A0A0A),
-                  ),
-                ),
-                SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
-                Text(
-                  feature['title'] as String,
-                  style: GoogleFonts.poppins(
-                    fontSize: isDesktop ? 18 : isTablet ? 16 : 14,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                    letterSpacing: 0.5,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                SizedBox(height: isDesktop ? 12 : isTablet ? 10 : 8),
-                Text(
-                  feature['subtitle'] as String,
-                  style: GoogleFonts.inter(
-                    fontSize: isDesktop ? 13 : isTablet ? 12 : 11,
-                    color: Colors.white.withOpacity(0.6),
-                    height: 1.5,
-                    fontWeight: FontWeight.w400,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            child: Icon(
+              feature['icon'] as IconData,
+              size: isDesktop
+                  ? 36
+                  : isTablet
+                      ? 32
+                      : 28,
+              color: const Color(0xFF0A0A0A),
             ),
-          );
+          ),
+          SizedBox(
+              height: isDesktop
+                  ? 24
+                  : isTablet
+                      ? 20
+                      : 16),
+          Text(
+            feature['title'] as String,
+            style: GoogleFonts.poppins(
+              fontSize: isDesktop
+                  ? 18
+                  : isTablet
+                      ? 16
+                      : 14,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(
+              height: isDesktop
+                  ? 12
+                  : isTablet
+                      ? 10
+                      : 8),
+          Text(
+            feature['subtitle'] as String,
+            style: GoogleFonts.inter(
+              fontSize: isDesktop
+                  ? 13
+                  : isTablet
+                      ? 12
+                      : 11,
+              color: Colors.white.withOpacity(0.6),
+              height: 1.5,
+              fontWeight: FontWeight.w400,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
   }
 
-  Widget _buildPopularProductsSection(bool isDesktop, bool isTablet, TextTheme textTheme) {
+  Widget _buildPopularProductsSection(
+      bool isDesktop, bool isTablet, TextTheme textTheme) {
     final products = [
-      {'name': 'EGZOZ SİSTEMİ', 'price': '₺24.999', 'category': 'PERFORMANS', 'image': '🚗'},
-      {'name': 'BODY KİT SETİ', 'price': '₺49.999', 'category': 'AERODİNAMİK', 'image': '🏎️'},
-      {'name': 'SPOR JANT SETİ', 'price': '₺32.999', 'category': 'JANTLAR', 'image': '⚙️'},
-      {'name': 'CHİP TUNİNG', 'price': '₺17.999', 'category': 'MOTOR', 'image': '💨'},
+      {
+        'name': 'EGZOZ S?STEM?',
+        'price': '?24.999',
+        'category': 'PERFORMANS',
+        'icon': Icons.air_rounded,
+        'accent': const Color(0xFFFF7A18),
+      },
+      {
+        'name': 'BODY K?T SET?',
+        'price': '?49.999',
+        'category': 'AEROD?NAM?K',
+        'icon': Icons.directions_car_filled_rounded,
+        'accent': const Color(0xFF00C2FF),
+      },
+      {
+        'name': 'SPOR JANT SET?',
+        'price': '?32.999',
+        'category': 'JANTLAR',
+        'icon': Icons.tire_repair_rounded,
+        'accent': const Color(0xFF9B7CFF),
+      },
+      {
+        'name': 'CHIP TUNING',
+        'price': '?17.999',
+        'category': 'MOTOR',
+        'icon': Icons.memory_rounded,
+        'accent': const Color(0xFF39D98A),
+      },
     ];
 
     return Column(
@@ -1170,19 +1128,33 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'ÖNE ÇIKAN',
+                  '?NE ?IKAN',
                   style: GoogleFonts.poppins(
-                    fontSize: isDesktop ? 14 : isTablet ? 12 : 11,
+                    fontSize: isDesktop
+                        ? 14
+                        : isTablet
+                            ? 12
+                            : 11,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFFD4AF37),
+                    color: const Color(0xFFFF6A00),
                     letterSpacing: 4,
                   ),
                 ),
-                SizedBox(height: isDesktop ? 12 : isTablet ? 10 : 8),
+                SizedBox(
+                  height: isDesktop
+                      ? 12
+                      : isTablet
+                          ? 10
+                          : 8,
+                ),
                 Text(
                   'Premium Koleksiyon',
                   style: GoogleFonts.poppins(
-                    fontSize: isDesktop ? 48 : isTablet ? 40 : 28,
+                    fontSize: isDesktop
+                        ? 48
+                        : isTablet
+                            ? 40
+                            : 28,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
                     letterSpacing: -1.5,
@@ -1204,7 +1176,10 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 }
               },
               style: TextButton.styleFrom(
-                padding: EdgeInsets.symmetric(horizontal: isDesktop ? 32 : 24, vertical: isDesktop ? 16 : 12),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isDesktop ? 32 : 24,
+                  vertical: isDesktop ? 16 : 12,
+                ),
                 backgroundColor: Colors.white.withOpacity(0.08),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
@@ -1215,9 +1190,13 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    'TÜMÜNÜ GÖR',
+                    'T?M?N? G?R',
                     style: GoogleFonts.inter(
-                      fontSize: isDesktop ? 14 : isTablet ? 13 : 12,
+                      fontSize: isDesktop
+                          ? 14
+                          : isTablet
+                              ? 13
+                              : 12,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       letterSpacing: 1.5,
@@ -1234,9 +1213,19 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             ),
           ],
         ),
-        SizedBox(height: isDesktop ? 40 : isTablet ? 32 : 24),
         SizedBox(
-          height: isDesktop ? 320 : isTablet ? 280 : 240,
+          height: isDesktop
+              ? 40
+              : isTablet
+                  ? 32
+                  : 24,
+        ),
+        SizedBox(
+          height: isDesktop
+              ? 320
+              : isTablet
+                  ? 280
+                  : 240,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -1244,8 +1233,15 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
             itemCount: products.length,
             itemBuilder: (context, index) {
               final product = products[index];
+              final accentColor = product['accent'] as Color;
+              final productIcon = product['icon'] as IconData;
+
               return Container(
-                width: isDesktop ? 280 : isTablet ? 240 : 200,
+                width: isDesktop
+                    ? 280
+                    : isTablet
+                        ? 240
+                        : 200,
                 margin: const EdgeInsets.only(right: 20),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.05),
@@ -1266,7 +1262,6 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Product Image
                     Expanded(
                       child: Container(
                         decoration: BoxDecoration(
@@ -1274,8 +1269,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: [
-                              const Color(0xFFD4AF37).withOpacity(0.2),
-                              const Color(0xFFD4AF37).withOpacity(0.05),
+                              accentColor.withOpacity(0.22),
+                              accentColor.withOpacity(0.05),
                             ],
                           ),
                           borderRadius: const BorderRadius.only(
@@ -1285,22 +1280,76 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                         ),
                         child: Stack(
                           children: [
+                            Positioned(
+                              left: -24,
+                              top: -8,
+                              child: Container(
+                                width: isDesktop ? 170 : 140,
+                                height: isDesktop ? 170 : 140,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      accentColor.withOpacity(0.28),
+                                      accentColor.withOpacity(0.0),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              right: -18,
+                              bottom: -18,
+                              child: Transform.rotate(
+                                angle: -0.35,
+                                child: Icon(
+                                  productIcon,
+                                  size: isDesktop ? 150 : 126,
+                                  color: Colors.white.withOpacity(0.08),
+                                ),
+                              ),
+                            ),
                             Center(
-                              child: Text(
-                                product['image'] as String,
-                                style: TextStyle(fontSize: isDesktop ? 90 : isTablet ? 80 : 70),
+                              child: Container(
+                                padding: const EdgeInsets.all(20),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withOpacity(0.08),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.12),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: accentColor.withOpacity(0.18),
+                                      blurRadius: 24,
+                                      spreadRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  productIcon,
+                                  size: isDesktop
+                                      ? 72
+                                      : isTablet
+                                          ? 64
+                                          : 54,
+                                  color: Colors.white.withOpacity(0.92),
+                                ),
                               ),
                             ),
                             Positioned(
                               top: 12,
                               right: 12,
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFD4AF37).withOpacity(0.2),
+                                  color: accentColor.withOpacity(0.16),
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: const Color(0xFFD4AF37).withOpacity(0.4),
+                                    color: accentColor.withOpacity(0.42),
                                     width: 1,
                                   ),
                                 ),
@@ -1309,7 +1358,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                                   style: GoogleFonts.inter(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFFD4AF37),
+                                    color: accentColor,
                                     letterSpacing: 0.8,
                                   ),
                                 ),
@@ -1320,11 +1369,18 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 16,
+                      ),
                       child: Text(
                         product['name'] as String,
                         style: GoogleFonts.poppins(
-                          fontSize: isDesktop ? 16 : isTablet ? 15 : 13,
+                          fontSize: isDesktop
+                              ? 16
+                              : isTablet
+                                  ? 15
+                                  : 13,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
                           letterSpacing: 0.2,
@@ -1344,26 +1400,30 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildTestimonialsSection(bool isDesktop, bool isTablet, TextTheme textTheme) {
+  Widget _buildTestimonialsSection(
+      bool isDesktop, bool isTablet, TextTheme textTheme) {
     final testimonials = [
       {
         'name': 'MEHMET YILMAZ',
         'role': 'OTOMOTİV TUTKUNU',
-        'comment': 'Olağanüstü kalite ve hizmet. Egzoz sistemi aracımın performansını tamamen değiştirdi.',
+        'comment':
+            'Olağanüstü kalite ve hizmet. Egzoz sistemi aracımın performansını tamamen değiştirdi.',
         'rating': 5,
         'location': 'İSTANBUL',
       },
       {
         'name': 'AYŞE DEMİR',
         'role': 'YARIŞ ARABASI SAHİBİ',
-        'comment': 'Beklentileri aşan premium parçalar. Hızlı kargo ve profesyonel destek her zaman.',
+        'comment':
+            'Beklentileri aşan premium parçalar. Hızlı kargo ve profesyonel destek her zaman.',
         'rating': 5,
         'location': 'ANKARA',
       },
       {
         'name': 'CAN ÖZKAN',
         'role': 'TUNİNG UZMANI',
-        'comment': 'Chip tuning modülü inanılmaz sonuçlar verdi. Performans artışı için en iyi yatırım.',
+        'comment':
+            'Chip tuning modülü inanılmaz sonuçlar verdi. Performans artışı için en iyi yatırım.',
         'rating': 5,
         'location': 'İZMİR',
       },
@@ -1374,25 +1434,43 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
         Text(
           'MÜŞTERİ YORUMLARI',
           style: GoogleFonts.poppins(
-            fontSize: isDesktop ? 14 : isTablet ? 12 : 11,
+            fontSize: isDesktop
+                ? 14
+                : isTablet
+                    ? 12
+                    : 11,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFFD4AF37),
+            color: const Color(0xFFFF6A00),
             letterSpacing: 4,
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: isDesktop ? 16 : isTablet ? 12 : 8),
+        SizedBox(
+            height: isDesktop
+                ? 16
+                : isTablet
+                    ? 12
+                    : 8),
         Text(
           'Müşterilerimiz Ne Diyor',
           style: GoogleFonts.poppins(
-            fontSize: isDesktop ? 48 : isTablet ? 40 : 28,
+            fontSize: isDesktop
+                ? 48
+                : isTablet
+                    ? 40
+                    : 28,
             fontWeight: FontWeight.w900,
             color: Colors.white,
             letterSpacing: -1.5,
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: isDesktop ? 56 : isTablet ? 44 : 32),
+        SizedBox(
+            height: isDesktop
+                ? 56
+                : isTablet
+                    ? 44
+                    : 32),
         AnimatedSwitcher(
           duration: const Duration(milliseconds: 600),
           transitionBuilder: (child, animation) {
@@ -1409,7 +1487,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           },
           child: Container(
             key: ValueKey(_currentTestimonialIndex),
-            padding: EdgeInsets.all(isDesktop ? 56 : isTablet ? 44 : 32),
+            padding: EdgeInsets.all(isDesktop
+                ? 56
+                : isTablet
+                    ? 44
+                    : 32),
             decoration: BoxDecoration(
               color: Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(24),
@@ -1434,17 +1516,26 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                     testimonials[_currentTestimonialIndex]['rating'] as int,
                     (index) => const Icon(
                       Icons.star_rounded,
-                      color: Color(0xFFD4AF37),
+                      color: Color(0xFFFF6A00),
                       size: 32,
                     ),
                   ),
                 ),
-                SizedBox(height: isDesktop ? 28 : isTablet ? 24 : 20),
+                SizedBox(
+                    height: isDesktop
+                        ? 28
+                        : isTablet
+                            ? 24
+                            : 20),
                 // Comment
                 Text(
                   '"${testimonials[_currentTestimonialIndex]['comment'] as String}"',
                   style: GoogleFonts.inter(
-                    fontSize: isDesktop ? 20 : isTablet ? 18 : 16,
+                    fontSize: isDesktop
+                        ? 20
+                        : isTablet
+                            ? 18
+                            : 16,
                     color: Colors.white.withOpacity(0.9),
                     height: 1.7,
                     fontStyle: FontStyle.italic,
@@ -1452,7 +1543,12 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                   ),
                   textAlign: TextAlign.center,
                 ),
-                SizedBox(height: isDesktop ? 32 : isTablet ? 28 : 24),
+                SizedBox(
+                    height: isDesktop
+                        ? 32
+                        : isTablet
+                            ? 28
+                            : 24),
                 // User Info
                 Column(
                   children: [
@@ -1462,11 +1558,11 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         gradient: const LinearGradient(
-                          colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
+                          colors: [Color(0xFFFF6A00), Color(0xFF00D1FF)],
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withOpacity(0.4),
+                            color: const Color(0xFFFF6A00).withOpacity(0.4),
                             blurRadius: 20,
                             spreadRadius: 2,
                           ),
@@ -1474,7 +1570,8 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                       ),
                       child: Center(
                         child: Text(
-                          (testimonials[_currentTestimonialIndex]['name'] as String)[0],
+                          (testimonials[_currentTestimonialIndex]['name']
+                              as String)[0],
                           style: GoogleFonts.poppins(
                             fontSize: 36,
                             fontWeight: FontWeight.w800,
@@ -1483,38 +1580,71 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                         ),
                       ),
                     ),
-                    SizedBox(height: isDesktop ? 20 : isTablet ? 16 : 12),
+                    SizedBox(
+                        height: isDesktop
+                            ? 20
+                            : isTablet
+                                ? 16
+                                : 12),
                     Text(
                       testimonials[_currentTestimonialIndex]['name'] as String,
                       style: GoogleFonts.poppins(
-                        fontSize: isDesktop ? 20 : isTablet ? 18 : 16,
+                        fontSize: isDesktop
+                            ? 20
+                            : isTablet
+                                ? 18
+                                : 16,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         letterSpacing: 1,
                       ),
                     ),
-                    SizedBox(height: isDesktop ? 8 : isTablet ? 6 : 4),
+                    SizedBox(
+                        height: isDesktop
+                            ? 8
+                            : isTablet
+                                ? 6
+                                : 4),
                     Text(
                       testimonials[_currentTestimonialIndex]['role'] as String,
                       style: GoogleFonts.inter(
-                        fontSize: isDesktop ? 14 : isTablet ? 13 : 12,
+                        fontSize: isDesktop
+                            ? 14
+                            : isTablet
+                                ? 13
+                                : 12,
                         color: Colors.white.withOpacity(0.6),
                         letterSpacing: 1,
                       ),
                     ),
-                    SizedBox(height: isDesktop ? 4 : isTablet ? 3 : 2),
+                    SizedBox(
+                        height: isDesktop
+                            ? 4
+                            : isTablet
+                                ? 3
+                                : 2),
                     Text(
-                      testimonials[_currentTestimonialIndex]['location'] as String,
+                      testimonials[_currentTestimonialIndex]['location']
+                          as String,
                       style: GoogleFonts.inter(
-                        fontSize: isDesktop ? 12 : isTablet ? 11 : 10,
-                        color: const Color(0xFFD4AF37),
+                        fontSize: isDesktop
+                            ? 12
+                            : isTablet
+                                ? 11
+                                : 10,
+                        color: const Color(0xFFFF6A00),
                         letterSpacing: 2,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: isDesktop ? 32 : isTablet ? 28 : 24),
+                SizedBox(
+                    height: isDesktop
+                        ? 32
+                        : isTablet
+                            ? 28
+                            : 24),
                 // Dots indicator
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1526,7 +1656,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                       margin: const EdgeInsets.symmetric(horizontal: 6),
                       decoration: BoxDecoration(
                         color: _currentTestimonialIndex == index
-                            ? const Color(0xFFD4AF37)
+                            ? const Color(0xFFFF6A00)
                             : Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(4),
                       ),
@@ -1544,21 +1674,25 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
   Widget _buildCTASection(bool isDesktop, bool isTablet, TextTheme textTheme) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isDesktop ? 100 : isTablet ? 80 : 60),
+      padding: EdgeInsets.all(isDesktop
+          ? 100
+          : isTablet
+              ? 80
+              : 60),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFFD4AF37),
-            Color(0xFFFFD700),
-            Color(0xFFD4AF37),
+            Color(0xFFFF6A00),
+            Color(0xFF00D1FF),
+            Color(0xFFFF6A00),
           ],
         ),
         borderRadius: BorderRadius.circular(40),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD4AF37).withOpacity(0.6),
+            color: const Color(0xFFFF6A00).withOpacity(0.6),
             blurRadius: 60,
             offset: const Offset(0, 30),
             spreadRadius: 0,
@@ -1570,36 +1704,63 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           Text(
             'HAZIR MISINIZ',
             style: GoogleFonts.poppins(
-              fontSize: isDesktop ? 14 : isTablet ? 12 : 11,
+              fontSize: isDesktop
+                  ? 14
+                  : isTablet
+                      ? 12
+                      : 11,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF0A0A0A),
               letterSpacing: 4,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: isDesktop ? 20 : isTablet ? 16 : 12),
+          SizedBox(
+              height: isDesktop
+                  ? 20
+                  : isTablet
+                      ? 16
+                      : 12),
           Text(
             'Performans Yolculuğunuz',
             style: GoogleFonts.poppins(
-              fontSize: isDesktop ? 64 : isTablet ? 52 : 40,
+              fontSize: isDesktop
+                  ? 64
+                  : isTablet
+                      ? 52
+                      : 40,
               fontWeight: FontWeight.w900,
               color: const Color(0xFF0A0A0A),
               letterSpacing: -2.5,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: isDesktop ? 24 : isTablet ? 20 : 16),
+          SizedBox(
+              height: isDesktop
+                  ? 24
+                  : isTablet
+                      ? 20
+                      : 16),
           Text(
             'Mükemmellik için tasarlanmış premium otomotiv parçalarını keşfedin',
             style: GoogleFonts.inter(
-              fontSize: isDesktop ? 20 : isTablet ? 18 : 16,
+              fontSize: isDesktop
+                  ? 20
+                  : isTablet
+                      ? 18
+                      : 16,
               color: const Color(0xFF0A0A0A).withOpacity(0.7),
               height: 1.6,
               fontWeight: FontWeight.w400,
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: isDesktop ? 48 : isTablet ? 40 : 32),
+          SizedBox(
+              height: isDesktop
+                  ? 48
+                  : isTablet
+                      ? 40
+                      : 32),
           ScaleTransition(
             scale: _scaleAnimation,
             child: Container(
@@ -1632,8 +1793,16 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
                     padding: EdgeInsets.symmetric(
-                      horizontal: isDesktop ? 56 : isTablet ? 48 : 40,
-                      vertical: isDesktop ? 24 : isTablet ? 20 : 18,
+                      horizontal: isDesktop
+                          ? 56
+                          : isTablet
+                              ? 48
+                              : 40,
+                      vertical: isDesktop
+                          ? 24
+                          : isTablet
+                              ? 20
+                              : 18,
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1642,9 +1811,13 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                         Text(
                           'HEMEN KEŞFET',
                           style: GoogleFonts.inter(
-                            fontSize: isDesktop ? 16 : isTablet ? 15 : 14,
+                            fontSize: isDesktop
+                                ? 16
+                                : isTablet
+                                    ? 15
+                                    : 14,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFFD4AF37),
+                            color: const Color(0xFFFF6A00),
                             letterSpacing: 1.5,
                           ),
                         ),
@@ -1652,7 +1825,7 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
                         const Icon(
                           Icons.arrow_forward_rounded,
                           size: 22,
-                          color: Color(0xFFD4AF37),
+                          color: Color(0xFFFF6A00),
                         ),
                       ],
                     ),
@@ -1666,10 +1839,15 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
     );
   }
 
-  Widget _buildStatsSection(bool isDesktop, bool isTablet, TextTheme textTheme) {
+  Widget _buildStatsSection(
+      bool isDesktop, bool isTablet, TextTheme textTheme) {
     final stats = [
       {'value': '50K+', 'label': 'MUTLU MÜŞTERİ', 'icon': Icons.people_rounded},
-      {'value': '10K+', 'label': 'ÜRÜN ÇEŞİDİ', 'icon': Icons.inventory_2_rounded},
+      {
+        'value': '10K+',
+        'label': 'ÜRÜN ÇEŞİDİ',
+        'icon': Icons.inventory_2_rounded
+      },
       {'value': '98%', 'label': 'MEMNUNİYET', 'icon': Icons.star_rounded},
       {'value': '7/24', 'label': 'DESTEK', 'icon': Icons.support_agent_rounded},
     ];
@@ -1679,27 +1857,49 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
         Text(
           'RAKAMLARIMIZ',
           style: GoogleFonts.poppins(
-            fontSize: isDesktop ? 14 : isTablet ? 12 : 11,
+            fontSize: isDesktop
+                ? 14
+                : isTablet
+                    ? 12
+                    : 11,
             fontWeight: FontWeight.w600,
-            color: const Color(0xFFD4AF37),
+            color: const Color(0xFFFF6A00),
             letterSpacing: 4,
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: isDesktop ? 16 : isTablet ? 12 : 8),
+        SizedBox(
+            height: isDesktop
+                ? 16
+                : isTablet
+                    ? 12
+                    : 8),
         Text(
           'Rakamlarda Mükemmellik',
           style: GoogleFonts.poppins(
-            fontSize: isDesktop ? 48 : isTablet ? 40 : 28,
+            fontSize: isDesktop
+                ? 48
+                : isTablet
+                    ? 40
+                    : 28,
             fontWeight: FontWeight.w900,
             color: Colors.white,
             letterSpacing: -1.5,
           ),
           textAlign: TextAlign.center,
         ),
-        SizedBox(height: isDesktop ? 56 : isTablet ? 44 : 32),
+        SizedBox(
+            height: isDesktop
+                ? 56
+                : isTablet
+                    ? 44
+                    : 32),
         Container(
-          padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 40 : 32),
+          padding: EdgeInsets.all(isDesktop
+              ? 48
+              : isTablet
+                  ? 40
+                  : 32),
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(24),
@@ -1718,69 +1918,97 @@ class _LandingPageState extends State<LandingPage> with TickerProviderStateMixin
           child: isDesktop
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: stats.map((stat) => _buildStatItem(stat, isDesktop, isTablet, textTheme)).toList(),
+                  children: stats
+                      .map((stat) =>
+                          _buildStatItem(stat, isDesktop, isTablet, textTheme))
+                      .toList(),
                 )
               : Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 40,
                   runSpacing: 40,
-                  children: stats.map((stat) => _buildStatItem(stat, isDesktop, isTablet, textTheme)).toList(),
+                  children: stats
+                      .map((stat) =>
+                          _buildStatItem(stat, isDesktop, isTablet, textTheme))
+                      .toList(),
                 ),
         ),
       ],
     );
   }
 
-  Widget _buildStatItem(Map<String, dynamic> stat, bool isDesktop, bool isTablet, TextTheme textTheme) {
+  Widget _buildStatItem(Map<String, dynamic> stat, bool isDesktop,
+      bool isTablet, TextTheme textTheme) {
     // AnimatedBuilder kaldırıldı - performans için
     return Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFD4AF37), Color(0xFFFFD700)],
-                  ),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFD4AF37).withOpacity(0.4),
-                      blurRadius: 25,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-                child: Icon(
-                  stat['icon'] as IconData,
-                  size: isDesktop ? 36 : isTablet ? 32 : 28,
-                  color: const Color(0xFF0A0A0A),
-                ),
-              ),
-              SizedBox(height: isDesktop ? 20 : isTablet ? 16 : 12),
-              Text(
-                stat['value'] as String,
-                style: GoogleFonts.poppins(
-                  fontSize: isDesktop ? 42 : isTablet ? 36 : 32,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: -1.5,
-                ),
-              ),
-              SizedBox(height: isDesktop ? 10 : isTablet ? 8 : 6),
-              Text(
-                stat['label'] as String,
-                style: GoogleFonts.inter(
-                  fontSize: isDesktop ? 13 : isTablet ? 12 : 11,
-                  color: Colors.white.withOpacity(0.6),
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
-                ),
-                textAlign: TextAlign.center,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFF6A00), Color(0xFF00D1FF)],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF6A00).withOpacity(0.4),
+                blurRadius: 25,
+                spreadRadius: 1,
               ),
             ],
-          );
+          ),
+          child: Icon(
+            stat['icon'] as IconData,
+            size: isDesktop
+                ? 36
+                : isTablet
+                    ? 32
+                    : 28,
+            color: const Color(0xFF0A0A0A),
+          ),
+        ),
+        SizedBox(
+            height: isDesktop
+                ? 20
+                : isTablet
+                    ? 16
+                    : 12),
+        Text(
+          stat['value'] as String,
+          style: GoogleFonts.poppins(
+            fontSize: isDesktop
+                ? 42
+                : isTablet
+                    ? 36
+                    : 32,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: -1.5,
+          ),
+        ),
+        SizedBox(
+            height: isDesktop
+                ? 10
+                : isTablet
+                    ? 8
+                    : 6),
+        Text(
+          stat['label'] as String,
+          style: GoogleFonts.inter(
+            fontSize: isDesktop
+                ? 13
+                : isTablet
+                    ? 12
+                    : 11,
+            color: Colors.white.withOpacity(0.6),
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
   }
-
 }
 
 // Grid Pattern Painter for premium background
@@ -1794,7 +2022,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final ValueNotifier<Set<String>> selectedFilters = ValueNotifier<Set<String>>({});
+  final ValueNotifier<Set<String>> selectedFilters =
+      ValueNotifier<Set<String>>({});
   String selectedSort = 'Önerilen';
   String selectedCategory = 'Tüm Kategoriler';
   late final ProductService _productService;
@@ -1806,18 +2035,18 @@ class _HomePageState extends State<HomePage> {
     _productService = ProductService();
     // Stream'i başlat - cache sorunlarını önlemek için her seferinde yeni stream
     _productStream = _productService.getAllProductsStream();
-    
+
     // Web'de cache sorunlarını önlemek için sayfa açıldığında sunucudan zorla çek
     _refreshProductsFromServer();
   }
-  
+
   // Sunucudan ürünleri zorla çek - cache sorunlarını önlemek için
   Future<void> _refreshProductsFromServer() async {
     try {
       debugPrint('🔄 Ürünler sunucudan zorla çekiliyor (cache bypass)...');
       final products = await _productService.getAllProducts();
       debugPrint('✅ Sunucudan ${products.length} adet ürün çekildi');
-      
+
       // Stream'i yeniden başlat - taze veri için
       if (mounted) {
         setState(() {
@@ -1840,22 +2069,25 @@ class _HomePageState extends State<HomePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = ResponsiveHelper.isDesktop(context);
-        final crossAxisCount = ResponsiveHelper.responsiveProductGridColumns(context);
-        
+        final crossAxisCount =
+            ResponsiveHelper.responsiveProductGridColumns(context);
+
         final appBarHeight = ResponsiveHelper.responsiveValue<double>(
           context,
           mobile: 250.0,
           tablet: 230.0,
           desktop: 190.0,
         );
-        
-    return Scaffold(
+
+        return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
-          drawer: isDesktop ? null : Builder(
-            builder: (context) => Drawer(
-              child: FiltersPanel(selectedFilters: selectedFilters),
-            ),
-          ),
+          drawer: isDesktop
+              ? null
+              : Builder(
+                  builder: (context) => Drawer(
+                    child: FiltersPanel(selectedFilters: selectedFilters),
+                  ),
+                ),
           appBar: PreferredSize(
             preferredSize: Size.fromHeight(appBarHeight),
             child: Column(
@@ -1867,7 +2099,8 @@ class _HomePageState extends State<HomePage> {
                 Flexible(
                   child: _SearchBar(
                     selectedCategory: selectedCategory,
-                    onCategoryChange: (category) => setState(() => selectedCategory = category),
+                    onCategoryChange: (category) =>
+                        setState(() => selectedCategory = category),
                   ),
                 ),
               ],
@@ -1899,7 +2132,8 @@ class _HomePageState extends State<HomePage> {
                           children: [
                             const Icon(Icons.error_outline, size: 48),
                             const SizedBox(height: 12),
-                            Text('Ürünler yüklenirken hata oluştu: ${snapshot.error}'),
+                            Text(
+                                'Ürünler yüklenirken hata oluştu: ${snapshot.error}'),
                             const SizedBox(height: 12),
                             FilledButton(
                               onPressed: () => setState(() {}),
@@ -1921,13 +2155,17 @@ class _HomePageState extends State<HomePage> {
                     return ValueListenableBuilder<Set<String>>(
                       valueListenable: selectedFilters,
                       builder: (context, filters, _) {
-                        final preparedProducts =
-                            _applyFiltersAndSort(allProducts, filters, selectedCategory, selectedSort);
+                        final preparedProducts = _applyFiltersAndSort(
+                            allProducts,
+                            filters,
+                            selectedCategory,
+                            selectedSort);
                         return Column(
                           children: [
                             SortBar(
                               selectedSort: selectedSort,
-                              onSortSelected: (value) => setState(() => selectedSort = value),
+                              onSortSelected: (value) =>
+                                  setState(() => selectedSort = value),
                             ),
                             Expanded(
                               child: CustomScrollView(
@@ -1940,16 +2178,26 @@ class _HomePageState extends State<HomePage> {
                                         const SizedBox(height: 24),
                                         const InsightsRow(),
                                         const SizedBox(height: 24),
-                                        FeaturedCollections(isCompact: !isDesktop),
+                                        FeaturedCollections(
+                                            isCompact: !isDesktop),
                                         const SizedBox(height: 24),
                                       ],
                                     ),
                                   ),
                                   SliverPadding(
                                     padding: EdgeInsets.only(
-                                      left: ResponsiveHelper.responsiveHorizontalPadding(context).horizontal / 2,
-                                      right: ResponsiveHelper.responsiveHorizontalPadding(context).horizontal / 2,
-                                      bottom: ResponsiveHelper.responsiveSpacing(
+                                      left: ResponsiveHelper
+                                                  .responsiveHorizontalPadding(
+                                                      context)
+                                              .horizontal /
+                                          2,
+                                      right: ResponsiveHelper
+                                                  .responsiveHorizontalPadding(
+                                                      context)
+                                              .horizontal /
+                                          2,
+                                      bottom:
+                                          ResponsiveHelper.responsiveSpacing(
                                         context,
                                         mobile: 24.0,
                                         tablet: 28.0,
@@ -1957,15 +2205,21 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     sliver: SliverGrid(
-                                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                      gridDelegate:
+                                          SliverGridDelegateWithFixedCrossAxisCount(
                                         crossAxisCount: crossAxisCount,
-                                        crossAxisSpacing: ResponsiveHelper.responsiveGridSpacing(context),
-                                        mainAxisSpacing: ResponsiveHelper.responsiveGridSpacing(context),
-                                        childAspectRatio: ResponsiveHelper.responsiveProductAspectRatio(context),
+                                        crossAxisSpacing: ResponsiveHelper
+                                            .responsiveGridSpacing(context),
+                                        mainAxisSpacing: ResponsiveHelper
+                                            .responsiveGridSpacing(context),
+                                        childAspectRatio: ResponsiveHelper
+                                            .responsiveProductAspectRatio(
+                                                context),
                                       ),
                                       delegate: SliverChildBuilderDelegate(
                                         (context, index) {
-                                          return ProductCard(product: preparedProducts[index]);
+                                          return ProductCard(
+                                              product: preparedProducts[index]);
                                         },
                                         childCount: preparedProducts.length,
                                       ),
@@ -1997,8 +2251,8 @@ List<Product> _applyFiltersAndSort(
   String sortBy,
 ) {
   var filtered = products.where((product) {
-    final matchesCategory =
-        selectedCategory == 'Tüm Kategoriler' || product.category == selectedCategory;
+    final matchesCategory = selectedCategory == 'Tüm Kategoriler' ||
+        product.category == selectedCategory;
     if (!matchesCategory) return false;
 
     bool matchesFilters = true;
@@ -2017,7 +2271,8 @@ List<Product> _applyFiltersAndSort(
           matchesFilters &= product.discountedPrice <= 5000;
           break;
         case '5.000-15.000 ₺':
-          matchesFilters &= product.discountedPrice > 5000 && product.discountedPrice <= 15000;
+          matchesFilters &= product.discountedPrice > 5000 &&
+              product.discountedPrice <= 15000;
           break;
         case '15.000+ ₺':
           matchesFilters &= product.discountedPrice > 15000;
@@ -2077,7 +2332,7 @@ class _HeaderButton extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+              color: const Color(0xFF2A3340).withOpacity(0.5),
               width: 1.5,
             ),
             color: Colors.white,
@@ -2125,7 +2380,7 @@ class _TopActionBar extends StatelessWidget {
             color: Colors.white,
             border: Border(
               bottom: BorderSide(
-                color: const Color(0xFFE5E5E5).withOpacity(0.5),
+                color: const Color(0xFF2A3340).withOpacity(0.5),
                 width: 1,
               ),
             ),
@@ -2190,7 +2445,8 @@ class _TopActionBar extends StatelessWidget {
                               child: InkWell(
                                 onTap: () {
                                   Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => OrdersPage()),
+                                    MaterialPageRoute(
+                                        builder: (_) => OrdersPage()),
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(14),
@@ -2200,7 +2456,8 @@ class _TopActionBar extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                                      color: const Color(0xFF2A3340)
+                                          .withOpacity(0.5),
                                       width: 1.5,
                                     ),
                                     color: Colors.white,
@@ -2219,7 +2476,8 @@ class _TopActionBar extends StatelessWidget {
                               child: InkWell(
                                 onTap: () {
                                   Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => FavoritesPage()),
+                                    MaterialPageRoute(
+                                        builder: (_) => FavoritesPage()),
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(14),
@@ -2229,7 +2487,8 @@ class _TopActionBar extends StatelessWidget {
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(14),
                                     border: Border.all(
-                                      color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                                      color: const Color(0xFF2A3340)
+                                          .withOpacity(0.5),
                                       width: 1.5,
                                     ),
                                     color: Colors.white,
@@ -2248,22 +2507,28 @@ class _TopActionBar extends StatelessWidget {
                               child: InkWell(
                                 onTap: () {
                                   Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => const GirisSayfasi()),
+                                    MaterialPageRoute(
+                                        builder: (_) => const GirisSayfasi()),
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(16),
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A)],
+                                      colors: [
+                                        Color(0xFF0A0A0A),
+                                        Color(0xFF1A1A1A)
+                                      ],
                                       begin: Alignment.topLeft,
                                       end: Alignment.bottomRight,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: const Color(0xFFD4AF37).withOpacity(0.25),
+                                        color: const Color(0xFFFF6A00)
+                                            .withOpacity(0.25),
                                         blurRadius: 10,
                                         offset: const Offset(0, 3),
                                         spreadRadius: 0,
@@ -2272,7 +2537,7 @@ class _TopActionBar extends StatelessWidget {
                                   ),
                                   child: const Icon(
                                     Icons.person_outline_rounded,
-                                    color: Color(0xFFD4AF37),
+                                    color: Color(0xFFFF6A00),
                                     size: 18,
                                   ),
                                 ),
@@ -2291,12 +2556,13 @@ class _TopActionBar extends StatelessWidget {
                         },
                         borderRadius: BorderRadius.circular(18),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 13),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFAFAFA),
+                            color: const Color(0xFF0B0D10),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.6),
+                              color: const Color(0xFF2A3340).withOpacity(0.6),
                               width: 1.5,
                             ),
                           ),
@@ -2322,7 +2588,7 @@ class _TopActionBar extends StatelessWidget {
                               Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 size: 18,
-                                color: const Color(0xFF6A6A6A),
+                                color: const Color(0xFFC7CDD6),
                               ),
                             ],
                           ),
@@ -2375,14 +2641,15 @@ class _TopActionBar extends StatelessWidget {
                           // Teslimat adresi seçimi
                         },
                         borderRadius: BorderRadius.circular(18),
-                        hoverColor: const Color(0xFFF5F5F5),
+                        hoverColor: const Color(0xFF202733),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 13),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFAFAFA),
+                            color: const Color(0xFF0B0D10),
                             borderRadius: BorderRadius.circular(18),
                             border: Border.all(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.6),
+                              color: const Color(0xFF2A3340).withOpacity(0.6),
                               width: 1.5,
                             ),
                           ),
@@ -2408,7 +2675,7 @@ class _TopActionBar extends StatelessWidget {
                               Icon(
                                 Icons.keyboard_arrow_down_rounded,
                                 size: 18,
-                                color: const Color(0xFF6A6A6A),
+                                color: const Color(0xFFC7CDD6),
                               ),
                             ],
                           ),
@@ -2435,7 +2702,8 @@ class _TopActionBar extends StatelessWidget {
                           label: 'Favoriler',
                           onTap: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(builder: (_) => FavoritesPage()),
+                              MaterialPageRoute(
+                                  builder: (_) => FavoritesPage()),
                             );
                           },
                         ),
@@ -2445,7 +2713,8 @@ class _TopActionBar extends StatelessWidget {
                           child: InkWell(
                             onTap: () {
                               Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const GirisSayfasi()),
+                                MaterialPageRoute(
+                                    builder: (_) => const GirisSayfasi()),
                               );
                             },
                             borderRadius: BorderRadius.circular(20),
@@ -2458,13 +2727,17 @@ class _TopActionBar extends StatelessWidget {
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(20),
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF0A0A0A), Color(0xFF1A1A1A)],
+                                  colors: [
+                                    Color(0xFF0A0A0A),
+                                    Color(0xFF1A1A1A)
+                                  ],
                                   begin: Alignment.topLeft,
                                   end: Alignment.bottomRight,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: const Color(0xFFD4AF37).withOpacity(0.3),
+                                    color: const Color(0xFFFF6A00)
+                                        .withOpacity(0.3),
                                     blurRadius: 14,
                                     offset: const Offset(0, 4),
                                     spreadRadius: 0,
@@ -2483,12 +2756,13 @@ class _TopActionBar extends StatelessWidget {
                                   Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFD4AF37).withOpacity(0.25),
+                                      color: const Color(0xFFFF6A00)
+                                          .withOpacity(0.25),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: const Icon(
                                       Icons.person_outline_rounded,
-                                      color: Color(0xFFD4AF37),
+                                      color: Color(0xFFFF6A00),
                                       size: 18,
                                     ),
                                   ),
@@ -2545,12 +2819,12 @@ class _SearchBarState extends State<_SearchBar> {
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
-                color: const Color(0xFFD4AF37).withOpacity(0.3),
+                color: const Color(0xFFFF6A00).withOpacity(0.3),
                 width: 1.5,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFD4AF37).withOpacity(0.08),
+                  color: const Color(0xFFFF6A00).withOpacity(0.08),
                   blurRadius: 12,
                   offset: const Offset(0, 2),
                   spreadRadius: 0,
@@ -2581,7 +2855,8 @@ class _SearchBarState extends State<_SearchBar> {
                       fontWeight: FontWeight.w400,
                     ),
                     decoration: InputDecoration(
-                      hintText: 'Aradığınız ürün, kategori veya markayı yazınız',
+                      hintText:
+                          'Aradığınız ürün, kategori veya markayı yazınız',
                       hintStyle: GoogleFonts.inter(
                         color: Colors.grey[500],
                         fontSize: 15,
@@ -2597,7 +2872,7 @@ class _SearchBarState extends State<_SearchBar> {
                   height: double.infinity,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
-                      colors: [Color(0xFFD4AF37), Color(0xFFC19B2E)],
+                      colors: [Color(0xFFFF6A00), Color(0xFFE85F00)],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -2607,7 +2882,7 @@ class _SearchBarState extends State<_SearchBar> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withOpacity(0.3),
+                        color: const Color(0xFFFF6A00).withOpacity(0.3),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
                         spreadRadius: 0,
@@ -2647,15 +2922,20 @@ class _SearchBarState extends State<_SearchBar> {
           builder: (context, categorySnapshot) {
             final adminCategories = categorySnapshot.data ?? [];
             // Maksimum 8 kategori göster, rasgele sırala
-            final displayCategories = adminCategories.take(8).toList()..shuffle();
-            
+            final displayCategories = adminCategories.take(8).toList()
+              ..shuffle();
+
             // "Tümü" seçeneğini ekle
-            final allCategories = ['Tümü', ...displayCategories.map((c) => c.name)];
+            final allCategories = [
+              'Tümü',
+              ...displayCategories.map((c) => c.name)
+            ];
             final quickCategories = allCategories.take(4).toList();
-            final quickSelection = quickCategories.contains(widget.selectedCategory)
-                ? widget.selectedCategory
-                : quickCategories.first;
-            
+            final quickSelection =
+                quickCategories.contains(widget.selectedCategory)
+                    ? widget.selectedCategory
+                    : quickCategories.first;
+
             final categorySelector = SegmentedButton<String>(
               segments: quickCategories
                   .map(
@@ -2682,26 +2962,27 @@ class _SearchBarState extends State<_SearchBar> {
                   BorderSide(color: Colors.grey.shade300),
                 ),
               ),
-              onSelectionChanged: (value) => widget.onCategoryChange(value.first),
+              onSelectionChanged: (value) =>
+                  widget.onCategoryChange(value.first),
             );
 
             final cartButton = ValueListenableBuilder<List<CartItem>>(
-          valueListenable: cartItems,
-          builder: (context, items, _) {
-            final count = getCartItemCount();
-            return IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CartPage()),
+              valueListenable: cartItems,
+              builder: (context, items, _) {
+                final count = getCartItemCount();
+                return IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const CartPage()),
+                    );
+                  },
+                  icon: Badge.count(
+                    count: count,
+                    child: const Icon(Icons.shopping_cart_outlined),
+                  ),
                 );
               },
-              icon: Badge.count(
-                count: count,
-                child: const Icon(Icons.shopping_cart_outlined),
-              ),
             );
-          },
-        );
 
             return Container(
               padding: EdgeInsets.symmetric(
@@ -2728,7 +3009,9 @@ class _SearchBarState extends State<_SearchBar> {
                         const SizedBox(height: 10),
                         categorySelector,
                         const SizedBox(height: 10),
-                        Align(alignment: Alignment.centerRight, child: cartButton),
+                        Align(
+                            alignment: Alignment.centerRight,
+                            child: cartButton),
                       ],
                     )
                   : Row(
@@ -2839,19 +3122,19 @@ class _FilterSection extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(
                           color: filters.contains(option)
-                              ? const Color(0xFFD4AF37)
+                              ? const Color(0xFFFF6A00)
                               : const Color(0xFFE0E0E0),
                           width: filters.contains(option) ? 4 : 1.5,
                         ),
                         color: filters.contains(option)
-                            ? const Color(0xFFD4AF37).withOpacity(0.1)
+                            ? const Color(0xFFFF6A00).withOpacity(0.1)
                             : Colors.transparent,
                       ),
                       child: filters.contains(option)
                           ? const Icon(
                               Icons.check,
                               size: 8,
-                              color: Color(0xFFD4AF37),
+                              color: Color(0xFFFF6A00),
                             )
                           : null,
                     ),
@@ -2866,7 +3149,7 @@ class _FilterSection extends StatelessWidget {
                               : FontWeight.w400,
                           color: filters.contains(option)
                               ? const Color(0xFF1A1A1A)
-                              : const Color(0xFF6A6A6A),
+                              : const Color(0xFFC7CDD6),
                           letterSpacing: 0.1,
                         ),
                       ),
@@ -2905,7 +3188,8 @@ class SortBar extends StatelessWidget {
       showSelectedIcon: false,
       style: ButtonStyle(
         visualDensity: VisualDensity.compact,
-        padding: WidgetStateProperty.all(const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
+        padding: WidgetStateProperty.all(
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 6)),
         textStyle: WidgetStateProperty.all(
           GoogleFonts.montserrat(
             fontSize: 12,
@@ -2928,7 +3212,7 @@ class SortBar extends StatelessWidget {
         color: Colors.white,
         border: Border(
           bottom: BorderSide(
-            color: const Color(0xFFE5E5E5).withOpacity(0.5),
+            color: const Color(0xFF2A3340).withOpacity(0.5),
             width: 0.5,
           ),
         ),
@@ -2954,7 +3238,7 @@ class SortBar extends StatelessWidget {
             child: Icon(
               Icons.tune_rounded,
               size: 18,
-              color: const Color(0xFF6A6A6A),
+              color: const Color(0xFFC7CDD6),
             ),
           ),
         ],
@@ -2996,12 +3280,12 @@ class HeroBanner extends StatelessWidget {
           end: Alignment.bottomRight,
           colors: [
             const Color(0xFF0A0A0A).withOpacity(0.02),
-            const Color(0xFFD4AF37).withOpacity(0.04),
+            const Color(0xFFFF6A00).withOpacity(0.04),
             Colors.white,
           ],
         ),
         border: Border.all(
-          color: const Color(0xFFE8E8E8).withOpacity(0.6),
+          color: const Color(0xFF2A3340).withOpacity(0.6),
           width: 0.5,
         ),
         boxShadow: [
@@ -3014,268 +3298,281 @@ class HeroBanner extends StatelessWidget {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFFF6A00).withOpacity(0.15),
+                        const Color(0xFFFF6A00).withOpacity(0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: const Color(0xFFFF6A00).withOpacity(0.4),
+                      width: 1.5,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFFFF6A00).withOpacity(0.1),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              const Color(0xFFD4AF37).withOpacity(0.15),
-                              const Color(0xFFD4AF37).withOpacity(0.08),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: const Color(0xFFD4AF37).withOpacity(0.4),
-                            width: 1.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.1),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.workspace_premium_rounded,
-                              color: const Color(0xFFD4AF37),
-                              size: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Elite Koleksiyon',
-                              style: GoogleFonts.playfairDisplay(
-                                color: const Color(0xFF1A1A1A),
-                                fontWeight: FontWeight.w700,
-                                fontSize: 14,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ],
-                        ),
+                      Icon(
+                        Icons.workspace_premium_rounded,
+                        color: const Color(0xFFFF6A00),
+                        size: 20,
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(width: 10),
                       Text(
-                        'Otomobil tutkunuzu yansıtan seçkin çözümler',
-                        style: textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colorScheme.onSurface,
-                          letterSpacing: -0.5,
-                          height: 1.2,
+                        'Elite Koleksiyon',
+                        style: GoogleFonts.playfairDisplay(
+                          color: const Color(0xFF1A1A1A),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 14,
+                          letterSpacing: 0.5,
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Profesyonel performans kitlerinden, zarif günlük kullanım aksesuarlarına kadar özenle seçilmiş koleksiyonlarımız. '
-                        'Kurumsal teslimat garantisi ve özel müşteri hizmetleri ile yanınızdayız.',
-                        style: textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurface.withOpacity(0.75),
-                          height: 1.7,
-                          letterSpacing: 0.2,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 16,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF1A1A1A), Color(0xFF2C2C2C), Color(0xFF1A1A1A)],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: const Color(0xFFD4AF37).withOpacity(0.3),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder: (_) => CategoryPage(category: 'Performans'),
-                                    ),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(18),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 16,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFD4AF37).withOpacity(0.2),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.auto_awesome_rounded,
-                                          color: Color(0xFFD4AF37),
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'Elite Performans',
-                                        style: GoogleFonts.playfairDisplay(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Container(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              color: Colors.white,
-                              border: Border.all(
-                                color: const Color(0xFF1A1A1A).withOpacity(0.2),
-                                width: 2,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Material(
-                              color: Colors.transparent,
-                              child: InkWell(
-                                onTap: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(builder: (_) => ConsultationPage()),
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(18),
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 16,
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(6),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF1A1A1A).withOpacity(0.08),
-                                          borderRadius: BorderRadius.circular(8),
-                                        ),
-                                        child: const Icon(
-                                          Icons.verified_user_rounded,
-                                          color: Color(0xFF1A1A1A),
-                                          size: 20,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'Özel Danışmanlık',
-                                        style: GoogleFonts.playfairDisplay(
-                                          color: const Color(0xFF1A1A1A),
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 15,
-                                          letterSpacing: 0.3,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 32),
-                Expanded(
-                  flex: 2,
-                  child: AspectRatio(
-                    aspectRatio: 4 / 3,
-                    child: Container(
+                const SizedBox(height: 20),
+                Text(
+                  'Otomobil tutkunuzu yansıtan seçkin çözümler',
+                  style: textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: colorScheme.onSurface,
+                    letterSpacing: -0.5,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Profesyonel performans kitlerinden, zarif günlük kullanım aksesuarlarına kadar özenle seçilmiş koleksiyonlarımız. '
+                  'Kurumsal teslimat garantisi ve özel müşteri hizmetleri ile yanınızdayız.',
+                  style: textTheme.bodyLarge?.copyWith(
+                    color: colorScheme.onSurface.withOpacity(0.75),
+                    height: 1.7,
+                    letterSpacing: 0.2,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: [
+                    Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(28),
-                        gradient: LinearGradient(
+                        borderRadius: BorderRadius.circular(18),
+                        gradient: const LinearGradient(
                           colors: [
-                            Colors.white,
-                            colorScheme.primary.withOpacity(0.05),
+                            Color(0xFF1A1A1A),
+                            Color(0xFF2C2C2C),
+                            Color(0xFF1A1A1A)
                           ],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        border: Border.all(color: colorScheme.primary.withOpacity(0.1)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFF6A00).withOpacity(0.3),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.directions_car_filled, size: 48, color: colorScheme.primary),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Mükemmellik Standardı',
-                              style: textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: 0.2,
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) =>
+                                    CategoryPage(category: 'Performans'),
                               ),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(18),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
                             ),
-                            const SizedBox(height: 8),
-                            Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: List.generate(5, (index) => Icon(
-                                Icons.star_rounded,
-                                color: const Color(0xFFD4AF37),
-                                size: 24,
-                              )),
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFF6A00)
+                                        .withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: Color(0xFFFF6A00),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Elite Performans',
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Sertifikalı uzman ekibimiz ile',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onSurface.withOpacity(0.7),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        color: Colors.white,
+                        border: Border.all(
+                          color: const Color(0xFF1A1A1A).withOpacity(0.2),
+                          width: 2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => ConsultationPage()),
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(18),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1A1A1A)
+                                        .withOpacity(0.08),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(
+                                    Icons.verified_user_rounded,
+                                    color: Color(0xFF1A1A1A),
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Özel Danışmanlık',
+                                  style: GoogleFonts.playfairDisplay(
+                                    color: const Color(0xFF1A1A1A),
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
+          ),
+          const SizedBox(width: 32),
+          Expanded(
+            flex: 2,
+            child: AspectRatio(
+              aspectRatio: 4 / 3,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(28),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white,
+                      colorScheme.primary.withOpacity(0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  border:
+                      Border.all(color: colorScheme.primary.withOpacity(0.1)),
+                ),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.directions_car_filled,
+                          size: 48, color: colorScheme.primary),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Mükemmellik Standardı',
+                        style: textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(
+                            5,
+                            (index) => Icon(
+                                  Icons.star_rounded,
+                                  color: const Color(0xFFFF6A00),
+                                  size: 24,
+                                )),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Sertifikalı uzman ekibimiz ile',
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface.withOpacity(0.7),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -3302,14 +3599,15 @@ class InsightsRow extends StatelessWidget {
             children: insights
                 .map(
                   (insight) => SizedBox(
-                    width: (constraints.maxWidth - (16 * (columns - 1))) / columns,
+                    width:
+                        (constraints.maxWidth - (16 * (columns - 1))) / columns,
                     child: Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(22),
                         border: Border.all(
-                          color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                          color: const Color(0xFF2A3340).withOpacity(0.5),
                           width: 0.5,
                         ),
                         boxShadow: [
@@ -3328,7 +3626,8 @@ class InsightsRow extends StatelessWidget {
                           const SizedBox(height: 12),
                           Text(
                             insight.title,
-                            style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+                            style: textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           const SizedBox(height: 6),
                           Text(
@@ -3367,7 +3666,10 @@ class FeaturedCollections extends StatelessWidget {
             children: [
               Text(
                 'Seçili Koleksiyonlar',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w600),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(fontWeight: FontWeight.w600),
               ),
               TextButton(
                 onPressed: () {
@@ -3380,20 +3682,25 @@ class FeaturedCollections extends StatelessWidget {
             ],
           ),
         ),
-        SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 12.0)),
         SizedBox(
-          height: isCompact ? null : ResponsiveHelper.responsiveValue<double>(
-            context,
-            mobile: 200.0,
-            tablet: 210.0,
-            desktop: 220.0,
-          ),
+            height: ResponsiveHelper.responsiveSpacing(context,
+                mobile: 8.0, desktop: 12.0)),
+        SizedBox(
+          height: isCompact
+              ? null
+              : ResponsiveHelper.responsiveValue<double>(
+                  context,
+                  mobile: 200.0,
+                  tablet: 210.0,
+                  desktop: 220.0,
+                ),
           child: ListView.separated(
             padding: ResponsiveHelper.responsiveHorizontalPadding(context),
             scrollDirection: Axis.horizontal,
             itemBuilder: (context, index) {
               final collection = featuredCollections[index];
-              return _CollectionCard(collection: collection, isCompact: isCompact);
+              return _CollectionCard(
+                  collection: collection, isCompact: isCompact);
             },
             separatorBuilder: (_, __) => const SizedBox(width: 16),
             itemCount: featuredCollections.length,
@@ -3449,14 +3756,16 @@ class _CollectionCard extends StatelessWidget {
           Chip(
             label: Text(collection.badge),
             backgroundColor: collection.accent.withOpacity(0.12),
-            labelStyle: TextStyle(color: collection.accent, fontWeight: FontWeight.w600),
+            labelStyle: TextStyle(
+                color: collection.accent, fontWeight: FontWeight.w600),
             padding: EdgeInsets.zero,
             materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
           SizedBox(height: isCompact ? 10 : 12),
           Text(
             collection.title,
-            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleLarge
+                ?.copyWith(fontWeight: FontWeight.w700),
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
@@ -3476,7 +3785,8 @@ class _CollectionCard extends StatelessWidget {
               Flexible(
                 child: Text(
                   collection.stat,
-                  style: theme.textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+                  style: theme.textTheme.labelLarge
+                      ?.copyWith(fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -3489,7 +3799,6 @@ class _CollectionCard extends StatelessWidget {
     );
   }
 }
-
 
 class ProductCard extends StatelessWidget {
   const ProductCard({super.key, required this.product});
@@ -3509,7 +3818,7 @@ class ProductCard extends StatelessWidget {
       mobile: 6.0,
       desktop: 8.0,
     );
-    
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Container(
@@ -3517,7 +3826,7 @@ class ProductCard extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(borderRadius),
           border: Border.all(
-            color: const Color(0xFFE8E8E8),
+            color: const Color(0xFF2A3340),
             width: 1,
           ),
           boxShadow: [
@@ -3545,296 +3854,331 @@ class ProductCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                // Ürün Resmi
-                AspectRatio(
-                  aspectRatio: 1,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(6),
-                      color: Colors.grey[50],
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: OptimizedImage(
-                            imageUrl: product.imageUrl,
-                                    fit: BoxFit.contain,
-                            borderRadius: BorderRadius.circular(6),
-                            placeholder: Icon(
-                                      Icons.image,
-                                      size: 48,
-                              color: Colors.grey[300],
-                                    ),
-                            errorWidget: Icon(
-                                  Icons.image,
-                                  size: 48,
-                                  color: Colors.grey[400],
-                            ),
-                                ),
-                        ),
-                        // İndirim Badge
-                        if (product.discountPercentage > 0)
-                          Positioned(
-                            top: 8,
-                            left: 8,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEF4444),
-                                borderRadius: BorderRadius.circular(4),
+                  // Ürün Resmi
+                  AspectRatio(
+                    aspectRatio: 1,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(6),
+                        color: Colors.grey[50],
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: OptimizedImage(
+                              imageUrl: product.imageUrl,
+                              fit: BoxFit.contain,
+                              borderRadius: BorderRadius.circular(6),
+                              placeholder: Icon(
+                                Icons.image,
+                                size: 48,
+                                color: Colors.grey[300],
                               ),
-                              child: Text(
-                                '%${product.discountPercentage.toStringAsFixed(0)}',
-                                style: GoogleFonts.inter(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 11,
-                                ),
+                              errorWidget: Icon(
+                                Icons.image,
+                                size: 48,
+                                color: Colors.grey[400],
                               ),
                             ),
                           ),
-                      ],
+                          // İndirim Badge
+                          if (product.discountPercentage > 0)
+                            Positioned(
+                              top: 8,
+                              left: 8,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEF4444),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  '%${product.discountPercentage.toStringAsFixed(0)}',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 10.0)),
-                // Ürün Adı
-                Text(
-                  product.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: ResponsiveHelper.responsiveFontSize(
-                      context,
-                      mobile: 12.0,
-                      tablet: 13.0,
-                      desktop: 14.0,
-                    ),
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1A1A1A),
-                    height: 1.3,
-                  ),
-                ),
-                SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 6.0)),
-                // Değerlendirme
-                Row(
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber[700],
-                      size: ResponsiveHelper.responsiveIconSize(
+                  SizedBox(
+                      height: ResponsiveHelper.responsiveSpacing(context,
+                          mobile: 6.0, desktop: 10.0)),
+                  // Ürün Adı
+                  Text(
+                    product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.inter(
+                      fontSize: ResponsiveHelper.responsiveFontSize(
                         context,
-                        mobile: 14.0,
-                        desktop: 16.0,
+                        mobile: 12.0,
+                        tablet: 13.0,
+                        desktop: 14.0,
                       ),
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF1A1A1A),
+                      height: 1.3,
                     ),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 3.0, desktop: 4.0)),
-                    Text(
-                      product.averageRating.toStringAsFixed(1),
-                      style: GoogleFonts.inter(
-                        fontSize: ResponsiveHelper.responsiveFontSize(
+                  ),
+                  SizedBox(
+                      height: ResponsiveHelper.responsiveSpacing(context,
+                          mobile: 4.0, desktop: 6.0)),
+                  // Değerlendirme
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.star,
+                        color: Colors.amber[700],
+                        size: ResponsiveHelper.responsiveIconSize(
                           context,
-                          mobile: 11.0,
-                          desktop: 12.0,
+                          mobile: 14.0,
+                          desktop: 16.0,
                         ),
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF1A1A1A),
                       ),
-                    ),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 3.0, desktop: 4.0)),
-                    Text(
-                      '(${product.reviewCount})',
-                      style: GoogleFonts.inter(
-                        fontSize: ResponsiveHelper.responsiveFontSize(
-                          context,
-                          mobile: 11.0,
-                          desktop: 12.0,
-                        ),
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 8.0)),
-                // Fiyat
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (product.discountPercentage > 0)
+                      SizedBox(
+                          width: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 3.0, desktop: 4.0)),
                       Text(
-                        '${product.price.toStringAsFixed(2)} ₺',
+                        product.averageRating.toStringAsFixed(1),
                         style: GoogleFonts.inter(
                           fontSize: ResponsiveHelper.responsiveFontSize(
                             context,
                             mobile: 11.0,
                             desktop: 12.0,
                           ),
-                          decoration: TextDecoration.lineThrough,
-                          color: Colors.grey[500],
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1A1A1A),
                         ),
                       ),
-                    SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 1.0, desktop: 2.0)),
-                    Text(
-                      '${product.discountedPrice.toStringAsFixed(2)} ₺',
-                      style: GoogleFonts.inter(
-                        fontSize: ResponsiveHelper.responsiveFontSize(
-                          context,
-                          mobile: 16.0,
-                          tablet: 17.0,
-                          desktop: 18.0,
+                      SizedBox(
+                          width: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 3.0, desktop: 4.0)),
+                      Text(
+                        '(${product.reviewCount})',
+                        style: GoogleFonts.inter(
+                          fontSize: ResponsiveHelper.responsiveFontSize(
+                            context,
+                            mobile: 11.0,
+                            desktop: 12.0,
+                          ),
+                          color: Colors.grey[600],
                         ),
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFFD4AF37),
                       ),
-                    ),
-                  ],
-                ),
-                // En çok sepete eklenen ve favorilenen bilgisi
-                if (product.cartCount > 0 || product.favoriteCount > 0)
-                  Padding(
-                    padding: EdgeInsets.only(
-                      top: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 6.0),
-                      bottom: ResponsiveHelper.responsiveSpacing(context, mobile: 2.0, desktop: 4.0),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        if (product.cartCount > 0) ...[
-                          Icon(
-                            Icons.shopping_cart_outlined,
-                            size: ResponsiveHelper.responsiveIconSize(
+                    ],
+                  ),
+                  SizedBox(
+                      height: ResponsiveHelper.responsiveSpacing(context,
+                          mobile: 6.0, desktop: 8.0)),
+                  // Fiyat
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (product.discountPercentage > 0)
+                        Text(
+                          '${product.price.toStringAsFixed(2)} ₺',
+                          style: GoogleFonts.inter(
+                            fontSize: ResponsiveHelper.responsiveFontSize(
                               context,
-                              mobile: 10.0,
+                              mobile: 11.0,
                               desktop: 12.0,
                             ),
-                            color: Colors.grey[600],
+                            decoration: TextDecoration.lineThrough,
+                            color: Colors.grey[500],
                           ),
-                          SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 2.0, desktop: 4.0)),
-                          Text(
-                            '${product.cartCount} kez sepete eklendi',
-                            style: GoogleFonts.inter(
-                              fontSize: ResponsiveHelper.responsiveFontSize(
+                        ),
+                      SizedBox(
+                          height: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 1.0, desktop: 2.0)),
+                      Text(
+                        '${product.discountedPrice.toStringAsFixed(2)} ₺',
+                        style: GoogleFonts.inter(
+                          fontSize: ResponsiveHelper.responsiveFontSize(
+                            context,
+                            mobile: 16.0,
+                            tablet: 17.0,
+                            desktop: 18.0,
+                          ),
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFFFF6A00),
+                        ),
+                      ),
+                    ],
+                  ),
+                  // En çok sepete eklenen ve favorilenen bilgisi
+                  if (product.cartCount > 0 || product.favoriteCount > 0)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        top: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 4.0, desktop: 6.0),
+                        bottom: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 2.0, desktop: 4.0),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          if (product.cartCount > 0) ...[
+                            Icon(
+                              Icons.shopping_cart_outlined,
+                              size: ResponsiveHelper.responsiveIconSize(
                                 context,
-                                mobile: 9.0,
-                                desktop: 10.0,
+                                mobile: 10.0,
+                                desktop: 12.0,
                               ),
                               color: Colors.grey[600],
-                              fontWeight: FontWeight.w400,
                             ),
-                          ),
-                        ],
-                        if (product.cartCount > 0 && product.favoriteCount > 0)
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 6.0),
-                            ),
-                            child: Container(
-                              width: 2,
-                              height: 10,
-                              color: Colors.grey[400],
-                            ),
-                          ),
-                        if (product.favoriteCount > 0) ...[
-                          Icon(
-                            Icons.favorite_outline,
-                            size: ResponsiveHelper.responsiveIconSize(
-                              context,
-                              mobile: 10.0,
-                              desktop: 12.0,
-                            ),
-                            color: Colors.grey[600],
-                          ),
-                          SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 2.0, desktop: 4.0)),
-                          Text(
-                            '${product.favoriteCount} kez favorilendi',
-                            style: GoogleFonts.inter(
-                              fontSize: ResponsiveHelper.responsiveFontSize(
-                                context,
-                                mobile: 9.0,
-                                desktop: 10.0,
-                              ),
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 10.0)),
-                // Sepete Ekle Butonu - Responsive ve kompakt
-                SizedBox(
-                  width: double.infinity,
-                  height: ResponsiveHelper.responsiveValue(
-                    context,
-                    mobile: 28.0, // Küçültüldü
-                    tablet: 32.0,
-                    desktop: 36.0,
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      addToCart(product);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              const Icon(Icons.check_circle, color: Colors.white, size: 20),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  '${product.name} sepete eklendi',
-                                  style: const TextStyle(color: Colors.white),
+                            SizedBox(
+                                width: ResponsiveHelper.responsiveSpacing(
+                                    context,
+                                    mobile: 2.0,
+                                    desktop: 4.0)),
+                            Text(
+                              '${product.cartCount} kez sepete eklendi',
+                              style: GoogleFonts.inter(
+                                fontSize: ResponsiveHelper.responsiveFontSize(
+                                  context,
+                                  mobile: 9.0,
+                                  desktop: 10.0,
                                 ),
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w400,
                               ),
-                            ],
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          duration: const Duration(seconds: 2),
-                          backgroundColor: const Color(0xFF1A1A1A),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          action: SnackBarAction(
-                            label: 'Sepete Git',
-                            textColor: const Color(0xFFD4AF37),
-                            onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => const CartPage()),
-                              );
-                            },
-                          ),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFD4AF37),
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0),
-                        vertical: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 6.0),
+                            ),
+                          ],
+                          if (product.cartCount > 0 &&
+                              product.favoriteCount > 0)
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: ResponsiveHelper.responsiveSpacing(
+                                    context,
+                                    mobile: 4.0,
+                                    desktop: 6.0),
+                              ),
+                              child: Container(
+                                width: 2,
+                                height: 10,
+                                color: Colors.grey[400],
+                              ),
+                            ),
+                          if (product.favoriteCount > 0) ...[
+                            Icon(
+                              Icons.favorite_outline,
+                              size: ResponsiveHelper.responsiveIconSize(
+                                context,
+                                mobile: 10.0,
+                                desktop: 12.0,
+                              ),
+                              color: Colors.grey[600],
+                            ),
+                            SizedBox(
+                                width: ResponsiveHelper.responsiveSpacing(
+                                    context,
+                                    mobile: 2.0,
+                                    desktop: 4.0)),
+                            Text(
+                              '${product.favoriteCount} kez favorilendi',
+                              style: GoogleFonts.inter(
+                                fontSize: ResponsiveHelper.responsiveFontSize(
+                                  context,
+                                  mobile: 9.0,
+                                  desktop: 10.0,
+                                ),
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      elevation: 0,
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    child: Text(
-                      'Sepete Ekle',
-                      style: GoogleFonts.inter(
-                        fontSize: ResponsiveHelper.responsiveFontSize(
-                          context,
-                          mobile: 11.0,
-                          tablet: 12.0,
-                          desktop: 13.0,
+                  SizedBox(
+                      height: ResponsiveHelper.responsiveSpacing(context,
+                          mobile: 6.0, desktop: 10.0)),
+                  // Sepete Ekle Butonu - Responsive ve kompakt
+                  SizedBox(
+                    width: double.infinity,
+                    height: ResponsiveHelper.responsiveValue(
+                      context,
+                      mobile: 28.0, // Küçültüldü
+                      tablet: 32.0,
+                      desktop: 36.0,
+                    ),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        addToCart(product);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Row(
+                              children: [
+                                const Icon(Icons.check_circle,
+                                    color: Colors.white, size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    '${product.name} sepete eklendi',
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            duration: const Duration(seconds: 2),
+                            backgroundColor: const Color(0xFF1A1A1A),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            action: SnackBarAction(
+                              label: 'Sepete Git',
+                              textColor: const Color(0xFFFF6A00),
+                              onPressed: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (_) => const CartPage()),
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF6A00),
+                        foregroundColor: Colors.white,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: ResponsiveHelper.responsiveSpacing(
+                              context,
+                              mobile: 4.0,
+                              desktop: 8.0),
+                          vertical: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 4.0, desktop: 6.0),
                         ),
-                        fontWeight: FontWeight.w600,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        elevation: 0,
+                        minimumSize: Size.zero,
+                        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      ),
+                      child: Text(
+                        'Sepete Ekle',
+                        style: GoogleFonts.inter(
+                          fontSize: ResponsiveHelper.responsiveFontSize(
+                            context,
+                            mobile: 11.0,
+                            tablet: 12.0,
+                            desktop: 13.0,
+                          ),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
                 ],
               ),
             ),
@@ -3891,8 +4235,10 @@ class _MobileNavigationBarState extends State<_MobileNavigationBar> {
         }
       },
       destinations: [
-        const NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Anasayfa'),
-        const NavigationDestination(icon: Icon(Icons.category_outlined), label: 'Kategoriler'),
+        const NavigationDestination(
+            icon: Icon(Icons.home_outlined), label: 'Anasayfa'),
+        const NavigationDestination(
+            icon: Icon(Icons.category_outlined), label: 'Kategoriler'),
         NavigationDestination(
           icon: ValueListenableBuilder<List<CartItem>>(
             valueListenable: cartItems,
@@ -3906,7 +4252,8 @@ class _MobileNavigationBarState extends State<_MobileNavigationBar> {
           ),
           label: 'Sepet',
         ),
-        const NavigationDestination(icon: Icon(Icons.person_outline), label: 'Hesabım'),
+        const NavigationDestination(
+            icon: Icon(Icons.person_outline), label: 'Hesabım'),
       ],
     );
   }
@@ -4014,15 +4361,20 @@ class OrdersPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Siparişlerim',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -4033,21 +4385,33 @@ class OrdersPage extends StatelessWidget {
           body: Center(
             child: Container(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 600 : isTablet ? 500 : double.infinity,
+                maxWidth: isDesktop
+                    ? 600
+                    : isTablet
+                        ? 500
+                        : double.infinity,
               ),
-              padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 24),
+              padding: EdgeInsets.all(isDesktop
+                  ? 48
+                  : isTablet
+                      ? 36
+                      : 24),
               child: Container(
-                padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 32),
+                padding: EdgeInsets.all(isDesktop
+                    ? 48
+                    : isTablet
+                        ? 36
+                        : 32),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                    color: const Color(0xFF2A3340).withOpacity(0.5),
                     width: 0.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withOpacity(0.06),
+                      color: const Color(0xFFFF6A00).withOpacity(0.06),
                       blurRadius: 32,
                       offset: const Offset(0, 12),
                       spreadRadius: 0,
@@ -4066,20 +4430,28 @@ class OrdersPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD4AF37).withOpacity(0.1),
+                        color: const Color(0xFFFF6A00).withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.shopping_bag_outlined,
-                        size: isDesktop ? 80 : isTablet ? 70 : 60,
-                        color: const Color(0xFFD4AF37),
+                        size: isDesktop
+                            ? 80
+                            : isTablet
+                                ? 70
+                                : 60,
+                        color: const Color(0xFFFF6A00),
                       ),
                     ),
                     const SizedBox(height: 32),
                     Text(
                       'Henüz siparişiniz yok',
                       style: GoogleFonts.playfairDisplay(
-                        fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                        fontSize: isDesktop
+                            ? 28
+                            : isTablet
+                                ? 26
+                                : 24,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF1A1A1A),
                         letterSpacing: 0.2,
@@ -4091,7 +4463,7 @@ class OrdersPage extends StatelessWidget {
                       'İlk siparişinizi vermek için ürünleri keşfedin',
                       style: GoogleFonts.inter(
                         fontSize: isDesktop ? 16 : 15,
-                        color: const Color(0xFF6A6A6A),
+                        color: const Color(0xFFC7CDD6),
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
@@ -4105,7 +4477,7 @@ class OrdersPage extends StatelessWidget {
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withOpacity(0.25),
+                            color: const Color(0xFFFF6A00).withOpacity(0.25),
                             blurRadius: 10,
                             offset: const Offset(0, 3),
                           ),
@@ -4153,15 +4525,20 @@ class FavoritesPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Favorilerim',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -4172,21 +4549,33 @@ class FavoritesPage extends StatelessWidget {
           body: Center(
             child: Container(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 600 : isTablet ? 500 : double.infinity,
+                maxWidth: isDesktop
+                    ? 600
+                    : isTablet
+                        ? 500
+                        : double.infinity,
               ),
-              padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 24),
+              padding: EdgeInsets.all(isDesktop
+                  ? 48
+                  : isTablet
+                      ? 36
+                      : 24),
               child: Container(
-                padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 32),
+                padding: EdgeInsets.all(isDesktop
+                    ? 48
+                    : isTablet
+                        ? 36
+                        : 32),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(32),
                   border: Border.all(
-                    color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                    color: const Color(0xFF2A3340).withOpacity(0.5),
                     width: 0.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withOpacity(0.06),
+                      color: const Color(0xFFFF6A00).withOpacity(0.06),
                       blurRadius: 32,
                       offset: const Offset(0, 12),
                       spreadRadius: 0,
@@ -4205,20 +4594,28 @@ class FavoritesPage extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD4AF37).withOpacity(0.1),
+                        color: const Color(0xFFFF6A00).withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         Icons.favorite_border,
-                        size: isDesktop ? 80 : isTablet ? 70 : 60,
-                        color: const Color(0xFFD4AF37),
+                        size: isDesktop
+                            ? 80
+                            : isTablet
+                                ? 70
+                                : 60,
+                        color: const Color(0xFFFF6A00),
                       ),
                     ),
                     const SizedBox(height: 32),
                     Text(
                       'Favori ürününüz yok',
                       style: GoogleFonts.playfairDisplay(
-                        fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                        fontSize: isDesktop
+                            ? 28
+                            : isTablet
+                                ? 26
+                                : 24,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF1A1A1A),
                         letterSpacing: 0.2,
@@ -4230,7 +4627,7 @@ class FavoritesPage extends StatelessWidget {
                       'Beğendiğiniz ürünleri favorilerinize ekleyin',
                       style: GoogleFonts.inter(
                         fontSize: isDesktop ? 16 : 15,
-                        color: const Color(0xFF6A6A6A),
+                        color: const Color(0xFFC7CDD6),
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
@@ -4254,15 +4651,20 @@ class LoginPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Giriş Yap',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -4274,21 +4676,33 @@ class LoginPage extends StatelessWidget {
             child: SingleChildScrollView(
               child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: isDesktop ? 500 : isTablet ? 450 : double.infinity,
+                  maxWidth: isDesktop
+                      ? 500
+                      : isTablet
+                          ? 450
+                          : double.infinity,
                 ),
-                padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 24),
+                padding: EdgeInsets.all(isDesktop
+                    ? 48
+                    : isTablet
+                        ? 36
+                        : 24),
                 child: Container(
-                  padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 40 : 32),
+                  padding: EdgeInsets.all(isDesktop
+                      ? 48
+                      : isTablet
+                          ? 40
+                          : 32),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
-                      color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                      color: const Color(0xFF2A3340).withOpacity(0.5),
                       width: 0.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withOpacity(0.06),
+                        color: const Color(0xFFFF6A00).withOpacity(0.06),
                         blurRadius: 32,
                         offset: const Offset(0, 12),
                         spreadRadius: 0,
@@ -4307,7 +4721,11 @@ class LoginPage extends StatelessWidget {
                       Text(
                         'Hoş Geldiniz',
                         style: GoogleFonts.playfairDisplay(
-                          fontSize: isDesktop ? 32 : isTablet ? 30 : 28,
+                          fontSize: isDesktop
+                              ? 32
+                              : isTablet
+                                  ? 30
+                                  : 28,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1A1A1A),
                           letterSpacing: 0.2,
@@ -4319,7 +4737,7 @@ class LoginPage extends StatelessWidget {
                         'Hesabınıza giriş yapın',
                         style: GoogleFonts.inter(
                           fontSize: isDesktop ? 16 : 15,
-                          color: const Color(0xFF6A6A6A),
+                          color: const Color(0xFFC7CDD6),
                           height: 1.5,
                         ),
                         textAlign: TextAlign.center,
@@ -4329,31 +4747,31 @@ class LoginPage extends StatelessWidget {
                         decoration: InputDecoration(
                           labelText: 'E-posta',
                           labelStyle: GoogleFonts.inter(
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(
-                              color: Color(0xFFD4AF37),
+                              color: Color(0xFFFF6A00),
                               width: 1.5,
                             ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFFAFAFA),
+                          fillColor: const Color(0xFF0B0D10),
                         ),
                         style: GoogleFonts.inter(
                           fontSize: 15,
@@ -4366,31 +4784,31 @@ class LoginPage extends StatelessWidget {
                         decoration: InputDecoration(
                           labelText: 'Şifre',
                           labelStyle: GoogleFonts.inter(
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(
-                              color: Color(0xFFD4AF37),
+                              color: Color(0xFFFF6A00),
                               width: 1.5,
                             ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFFAFAFA),
+                          fillColor: const Color(0xFF0B0D10),
                         ),
                         style: GoogleFonts.inter(
                           fontSize: 15,
@@ -4406,7 +4824,7 @@ class LoginPage extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.25),
+                              color: const Color(0xFFFF6A00).withOpacity(0.25),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -4468,15 +4886,20 @@ class CartPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Sepetim',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -4498,21 +4921,33 @@ class CartPage extends StatelessWidget {
                 return Center(
                   child: Container(
                     constraints: BoxConstraints(
-                      maxWidth: isDesktop ? 600 : isTablet ? 500 : double.infinity,
+                      maxWidth: isDesktop
+                          ? 600
+                          : isTablet
+                              ? 500
+                              : double.infinity,
                     ),
-                    padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 24),
+                    padding: EdgeInsets.all(isDesktop
+                        ? 48
+                        : isTablet
+                            ? 36
+                            : 24),
                     child: Container(
-                      padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 32),
+                      padding: EdgeInsets.all(isDesktop
+                          ? 48
+                          : isTablet
+                              ? 36
+                              : 32),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(32),
                         border: Border.all(
-                          color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                          color: const Color(0xFF2A3340).withOpacity(0.5),
                           width: 0.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFD4AF37).withOpacity(0.06),
+                            color: const Color(0xFFFF6A00).withOpacity(0.06),
                             blurRadius: 32,
                             offset: const Offset(0, 12),
                             spreadRadius: 0,
@@ -4531,20 +4966,28 @@ class CartPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(24),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD4AF37).withOpacity(0.1),
+                              color: const Color(0xFFFF6A00).withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.shopping_cart_outlined,
-                              size: isDesktop ? 80 : isTablet ? 70 : 60,
-                              color: const Color(0xFFD4AF37),
+                              size: isDesktop
+                                  ? 80
+                                  : isTablet
+                                      ? 70
+                                      : 60,
+                              color: const Color(0xFFFF6A00),
                             ),
                           ),
                           const SizedBox(height: 32),
                           Text(
                             'Sepetiniz boş',
                             style: GoogleFonts.playfairDisplay(
-                              fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                              fontSize: isDesktop
+                                  ? 28
+                                  : isTablet
+                                      ? 26
+                                      : 24,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF1A1A1A),
                               letterSpacing: 0.2,
@@ -4556,7 +4999,7 @@ class CartPage extends StatelessWidget {
                             'Sepetinize ürün eklemek için alışverişe başlayın',
                             style: GoogleFonts.inter(
                               fontSize: isDesktop ? 16 : 15,
-                              color: const Color(0xFF6A6A6A),
+                              color: const Color(0xFFC7CDD6),
                               height: 1.5,
                             ),
                             textAlign: TextAlign.center,
@@ -4570,7 +5013,8 @@ class CartPage extends StatelessWidget {
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFFD4AF37).withOpacity(0.25),
+                                  color:
+                                      const Color(0xFFFF6A00).withOpacity(0.25),
                                   blurRadius: 10,
                                   offset: const Offset(0, 3),
                                 ),
@@ -4607,28 +5051,36 @@ class CartPage extends StatelessWidget {
               }
 
               final total = getCartTotal();
-              
+
               return Column(
                 children: [
                   Expanded(
                     child: ListView(
-                      padding: EdgeInsets.all(isDesktop ? 32 : isTablet ? 28 : 24),
+                      padding: EdgeInsets.all(isDesktop
+                          ? 32
+                          : isTablet
+                              ? 28
+                              : 24),
                       children: [
                         ...items.map((item) => _CartItemCard(
-                          item: item,
-                          isDesktop: isDesktop,
-                          isTablet: isTablet,
-                        )),
+                              item: item,
+                              isDesktop: isDesktop,
+                              isTablet: isTablet,
+                            )),
                       ],
                     ),
                   ),
                   Container(
-                    padding: EdgeInsets.all(isDesktop ? 32 : isTablet ? 28 : 24),
+                    padding: EdgeInsets.all(isDesktop
+                        ? 32
+                        : isTablet
+                            ? 28
+                            : 24),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       border: Border(
                         top: BorderSide(
-                          color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                          color: const Color(0xFF2A3340).withOpacity(0.5),
                           width: 0.5,
                         ),
                       ),
@@ -4648,7 +5100,11 @@ class CartPage extends StatelessWidget {
                             Text(
                               'Toplam',
                               style: GoogleFonts.playfairDisplay(
-                                fontSize: isDesktop ? 24 : isTablet ? 22 : 20,
+                                fontSize: isDesktop
+                                    ? 24
+                                    : isTablet
+                                        ? 22
+                                        : 20,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF1A1A1A),
                               ),
@@ -4656,9 +5112,13 @@ class CartPage extends StatelessWidget {
                             Text(
                               '${total.toStringAsFixed(2)} ₺',
                               style: GoogleFonts.inter(
-                                fontSize: isDesktop ? 24 : isTablet ? 22 : 20,
+                                fontSize: isDesktop
+                                    ? 24
+                                    : isTablet
+                                        ? 22
+                                        : 20,
                                 fontWeight: FontWeight.w700,
-                                color: const Color(0xFFD4AF37),
+                                color: const Color(0xFFFF6A00),
                               ),
                             ),
                           ],
@@ -4673,7 +5133,8 @@ class CartPage extends StatelessWidget {
                             ),
                             boxShadow: [
                               BoxShadow(
-                                color: const Color(0xFFD4AF37).withOpacity(0.25),
+                                color:
+                                    const Color(0xFFFF6A00).withOpacity(0.25),
                                 blurRadius: 10,
                                 offset: const Offset(0, 3),
                               ),
@@ -4741,13 +5202,22 @@ class _CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: isDesktop ? 16 : isTablet ? 14 : 12),
-      padding: EdgeInsets.all(isDesktop ? 24 : isTablet ? 20 : 18),
+      margin: EdgeInsets.only(
+          bottom: isDesktop
+              ? 16
+              : isTablet
+                  ? 14
+                  : 12),
+      padding: EdgeInsets.all(isDesktop
+          ? 24
+          : isTablet
+              ? 20
+              : 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: const Color(0xFFE8E8E8).withOpacity(0.5),
+          color: const Color(0xFF2A3340).withOpacity(0.5),
           width: 0.5,
         ),
         boxShadow: [
@@ -4761,21 +5231,37 @@ class _CartItemCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: isDesktop ? 100 : isTablet ? 90 : 80,
-            height: isDesktop ? 100 : isTablet ? 90 : 80,
+            width: isDesktop
+                ? 100
+                : isTablet
+                    ? 90
+                    : 80,
+            height: isDesktop
+                ? 100
+                : isTablet
+                    ? 90
+                    : 80,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               color: Colors.grey.shade100,
             ),
             child: OptimizedImage(
               imageUrl: item.product.imageUrl,
-              width: isDesktop ? 100 : isTablet ? 90 : 80,
-              height: isDesktop ? 100 : isTablet ? 90 : 80,
-                      fit: BoxFit.cover,
+              width: isDesktop
+                  ? 100
+                  : isTablet
+                      ? 90
+                      : 80,
+              height: isDesktop
+                  ? 100
+                  : isTablet
+                      ? 90
+                      : 80,
+              fit: BoxFit.cover,
               borderRadius: BorderRadius.circular(16),
               placeholder: const Icon(Icons.image_outlined, size: 40),
               errorWidget: const Icon(Icons.image_outlined, size: 40),
-                    ),
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -4785,7 +5271,11 @@ class _CartItemCard extends StatelessWidget {
                 Text(
                   item.product.name,
                   style: GoogleFonts.inter(
-                    fontSize: isDesktop ? 18 : isTablet ? 17 : 16,
+                    fontSize: isDesktop
+                        ? 18
+                        : isTablet
+                            ? 17
+                            : 16,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF1A1A1A),
                   ),
@@ -4798,7 +5288,7 @@ class _CartItemCard extends StatelessWidget {
                   style: GoogleFonts.inter(
                     fontSize: isDesktop ? 16 : 15,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFFD4AF37),
+                    color: const Color(0xFFFF6A00),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -4808,7 +5298,7 @@ class _CartItemCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                          color: const Color(0xFF2A3340).withOpacity(0.5),
                           width: 0.5,
                         ),
                       ),
@@ -4819,7 +5309,8 @@ class _CartItemCard extends StatelessWidget {
                             icon: const Icon(Icons.remove, size: 18),
                             onPressed: () {
                               if (item.quantity > 1) {
-                                updateCartQuantity(item.product, item.quantity - 1);
+                                updateCartQuantity(
+                                    item.product, item.quantity - 1);
                               } else {
                                 removeFromCart(item.product);
                               }
@@ -4843,7 +5334,8 @@ class _CartItemCard extends StatelessWidget {
                           IconButton(
                             icon: const Icon(Icons.add, size: 18),
                             onPressed: () {
-                              updateCartQuantity(item.product, item.quantity + 1);
+                              updateCartQuantity(
+                                  item.product, item.quantity + 1);
                             },
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(
@@ -4881,15 +5373,20 @@ class ConsultationPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Özel Danışmanlık',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -4901,21 +5398,33 @@ class ConsultationPage extends StatelessWidget {
             child: SingleChildScrollView(
               child: Container(
                 constraints: BoxConstraints(
-                  maxWidth: isDesktop ? 700 : isTablet ? 600 : double.infinity,
+                  maxWidth: isDesktop
+                      ? 700
+                      : isTablet
+                          ? 600
+                          : double.infinity,
                 ),
-                padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 24),
+                padding: EdgeInsets.all(isDesktop
+                    ? 48
+                    : isTablet
+                        ? 36
+                        : 24),
                 child: Container(
-                  padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 40 : 32),
+                  padding: EdgeInsets.all(isDesktop
+                      ? 48
+                      : isTablet
+                          ? 40
+                          : 32),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(32),
                     border: Border.all(
-                      color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                      color: const Color(0xFF2A3340).withOpacity(0.5),
                       width: 0.5,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFFD4AF37).withOpacity(0.06),
+                        color: const Color(0xFFFF6A00).withOpacity(0.06),
                         blurRadius: 32,
                         offset: const Offset(0, 12),
                         spreadRadius: 0,
@@ -4933,7 +5442,11 @@ class ConsultationPage extends StatelessWidget {
                       Text(
                         'Profesyonel Danışmanlık Hizmeti',
                         style: GoogleFonts.playfairDisplay(
-                          fontSize: isDesktop ? 32 : isTablet ? 30 : 28,
+                          fontSize: isDesktop
+                              ? 32
+                              : isTablet
+                                  ? 30
+                                  : 28,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1A1A1A),
                           letterSpacing: 0.2,
@@ -4944,7 +5457,7 @@ class ConsultationPage extends StatelessWidget {
                         'Otomobil tuning projeniz için uzman ekibimizle iletişime geçin. Size özel çözümler sunuyoruz.',
                         style: GoogleFonts.inter(
                           fontSize: isDesktop ? 16 : 15,
-                          color: const Color(0xFF6A6A6A),
+                          color: const Color(0xFFC7CDD6),
                           height: 1.6,
                         ),
                       ),
@@ -4953,31 +5466,31 @@ class ConsultationPage extends StatelessWidget {
                         decoration: InputDecoration(
                           labelText: 'Adınız',
                           labelStyle: GoogleFonts.inter(
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(
-                              color: Color(0xFFD4AF37),
+                              color: Color(0xFFFF6A00),
                               width: 1.5,
                             ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFFAFAFA),
+                          fillColor: const Color(0xFF0B0D10),
                         ),
                         style: GoogleFonts.inter(
                           fontSize: 15,
@@ -4989,31 +5502,31 @@ class ConsultationPage extends StatelessWidget {
                         decoration: InputDecoration(
                           labelText: 'E-posta',
                           labelStyle: GoogleFonts.inter(
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(
-                              color: Color(0xFFD4AF37),
+                              color: Color(0xFFFF6A00),
                               width: 1.5,
                             ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFFAFAFA),
+                          fillColor: const Color(0xFF0B0D10),
                         ),
                         style: GoogleFonts.inter(
                           fontSize: 15,
@@ -5026,31 +5539,31 @@ class ConsultationPage extends StatelessWidget {
                         decoration: InputDecoration(
                           labelText: 'Mesajınız',
                           labelStyle: GoogleFonts.inter(
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                           ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: BorderSide(
-                              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                              color: const Color(0xFF2A3340).withOpacity(0.5),
                               width: 0.5,
                             ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
                             borderSide: const BorderSide(
-                              color: Color(0xFFD4AF37),
+                              color: Color(0xFFFF6A00),
                               width: 1.5,
                             ),
                           ),
                           filled: true,
-                          fillColor: const Color(0xFFFAFAFA),
+                          fillColor: const Color(0xFF0B0D10),
                         ),
                         style: GoogleFonts.inter(
                           fontSize: 15,
@@ -5067,7 +5580,7 @@ class ConsultationPage extends StatelessWidget {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFFD4AF37).withOpacity(0.25),
+                              color: const Color(0xFFFF6A00).withOpacity(0.25),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -5129,15 +5642,20 @@ class CollectionsPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Tüm Koleksiyonlar',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -5146,11 +5664,24 @@ class CollectionsPage extends StatelessWidget {
             elevation: 0,
           ),
           body: ListView(
-            padding: EdgeInsets.all(isDesktop ? 32 : isTablet ? 28 : 24),
+            padding: EdgeInsets.all(isDesktop
+                ? 32
+                : isTablet
+                    ? 28
+                    : 24),
             children: featuredCollections.map((collection) {
               return Container(
-                margin: EdgeInsets.only(bottom: isDesktop ? 20 : isTablet ? 18 : 16),
-                padding: EdgeInsets.all(isDesktop ? 32 : isTablet ? 28 : 24),
+                margin: EdgeInsets.only(
+                    bottom: isDesktop
+                        ? 20
+                        : isTablet
+                            ? 18
+                            : 16),
+                padding: EdgeInsets.all(isDesktop
+                    ? 32
+                    : isTablet
+                        ? 28
+                        : 24),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(28),
@@ -5183,13 +5714,18 @@ class CollectionsPage extends StatelessWidget {
                         ),
                       ),
                       backgroundColor: collection.accent.withOpacity(0.12),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                     ),
                     const SizedBox(height: 16),
                     Text(
                       collection.title,
                       style: GoogleFonts.playfairDisplay(
-                        fontSize: isDesktop ? 26 : isTablet ? 24 : 22,
+                        fontSize: isDesktop
+                            ? 26
+                            : isTablet
+                                ? 24
+                                : 22,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF1A1A1A),
                         letterSpacing: 0.2,
@@ -5200,7 +5736,7 @@ class CollectionsPage extends StatelessWidget {
                       collection.description,
                       style: GoogleFonts.inter(
                         fontSize: isDesktop ? 15 : 14,
-                        color: const Color(0xFF6A6A6A),
+                        color: const Color(0xFFC7CDD6),
                         height: 1.6,
                       ),
                     ),
@@ -5232,16 +5768,25 @@ class CategoriesPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        final crossAxisCount = isDesktop ? 4 : isTablet ? 3 : 2;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+        final crossAxisCount = isDesktop
+            ? 4
+            : isTablet
+                ? 3
+                : 2;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Kategoriler',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -5250,12 +5795,28 @@ class CategoriesPage extends StatelessWidget {
             elevation: 0,
           ),
           body: GridView.builder(
-            padding: EdgeInsets.all(isDesktop ? 32 : isTablet ? 28 : 24),
+            padding: EdgeInsets.all(isDesktop
+                ? 32
+                : isTablet
+                    ? 28
+                    : 24),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: crossAxisCount,
-              crossAxisSpacing: isDesktop ? 20 : isTablet ? 18 : 16,
-              mainAxisSpacing: isDesktop ? 20 : isTablet ? 18 : 16,
-              childAspectRatio: isDesktop ? 1.1 : isTablet ? 1.2 : 1.2,
+              crossAxisSpacing: isDesktop
+                  ? 20
+                  : isTablet
+                      ? 18
+                      : 16,
+              mainAxisSpacing: isDesktop
+                  ? 20
+                  : isTablet
+                      ? 18
+                      : 16,
+              childAspectRatio: isDesktop
+                  ? 1.1
+                  : isTablet
+                      ? 1.2
+                      : 1.2,
             ),
             itemCount: categories.length - 1,
             itemBuilder: (context, index) {
@@ -5265,12 +5826,12 @@ class CategoriesPage extends StatelessWidget {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                    color: const Color(0xFF2A3340).withOpacity(0.5),
                     width: 0.5,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFD4AF37).withOpacity(0.04),
+                      color: const Color(0xFFFF6A00).withOpacity(0.04),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
@@ -5293,20 +5854,28 @@ class CategoriesPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFD4AF37).withOpacity(0.1),
+                              color: const Color(0xFFFF6A00).withOpacity(0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               Icons.category_outlined,
-                              size: isDesktop ? 48 : isTablet ? 44 : 40,
-                              color: const Color(0xFFD4AF37),
+                              size: isDesktop
+                                  ? 48
+                                  : isTablet
+                                      ? 44
+                                      : 40,
+                              color: const Color(0xFFFF6A00),
                             ),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             category,
                             style: GoogleFonts.inter(
-                              fontSize: isDesktop ? 16 : isTablet ? 15 : 14,
+                              fontSize: isDesktop
+                                  ? 16
+                                  : isTablet
+                                      ? 15
+                                      : 14,
                               fontWeight: FontWeight.w600,
                               color: const Color(0xFF1A1A1A),
                             ),
@@ -5334,15 +5903,20 @@ class AccountPage extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        final isTablet = constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
-        
+        final isTablet =
+            constraints.maxWidth >= 768 && constraints.maxWidth < 1200;
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
             title: Text(
               'Hesabım',
               style: GoogleFonts.playfairDisplay(
-                fontSize: isDesktop ? 28 : isTablet ? 26 : 24,
+                fontSize: isDesktop
+                    ? 28
+                    : isTablet
+                        ? 26
+                        : 24,
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.3,
               ),
@@ -5353,23 +5927,35 @@ class AccountPage extends StatelessWidget {
           body: Center(
             child: Container(
               constraints: BoxConstraints(
-                maxWidth: isDesktop ? 600 : isTablet ? 550 : double.infinity,
+                maxWidth: isDesktop
+                    ? 600
+                    : isTablet
+                        ? 550
+                        : double.infinity,
               ),
-              padding: EdgeInsets.all(isDesktop ? 48 : isTablet ? 36 : 24),
+              padding: EdgeInsets.all(isDesktop
+                  ? 48
+                  : isTablet
+                      ? 36
+                      : 24),
               child: ListView(
                 children: [
                   Container(
-                    padding: EdgeInsets.all(isDesktop ? 40 : isTablet ? 36 : 32),
+                    padding: EdgeInsets.all(isDesktop
+                        ? 40
+                        : isTablet
+                            ? 36
+                            : 32),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(32),
                       border: Border.all(
-                        color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                        color: const Color(0xFF2A3340).withOpacity(0.5),
                         width: 0.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFD4AF37).withOpacity(0.06),
+                          color: const Color(0xFFFF6A00).withOpacity(0.06),
                           blurRadius: 32,
                           offset: const Offset(0, 12),
                           spreadRadius: 0,
@@ -5384,19 +5970,32 @@ class AccountPage extends StatelessWidget {
                     child: Column(
                       children: [
                         CircleAvatar(
-                          radius: isDesktop ? 50 : isTablet ? 45 : 40,
-                          backgroundColor: const Color(0xFFD4AF37).withOpacity(0.1),
+                          radius: isDesktop
+                              ? 50
+                              : isTablet
+                                  ? 45
+                                  : 40,
+                          backgroundColor:
+                              const Color(0xFFFF6A00).withOpacity(0.1),
                           child: Icon(
                             Icons.person,
-                            size: isDesktop ? 50 : isTablet ? 45 : 40,
-                            color: const Color(0xFFD4AF37),
+                            size: isDesktop
+                                ? 50
+                                : isTablet
+                                    ? 45
+                                    : 40,
+                            color: const Color(0xFFFF6A00),
                           ),
                         ),
                         const SizedBox(height: 20),
                         Text(
                           'Misafir Kullanıcı',
                           style: GoogleFonts.playfairDisplay(
-                            fontSize: isDesktop ? 24 : isTablet ? 22 : 20,
+                            fontSize: isDesktop
+                                ? 24
+                                : isTablet
+                                    ? 22
+                                    : 20,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF1A1A1A),
                           ),
@@ -5406,7 +6005,7 @@ class AccountPage extends StatelessWidget {
                           'Giriş yaparak daha fazla özellik kullanın',
                           style: GoogleFonts.inter(
                             fontSize: isDesktop ? 15 : 14,
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -5505,14 +6104,14 @@ class _AccountMenuItem extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 1200;
-        
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: const Color(0xFFE8E8E8).withOpacity(0.5),
+              color: const Color(0xFF2A3340).withOpacity(0.5),
               width: 0.5,
             ),
             boxShadow: [
@@ -5535,12 +6134,12 @@ class _AccountMenuItem extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFD4AF37).withOpacity(0.1),
+                        color: const Color(0xFFFF6A00).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
                         icon,
-                        color: const Color(0xFFD4AF37),
+                        color: const Color(0xFFFF6A00),
                         size: isDesktop ? 24 : 22,
                       ),
                     ),
@@ -5557,7 +6156,7 @@ class _AccountMenuItem extends StatelessWidget {
                     ),
                     const Icon(
                       Icons.chevron_right,
-                      color: Color(0xFF6A6A6A),
+                      color: Color(0xFFC7CDD6),
                       size: 20,
                     ),
                   ],
@@ -5580,15 +6179,16 @@ class CategoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final crossAxisCount = ResponsiveHelper.responsiveProductGridColumns(context);
-        
+        final crossAxisCount =
+            ResponsiveHelper.responsiveProductGridColumns(context);
+
         final titleFontSize = ResponsiveHelper.responsiveFontSize(
           context,
           mobile: 24.0,
           tablet: 26.0,
           desktop: 28.0,
         );
-        
+
         return Scaffold(
           backgroundColor: Theme.of(context).colorScheme.surface,
           appBar: AppBar(
@@ -5598,8 +6198,8 @@ class CategoryPage extends StatelessWidget {
                 // Ana sayfaya kadar geri git, giriş sayfasına kadar gitme
                 if (Navigator.canPop(context)) {
                   Navigator.popUntil(context, (route) {
-                    return route.settings.name == AppRoutes.main || 
-                           route.isFirst;
+                    return route.settings.name == AppRoutes.main ||
+                        route.isFirst;
                   });
                 } else {
                   AppRoutes.navigateToMain(context);
@@ -5632,20 +6232,21 @@ class CategoryPage extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(24),
                       border: Border.all(
-                        color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                        color: const Color(0xFF2A3340).withOpacity(0.5),
                         width: 0.5,
                       ),
                     ),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.error_outline, size: 48, color: Color(0xFF6A6A6A)),
+                        const Icon(Icons.error_outline,
+                            size: 48, color: Color(0xFFC7CDD6)),
                         const SizedBox(height: 16),
                         Text(
                           'Hata: ${snapshot.error}',
                           style: GoogleFonts.inter(
                             fontSize: 15,
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                           ),
                           textAlign: TextAlign.center,
                         ),
@@ -5686,12 +6287,12 @@ class CategoryPage extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(32),
                       border: Border.all(
-                        color: const Color(0xFFE8E8E8).withOpacity(0.5),
+                        color: const Color(0xFF2A3340).withOpacity(0.5),
                         width: 0.5,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFD4AF37).withOpacity(0.06),
+                          color: const Color(0xFFFF6A00).withOpacity(0.06),
                           blurRadius: 32,
                           offset: const Offset(0, 12),
                           spreadRadius: 0,
@@ -5709,7 +6310,7 @@ class CategoryPage extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFD4AF37).withOpacity(0.1),
+                            color: const Color(0xFFFF6A00).withOpacity(0.1),
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
@@ -5720,10 +6321,12 @@ class CategoryPage extends StatelessWidget {
                               tablet: 70.0,
                               desktop: 80.0,
                             ),
-                            color: const Color(0xFFD4AF37),
+                            color: const Color(0xFFFF6A00),
                           ),
                         ),
-                        SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 24.0, desktop: 32.0)),
+                        SizedBox(
+                            height: ResponsiveHelper.responsiveSpacing(context,
+                                mobile: 24.0, desktop: 32.0)),
                         Text(
                           'Bu kategoride ürün bulunamadı',
                           style: GoogleFonts.playfairDisplay(
@@ -5734,7 +6337,9 @@ class CategoryPage extends StatelessWidget {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 12.0)),
+                        SizedBox(
+                            height: ResponsiveHelper.responsiveSpacing(context,
+                                mobile: 8.0, desktop: 12.0)),
                         Text(
                           'Farklı kategorileri keşfetmek için ana sayfaya dönebilirsiniz',
                           style: GoogleFonts.inter(
@@ -5743,7 +6348,7 @@ class CategoryPage extends StatelessWidget {
                               mobile: 15.0,
                               desktop: 16.0,
                             ),
-                            color: const Color(0xFF6A6A6A),
+                            color: const Color(0xFFC7CDD6),
                             height: 1.5,
                           ),
                           textAlign: TextAlign.center,
@@ -5762,9 +6367,12 @@ class CategoryPage extends StatelessWidget {
                 ),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: ResponsiveHelper.responsiveGridSpacing(context),
-                  mainAxisSpacing: ResponsiveHelper.responsiveGridSpacing(context),
-                  childAspectRatio: ResponsiveHelper.responsiveProductAspectRatio(context),
+                  crossAxisSpacing:
+                      ResponsiveHelper.responsiveGridSpacing(context),
+                  mainAxisSpacing:
+                      ResponsiveHelper.responsiveGridSpacing(context),
+                  childAspectRatio:
+                      ResponsiveHelper.responsiveProductAspectRatio(context),
                 ),
                 itemCount: filteredProducts.length,
                 itemBuilder: (context, index) {

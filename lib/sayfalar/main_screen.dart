@@ -22,6 +22,7 @@ import '../services/order_service.dart';
 import '../services/admin_service.dart';
 import '../model/admin_product.dart';
 import '../widgets/ai_chat_widget.dart';
+import '../theme/app_design_system.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -30,7 +31,8 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
+class _MainScreenState extends State<MainScreen>
+    with AutomaticKeepAliveClientMixin, WidgetsBindingObserver {
   int _selectedIndex = 0;
   String? _selectedCategoryForNavigation; // Kategori navigasyonu için
   String? _headerSearchQuery; // Header'daki arama sorgusu
@@ -38,22 +40,22 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   final List<Product> favoriteProducts = [];
   final List<Product> cartProducts = [];
   final List<Order> orders = [];
-  
+
   final _appLinks = AppLinks();
   StreamSubscription<Uri>? _linkSubscription;
-  
+
   // Sepete ekleme için loading state
   final Set<String> _addingToCartProducts = {};
-  
+
   // Header arama controller
   final TextEditingController _headerSearchController = TextEditingController();
-  
+
   // Network durumu
   bool _isOnline = true;
-  
+
   // Profil fotoğrafı
   String? _profileImageUrl;
-  
+
   // Admin kategorileri için service
   final AdminService _adminService = AdminService();
 
@@ -66,7 +68,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
     WidgetsBinding.instance.addObserver(this);
     _initializeNetworkListener();
     _listenToDeepLinks();
-    
+
     // Data loading'i lazy yap - UI render'dan sonra
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -80,7 +82,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       }
     });
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -91,7 +93,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       }
     });
   }
-  
+
   /// Profil fotoğrafını hemen güncelle (callback ile)
   void updateProfileImage(String? imageUrl) {
     if (mounted) {
@@ -100,7 +102,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       });
     }
   }
-  
+
   void _initializeNetworkListener() {
     // Network durumunu kontrol et ve dinle
     NetworkManager.instance.addCallback((isOnline, connection) {
@@ -126,27 +128,28 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   /// Deep link'i işle
   void _handleDeepLink(Uri uri) {
     String? productId;
-    
+
     // HTTPS formatında deep link (https://tuning-app-789e.web.app/product/{productId})
-    if ((uri.scheme == 'https' || uri.scheme == 'http') && 
-        (uri.host == 'tuning-app-789e.web.app' || uri.host.contains('tuning-app'))) {
+    if ((uri.scheme == 'https' || uri.scheme == 'http') &&
+        (uri.host == 'tuning-app-789e.web.app' ||
+            uri.host.contains('tuning-app'))) {
       if (uri.pathSegments.isNotEmpty && uri.pathSegments.first == 'product') {
         if (uri.pathSegments.length > 1) {
           productId = uri.pathSegments[1];
         }
       }
     }
-    // Custom scheme formatında deep link (tuningapp://product/{productId})
-    else if (uri.scheme == 'tuningapp' && uri.host == 'product') {
+    // Custom scheme formatında deep link (tunex://product/{productId})
+    else if (uri.scheme == 'tunex' && uri.host == 'product') {
       // Önce pathSegments'i kontrol et (en güvenilir)
       if (uri.pathSegments.isNotEmpty) {
         productId = uri.pathSegments.first;
       }
-      // Path'ten al (tuningapp://product/123 formatı için)
+      // Path'ten al (tunex://product/123 formatı için)
       else if (uri.path.isNotEmpty && uri.path != '/') {
         productId = uri.path.replaceFirst('/', '').replaceAll('/', '').trim();
       }
-      // Query parametrelerinden al (tuningapp://product?id=123 formatı için)
+      // Query parametrelerinden al (tunex://product?id=123 formatı için)
       else if (uri.queryParameters.containsKey('id')) {
         productId = uri.queryParameters['id']!;
       }
@@ -155,9 +158,13 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         productId = uri.authority.split(':').last;
       }
     }
-    
+
     // ProductId bulunduysa yönlendir
-    if (productId != null && productId.isNotEmpty && productId != 'product' && productId != '/' && mounted) {
+    if (productId != null &&
+        productId.isNotEmpty &&
+        productId != 'product' &&
+        productId != '/' &&
+        mounted) {
       final finalProductId = productId;
       Future.delayed(const Duration(milliseconds: 300), () {
         if (mounted && finalProductId.isNotEmpty) {
@@ -213,17 +220,19 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       debugPrint('Initialize app error: $e');
     }
   }
-  
+
   /// Profil fotoğrafını yükle
   Future<void> _loadProfileImage() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return;
-      
+
       final dataService = FirebaseDataService();
       final userProfile = await dataService.getUserProfile();
-      
-      if (mounted && userProfile != null && userProfile['profileImageUrl'] != null) {
+
+      if (mounted &&
+          userProfile != null &&
+          userProfile['profileImageUrl'] != null) {
         final imageUrl = userProfile['profileImageUrl'].toString().trim();
         if (imageUrl.isNotEmpty && imageUrl != _profileImageUrl) {
           // Sadece farklıysa güncelle (gereksiz rebuild'leri önle)
@@ -231,7 +240,8 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             _profileImageUrl = imageUrl;
           });
         }
-      } else if (mounted && (userProfile == null || userProfile['profileImageUrl'] == null)) {
+      } else if (mounted &&
+          (userProfile == null || userProfile['profileImageUrl'] == null)) {
         // Profil fotoğrafı yoksa temizle
         if (_profileImageUrl != null) {
           setState(() {
@@ -247,14 +257,14 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   /// Firebase'den siparişleri yükle
   Future<void> _loadOrdersFromFirebase() async {
     if (!mounted) return;
-    
+
     try {
       final orderService = OrderService();
       final userOrders = await orderService.getUserOrders();
-      
+
       orders.clear();
       orders.addAll(userOrders);
-      
+
       if (mounted) {
         setState(() {});
       }
@@ -266,27 +276,28 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   /// Firebase'den favorileri yükle
   Future<void> _loadFavoritesFromFirebase() async {
     if (!mounted) return;
-    
+
     try {
       final dataService = FirebaseDataService();
       final productService = ProductService();
-      
+
       // Firebase'den favori ürün ID'lerini al
       final favoriteIds = await dataService.getFavoriteProductIds();
-      
+
       if (favoriteIds.isEmpty) {
         return;
       }
-      
+
       // Her ürün ID'si için ürün bilgisini al ve ekle - PARALEL yükleme
       favoriteProducts.clear();
-      final productFutures = favoriteIds.map((productId) => 
-        productService.getProductById(productId).catchError((e) => null)
-      ).toList();
-      
+      final productFutures = favoriteIds
+          .map((productId) =>
+              productService.getProductById(productId).catchError((e) => null))
+          .toList();
+
       final products = await Future.wait(productFutures);
       favoriteProducts.addAll(products.whereType<Product>());
-      
+
       if (mounted) {
         setState(() {});
       }
@@ -298,23 +309,24 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   /// Firebase'den sepeti yükle
   Future<void> _loadCartFromFirebase() async {
     if (!mounted) return;
-    
+
     try {
       final dataService = FirebaseDataService();
       final productService = ProductService();
-      
+
       // Firebase'den sepet öğelerini al
       final cartItems = await dataService.getCartItems();
-      
+
       if (cartItems.isEmpty) {
         return;
       }
-      
+
       // Sepet öğelerini ürünlere dönüştür - PARALEL yükleme
       cartProducts.clear();
       final cartProductFutures = cartItems.map((item) async {
         try {
-          final productId = item['productId'] as String? ?? item['id'] as String;
+          final productId =
+              item['productId'] as String? ?? item['id'] as String;
           final quantity = item['quantity'] as int? ?? 1;
           final product = await productService.getProductById(productId);
           if (product != null) {
@@ -325,10 +337,10 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         }
         return null;
       }).toList();
-      
+
       final cartProductsList = await Future.wait(cartProductFutures);
       cartProducts.addAll(cartProductsList.whereType<Product>());
-      
+
       if (mounted) {
         setState(() {});
       }
@@ -340,7 +352,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   void _fullCleanup() {
     MemoryManager.optimizeMemory();
   }
-  
+
   // _performMemoryCleanup kaldırıldı - performans için timer kullanılmıyor
   // void _performMemoryCleanup() {
   //   if (!mounted) return;
@@ -364,10 +376,12 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
     return [
       // 0 - Ana Sayfa
       AnaSayfa(
-        key: ValueKey('ana_sayfa_${_headerSearchQuery ?? ''}'), // Arama sorgusu değiştiğinde rebuild et
+        key: ValueKey(
+            'ana_sayfa_${_headerSearchQuery ?? ''}'), // Arama sorgusu değiştiğinde rebuild et
         favoriteProducts: favoriteProducts,
         cartProducts: cartProducts,
-        onFavoriteToggle: (product) => _toggleFavorite(product, showMessage: true),
+        onFavoriteToggle: (product) =>
+            _toggleFavorite(product, showMessage: true),
         onAddToCart: _addToCart,
         onRemoveFromCart: _removeFromCart,
         isAddingToCart: isAddingToCart,
@@ -401,30 +415,33 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         key: ValueKey('categories_${_selectedCategoryForNavigation ?? 'all'}'),
         favoriteProducts: favoriteProducts,
         cartProducts: cartProducts,
-        onFavoriteToggle: (product) => _toggleFavorite(product, showMessage: true),
+        onFavoriteToggle: (product) =>
+            _toggleFavorite(product, showMessage: true),
         onAddToCart: _addToCart,
         onRemoveFromCart: _removeFromCart,
         initialCategory: _selectedCategoryForNavigation,
       ),
     ];
   }
-  
 
-  Future<void> _toggleFavorite(Product product, {bool showMessage = true}) async {
+  Future<void> _toggleFavorite(Product product,
+      {bool showMessage = true}) async {
     if (!mounted) return;
-    
+
     try {
       final dataService = FirebaseDataService();
       final user = FirebaseAuth.instance.currentUser;
-      
+
       if (user == null) {
         if (showMessage && mounted) {
-          ErrorHandler.showError(context, 'Favori eklemek için giriş yapmalısınız');
+          ErrorHandler.showError(
+              context, 'Favori eklemek için giriş yapmalısınız');
         }
         return;
       }
-      
-      final existingIndex = favoriteProducts.indexWhere((p) => p.id == product.id);
+
+      final existingIndex =
+          favoriteProducts.indexWhere((p) => p.id == product.id);
       if (existingIndex != -1) {
         // Favorilerden çıkar
         favoriteProducts.removeAt(existingIndex);
@@ -434,11 +451,12 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         } catch (e) {
           // Hata durumunda sessizce devam et
         }
-        
+
         if (mounted) {
           setState(() {});
           if (showMessage) {
-            ErrorHandler.showSilentInfo(context, '${product.name} favorilerden çıkarıldı');
+            ErrorHandler.showSilentInfo(
+                context, '${product.name} favorilerden çıkarıldı');
           }
         }
       } else {
@@ -450,17 +468,19 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         } catch (e) {
           // Hata durumunda sessizce devam et
         }
-        
+
         if (mounted) {
           setState(() {});
           if (showMessage) {
-            ErrorHandler.showSilentSuccess(context, '${product.name} favorilere eklendi');
+            ErrorHandler.showSilentSuccess(
+                context, '${product.name} favorilere eklendi');
           }
         }
       }
     } catch (e) {
       if (mounted) {
-        ErrorHandler.showError(context, 'Favori işlemi sırasında hata oluştu: $e');
+        ErrorHandler.showError(
+            context, 'Favori işlemi sırasında hata oluştu: $e');
       }
     }
   }
@@ -470,37 +490,39 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   /// - Optimistic updates (hemen UI güncellemesi)
   /// - Gelişmiş hata yönetimi
   /// - Retry mekanizması
-  Future<void> _addToCart(Product product, {bool showMessage = true, int retryCount = 0}) async {
+  Future<void> _addToCart(Product product,
+      {bool showMessage = true, int retryCount = 0}) async {
     if (!mounted) return;
-    
+
     // Zaten ekleniyorsa tekrar ekleme
     if (_addingToCartProducts.contains(product.id)) {
       return;
     }
-    
+
     try {
       final dataService = FirebaseDataService();
       final user = FirebaseAuth.instance.currentUser;
-      
+
       // Kullanıcı kontrolü
       if (user == null) {
         if (showMessage && mounted) {
           ErrorHandler.showError(
-            context, 
+            context,
             'Sepete eklemek için giriş yapmalısınız',
           );
         }
         return;
       }
-      
+
       // Loading state başlat
       setState(() {
         _addingToCartProducts.add(product.id);
       });
-      
+
       final existingIndex = cartProducts.indexWhere((p) => p.id == product.id);
-      final requestedQuantity = existingIndex != -1 ? cartProducts[existingIndex].quantity + 1 : 1;
-      
+      final requestedQuantity =
+          existingIndex != -1 ? cartProducts[existingIndex].quantity + 1 : 1;
+
       // Stok kontrolü
       if (requestedQuantity > product.stock) {
         setState(() {
@@ -508,17 +530,17 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         });
         if (mounted && showMessage) {
           ErrorHandler.showError(
-            context, 
+            context,
             'Yeterli stok yok. Mevcut stok: ${product.stock}',
           );
         }
         return;
       }
-      
+
       // Optimistic update - Hemen UI'ı güncelle
       Product? previousProduct;
       int? previousQuantity;
-      
+
       if (existingIndex != -1) {
         previousProduct = cartProducts[existingIndex].copyWith();
         previousQuantity = cartProducts[existingIndex].quantity;
@@ -527,35 +549,36 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         final newProduct = product.copyWith(quantity: 1);
         cartProducts.add(newProduct);
       }
-      
+
       // UI'ı hemen güncelle
       if (mounted) {
         setState(() {});
       }
-      
+
       // Firebase işlemleri (arka planda)
       try {
         if (existingIndex != -1) {
-          await dataService.updateCartQuantity(product.id, cartProducts[existingIndex].quantity);
+          await dataService.updateCartQuantity(
+              product.id, cartProducts[existingIndex].quantity);
         } else {
           await dataService.addToCart(product.id, 1);
         }
-        
+
         // Başarılı - Loading state'i kaldır
         if (mounted) {
           setState(() {
             _addingToCartProducts.remove(product.id);
           });
-          
+
           if (showMessage) {
             if (existingIndex != -1) {
               ErrorHandler.showSilentSuccess(
-                context, 
+                context,
                 '${product.name} miktarı artırıldı',
               );
             } else {
               ErrorHandler.showCartSuccess(
-                context, 
+                context,
                 '${product.name} sepete eklendi',
                 onViewCart: () {
                   _selectedIndex = 2;
@@ -568,28 +591,31 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       } catch (e) {
         // Hata durumunda optimistic update'i geri al
         if (mounted) {
-          if (existingIndex != -1 && previousProduct != null && previousQuantity != null) {
+          if (existingIndex != -1 &&
+              previousProduct != null &&
+              previousQuantity != null) {
             cartProducts[existingIndex] = previousProduct;
             cartProducts[existingIndex].quantity = previousQuantity;
           } else {
             cartProducts.removeWhere((p) => p.id == product.id);
           }
-          
+
           setState(() {
             _addingToCartProducts.remove(product.id);
           });
-          
+
           // Retry mekanizması (max 2 deneme)
           if (retryCount < 2) {
             await Future.delayed(const Duration(milliseconds: 500));
             if (mounted) {
-              await _addToCart(product, showMessage: showMessage, retryCount: retryCount + 1);
+              await _addToCart(product,
+                  showMessage: showMessage, retryCount: retryCount + 1);
             }
           } else {
             // Son deneme de başarısız oldu
             if (showMessage) {
               ErrorHandler.showError(
-                context, 
+                context,
                 'Sepete ekleme başarısız oldu. Lütfen tekrar deneyin.',
               );
             }
@@ -605,10 +631,10 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         setState(() {
           _addingToCartProducts.remove(product.id);
         });
-        
+
         if (showMessage) {
           ErrorHandler.showError(
-            context, 
+            context,
             'Sepet işlemi sırasında hata oluştu. Lütfen tekrar deneyin.',
           );
         }
@@ -616,7 +642,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       }
     }
   }
-  
+
   /// Ürün sepete ekleniyor mu kontrol et
   bool isAddingToCart(String productId) {
     return _addingToCartProducts.contains(productId);
@@ -624,11 +650,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
 
   void _removeFromCart(Product product) async {
     if (!mounted) return;
-    
+
     try {
       final dataService = FirebaseDataService();
       final index = cartProducts.indexWhere((p) => p.id == product.id);
-      
+
       if (index != -1) {
         cartProducts.removeAt(index);
         // Firebase'den de kaldır
@@ -637,26 +663,28 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         } catch (e) {
           // Hata durumunda sessizce devam et
         }
-        
+
         if (mounted) {
           setState(() {});
-          ErrorHandler.showSilentInfo(context, '${product.name} sepetten çıkarıldı');
+          ErrorHandler.showSilentInfo(
+              context, '${product.name} sepetten çıkarıldı');
         }
       }
     } catch (e) {
       if (mounted) {
-        ErrorHandler.showError(context, 'Sepet işlemi sırasında hata oluştu: $e');
+        ErrorHandler.showError(
+            context, 'Sepet işlemi sırasında hata oluştu: $e');
       }
     }
   }
 
   Future<void> _updateQuantity(Product product, int newQuantity) async {
     if (!mounted) return;
-    
+
     try {
       final dataService = FirebaseDataService();
       final index = cartProducts.indexWhere((p) => p.id == product.id);
-      
+
       if (index != -1) {
         if (newQuantity <= 0) {
           cartProducts.removeAt(index);
@@ -666,10 +694,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
           } catch (e) {
             debugPrint('Error removing from cart in Firebase: $e');
           }
-          
+
           if (mounted) {
             setState(() {});
-            ErrorHandler.showSilentInfo(context, '${product.name} sepetten çıkarıldı');
+            ErrorHandler.showSilentInfo(
+                context, '${product.name} sepetten çıkarıldı');
           }
         } else {
           // Stok kontrolü yap (miktar artırma durumunda)
@@ -677,12 +706,13 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             // Stok kontrolü - product.stock kullanılıyor
             if (newQuantity > product.stock) {
               if (mounted) {
-                ErrorHandler.showError(context, 'Yeterli stok yok. Mevcut stok: ${product.stock}');
+                ErrorHandler.showError(
+                    context, 'Yeterli stok yok. Mevcut stok: ${product.stock}');
               }
               return;
             }
           }
-          
+
           // Yeni Product objesi oluştur
           cartProducts[index] = product.copyWith(quantity: newQuantity);
           // Firebase'de güncelle
@@ -691,7 +721,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
           } catch (e) {
             // Hata durumunda sessizce devam et
           }
-          
+
           if (mounted) {
             setState(() {});
           }
@@ -699,20 +729,22 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       }
     } catch (e) {
       if (mounted) {
-        ErrorHandler.showError(context, 'Miktar güncelleme sırasında hata oluştu: $e');
+        ErrorHandler.showError(
+            context, 'Miktar güncelleme sırasında hata oluştu: $e');
       }
     }
   }
 
   Future<void> _placeOrder() async {
     if (!mounted || cartProducts.isEmpty) return;
-    
+
     try {
       final dataService = FirebaseDataService();
       final order = Order(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         products: List.from(cartProducts),
-        totalAmount: cartProducts.fold(0.0, (sum, product) => sum + (product.price * product.quantity)),
+        totalAmount: cartProducts.fold(
+            0.0, (sum, product) => sum + (product.price * product.quantity)),
         orderDate: DateTime.now(),
         status: 'Beklemede',
         customerName: 'Müşteri',
@@ -720,9 +752,9 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         customerPhone: '555-0123',
         shippingAddress: 'Adres bilgisi',
       );
-      
+
       orders.add(order);
-      
+
       // Sepeti temizle (hem local hem Firebase)
       cartProducts.clear();
       try {
@@ -730,40 +762,41 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       } catch (e) {
         // Hata durumunda sessizce devam et
       }
-      
+
       if (mounted) {
         setState(() {});
-        ErrorHandler.showSilentSuccess(context, 'Sipariş başarıyla oluşturuldu!');
+        ErrorHandler.showSilentSuccess(
+            context, 'Sipariş başarıyla oluşturuldu!');
         AppRoutes.navigateToPayment(context, cartProducts);
       }
     } catch (e) {
       if (mounted) {
-        ErrorHandler.showError(context, 'Sipariş oluşturma sırasında hata oluştu: $e');
+        ErrorHandler.showError(
+            context, 'Sipariş oluşturma sırasında hata oluştu: $e');
       }
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: AppDesignSystem.background,
       body: Stack(
         children: [
           Column(
-        children: [
-          // Trendyol tarzı header
-          _buildTrendyolHeader(context),
-          // Ana içerik
-          Expanded(
-            child: IndexedStack(
-              index: _selectedIndex,
-              children: _getPages(), // Her seferinde yeniden oluştur (kategori değişiklikleri için)
-            ),
-          ),
+            children: [
+              // Trendyol tarzı header
+              _buildTrendyolHeader(context),
+              // Ana içerik
+              Expanded(
+                child: IndexedStack(
+                  index: _selectedIndex,
+                  children:
+                      _getPages(), // Her seferinde yeniden oluştur (kategori değişiklikleri için)
+                ),
+              ),
             ],
           ),
           // AI Chat Widget (sağ alt köşe)
@@ -788,13 +821,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
     final headerHeight = isDesktop ? 88.0 : 86.0;
-    final logoHeight = isDesktop ? 82.0 : 78.0;
-    final logoScale = isDesktop ? 1.35 : 1.30;
-    final cropWidthFactor = isDesktop ? 0.94 : 0.95;
-    final cropHeightFactor = isDesktop ? 0.78 : 0.80;
-    
+    final logoHeight = isDesktop ? 64.0 : 56.0;
+    final logoWidth = isDesktop ? 270.0 : 238.0;
+
     return Container(
-      color: Colors.white,
+      color: AppDesignSystem.surface,
       child: Column(
         children: [
           // Offline durumu banner'ı
@@ -802,7 +833,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFF6000),
+              color: AppDesignSystem.primary,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -824,7 +855,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             height: headerHeight,
             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 80 : 40),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppDesignSystem.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.04),
@@ -838,47 +869,35 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
               children: [
                 // Sol taraf - Logo (web için geniş)
                 SizedBox(
-                  width: isDesktop ? 280.0 : 240.0,
+                  width: logoWidth,
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
                         _selectedIndex = 0;
                       });
                     },
-                    child: Align(
+                    child: Image.asset(
+                      'assets/images/tunex_banner.png',
+                      width: logoWidth,
+                      height: logoHeight,
+                      fit: BoxFit.contain,
                       alignment: Alignment.centerLeft,
-                      child: ClipRect(
-                        child: Align(
-                          alignment: Alignment.center,
-                          widthFactor: cropWidthFactor,
-                          heightFactor: cropHeightFactor,
-                          child: Transform.scale(
-                            alignment: Alignment.center,
-                            scale: logoScale,
-                            child: Image.asset(
-                              'assets/images/baspinar_wordmark_elite.png',
-                              height: logoHeight,
-                              fit: BoxFit.contain,
-                              alignment: Alignment.centerLeft,
-                              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                            ),
-                          ),
-                        ),
-                      ),
+                      errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
                 ),
                 // Arama çubuğu - Web için tam genişlikte
                 Expanded(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 24),
+                    padding:
+                        EdgeInsets.symmetric(horizontal: isDesktop ? 40 : 24),
                     child: Container(
                       height: isDesktop ? 50 : 48,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFAFBFC),
+                        color: AppDesignSystem.surfaceElevated,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: const Color(0xFFE8E8E8),
+                          color: AppDesignSystem.borderLight,
                           width: 1,
                         ),
                       ),
@@ -890,7 +909,8 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                             onChanged: (value) {
                               final query = value.trim();
                               setState(() {
-                                _headerSearchQuery = query.isEmpty ? null : query;
+                                _headerSearchQuery =
+                                    query.isEmpty ? null : query;
                                 if (_selectedIndex != 0) {
                                   _selectedIndex = 0;
                                 }
@@ -899,25 +919,29 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                             onSubmitted: (value) {
                               final query = value.trim();
                               setState(() {
-                                _headerSearchQuery = query.isEmpty ? null : query;
+                                _headerSearchQuery =
+                                    query.isEmpty ? null : query;
                                 _selectedIndex = 0;
                               });
                             },
                             textInputAction: TextInputAction.search,
                             decoration: InputDecoration(
-                              hintText: 'Aradığınız ürün, kategori veya markayı yazınız',
+                              hintText:
+                                  'Aradığınız ürün, kategori veya markayı yazınız',
                               hintStyle: GoogleFonts.inter(
                                 fontSize: 14,
-                                color: const Color(0xFF9CA3AF),
+                                color: AppDesignSystem.textSecondary,
                               ),
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.search,
-                                color: Color(0xFF6A6A6A),
+                                color: AppDesignSystem.textSecondary,
                                 size: 22,
                               ),
                               suffixIcon: value.text.isNotEmpty
                                   ? IconButton(
-                                      icon: const Icon(Icons.clear, size: 18, color: Color(0xFF6A6A6A)),
+                                      icon: Icon(Icons.clear,
+                                          size: 18,
+                                          color: AppDesignSystem.textSecondary),
                                       onPressed: () {
                                         setState(() {
                                           _headerSearchController.clear();
@@ -934,7 +958,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                             ),
                             style: GoogleFonts.inter(
                               fontSize: 14,
-                              color: const Color(0xFF0F0F0F),
+                              color: AppDesignSystem.textPrimary,
                             ),
                           );
                         },
@@ -976,7 +1000,8 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                             right: 6,
                             top: -2,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 5, vertical: 2),
                               decoration: const BoxDecoration(
                                 color: Color(0xFFEF4444),
                                 shape: BoxShape.circle,
@@ -987,7 +1012,9 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                               ),
                               child: Center(
                                 child: Text(
-                                  cartProducts.length > 99 ? '99+' : '${cartProducts.length}',
+                                  cartProducts.length > 99
+                                      ? '99+'
+                                      : '${cartProducts.length}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 10,
@@ -1017,7 +1044,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
           // Kategoriler bar - Web için
           Container(
             height: 48,
-            color: Colors.white,
+            color: AppDesignSystem.background,
             padding: EdgeInsets.symmetric(horizontal: isDesktop ? 80 : 40),
             child: Row(
               children: [
@@ -1036,24 +1063,26 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                     stream: _adminService.getCategories(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: SizedBox(
+                        return const Center(
+                            child: SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ));
                       }
-                      
+
                       final categories = snapshot.data ?? [];
                       // Maksimum 8 kategori göster, rasgele sırala
-                      final displayCategories = categories.take(8).toList()..shuffle();
-                      
+                      final displayCategories = categories.take(8).toList()
+                        ..shuffle();
+
                       if (displayCategories.isEmpty) {
                         return const SizedBox.shrink();
                       }
-                      
+
                       return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
                           children: displayCategories.map((category) {
                             return _buildCategoryLink(
                               category.name,
@@ -1076,10 +1105,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   // Mobil için AppBar - Kompakt, minimal tasarım
   Widget _buildMobileHeader(BuildContext context) {
     final headerHeight = 70.0;
-    final logoHeight = 50.0;
-    
+    final logoHeight = 48.0;
+    final logoWidth = 180.0;
+
     return Container(
-      color: Colors.white,
+      color: AppDesignSystem.surface,
       child: Column(
         children: [
           // Offline durumu banner'ı
@@ -1087,7 +1117,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              color: const Color(0xFFFF6000),
+              color: AppDesignSystem.primary,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -1113,7 +1143,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             height: headerHeight,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppDesignSystem.surface,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.04),
@@ -1127,7 +1157,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
               children: [
                 // Sol taraf - Logo (mobil için küçük)
                 SizedBox(
-                  width: 100,
+                  width: logoWidth,
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -1135,9 +1165,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                       });
                     },
                     child: Image.asset(
-                      'assets/images/baspinar_wordmark_elite.png',
+                      'assets/images/tunex_banner.png',
+                      width: logoWidth,
                       height: logoHeight,
                       fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
                       errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                     ),
                   ),
@@ -1149,10 +1181,10 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                     child: Container(
                       height: 36,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFAFBFC),
+                        color: AppDesignSystem.surfaceElevated,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: const Color(0xFFE8E8E8),
+                          color: AppDesignSystem.borderLight,
                           width: 1,
                         ),
                       ),
@@ -1179,11 +1211,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                           hintText: 'Ara...',
                           hintStyle: GoogleFonts.inter(
                             fontSize: 11,
-                            color: const Color(0xFF9CA3AF),
+                            color: AppDesignSystem.textSecondary,
                           ),
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
-                            color: Color(0xFF6A6A6A),
+                            color: AppDesignSystem.textSecondary,
                             size: 18,
                           ),
                           border: InputBorder.none,
@@ -1194,7 +1226,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                         ),
                         style: GoogleFonts.inter(
                           fontSize: 11,
-                          color: const Color(0xFF0F0F0F),
+                          color: AppDesignSystem.textPrimary,
                         ),
                       ),
                     ),
@@ -1234,7 +1266,8 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                             right: 0,
                             top: -2,
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
                               decoration: const BoxDecoration(
                                 color: Color(0xFFEF4444),
                                 shape: BoxShape.circle,
@@ -1245,7 +1278,9 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                               ),
                               child: Center(
                                 child: Text(
-                                  cartProducts.length > 99 ? '99+' : '${cartProducts.length}',
+                                  cartProducts.length > 99
+                                      ? '99+'
+                                      : '${cartProducts.length}',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 8,
@@ -1275,7 +1310,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
           // Kategoriler bar - Mobil için (scrollable)
           Container(
             height: 40,
-            color: Colors.white,
+            color: AppDesignSystem.background,
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Row(
               children: [
@@ -1301,24 +1336,26 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                     stream: _adminService.getCategories(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: SizedBox(
+                        return const Center(
+                            child: SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         ));
                       }
-                      
+
                       final categories = snapshot.data ?? [];
                       // Maksimum 8 kategori göster, rasgele sırala
-                      final displayCategories = categories.take(8).toList()..shuffle();
-                      
+                      final displayCategories = categories.take(8).toList()
+                        ..shuffle();
+
                       if (displayCategories.isEmpty) {
                         return const SizedBox.shrink();
                       }
-                      
+
                       return SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
                           children: displayCategories.map((category) {
                             return _buildCategoryLink(
                               category.name,
@@ -1346,7 +1383,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
   }) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
-    
+
     final iconWidget = GestureDetector(
       onTap: onTap,
       child: Column(
@@ -1354,7 +1391,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         children: [
           Icon(
             icon,
-            color: const Color(0xFF0F0F0F),
+            color: AppDesignSystem.textPrimary,
             size: isMobile ? 22 : 24, // Mobilde ikon biraz daha küçük
           ),
           if (showLabel) ...[
@@ -1363,7 +1400,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
               label,
               style: GoogleFonts.inter(
                 fontSize: isMobile ? 9 : 10, // Mobilde font daha küçük
-                color: const Color(0xFF6A6A6A),
+                color: AppDesignSystem.textSecondary,
                 fontWeight: FontWeight.w400,
               ),
               maxLines: 1,
@@ -1373,7 +1410,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         ],
       ),
     );
-    
+
     // Mobilde tooltip ekle (label yoksa)
     if (!showLabel) {
       return Tooltip(
@@ -1381,10 +1418,10 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         child: iconWidget,
       );
     }
-    
+
     return iconWidget;
   }
-  
+
   /// Profil ikonu - Profil fotoğrafı varsa göster, yoksa ikon göster
   Widget _buildProfileIcon({
     String? profileImageUrl,
@@ -1394,13 +1431,13 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
     final iconSize = isMobile ? 22.0 : 24.0;
-    
+
     final user = FirebaseAuth.instance.currentUser;
     final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'K';
     final firstLetter = userName.isNotEmpty ? userName[0].toUpperCase() : 'K';
-    
+
     Widget avatarWidget;
-    
+
     if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
       // Profil fotoğrafı varsa göster
       avatarWidget = ClipOval(
@@ -1415,7 +1452,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
               width: iconSize,
               height: iconSize,
               decoration: BoxDecoration(
-                color: const Color(0xFFE8E8E8),
+                color: AppDesignSystem.borderLight,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -1424,7 +1461,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
                   style: GoogleFonts.inter(
                     fontSize: iconSize * 0.5,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFF6A6A6A),
+                    color: AppDesignSystem.textSecondary,
                   ),
                 ),
               ),
@@ -1436,11 +1473,11 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
       // Profil fotoğrafı yoksa ikon göster
       avatarWidget = Icon(
         Icons.person_outline_rounded,
-        color: const Color(0xFF0F0F0F),
+        color: AppDesignSystem.textPrimary,
         size: iconSize,
       );
     }
-    
+
     final profileWidget = GestureDetector(
       onTap: onTap,
       child: Column(
@@ -1452,7 +1489,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: const Color(0xFFE8E8E8),
+                color: AppDesignSystem.borderLight,
                 width: 1,
               ),
             ),
@@ -1464,7 +1501,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
               'Hesabım',
               style: GoogleFonts.inter(
                 fontSize: isMobile ? 9 : 10,
-                color: const Color(0xFF6A6A6A),
+                color: AppDesignSystem.textSecondary,
                 fontWeight: FontWeight.w400,
               ),
               maxLines: 1,
@@ -1474,7 +1511,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         ],
       ),
     );
-    
+
     // Mobilde tooltip ekle (label yoksa)
     if (!showLabel) {
       return Tooltip(
@@ -1482,7 +1519,7 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
         child: profileWidget,
       );
     }
-    
+
     return profileWidget;
   }
 
@@ -1494,7 +1531,8 @@ class _MainScreenState extends State<MainScreen> with AutomaticKeepAliveClientMi
     });
   }
 
-  Widget _buildCategoryLink(String text, VoidCallback onTap, {bool isNew = false}) {
+  Widget _buildCategoryLink(String text, VoidCallback onTap,
+      {bool isNew = false}) {
     return Padding(
       padding: const EdgeInsets.only(right: 24),
       child: _CategoryLinkWidget(
@@ -1540,10 +1578,13 @@ class _CategoryLinkWidgetState extends State<_CategoryLinkWidget> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
-            color: _isHovered ? const Color(0xFFFF6000).withOpacity(0.1) : Colors.transparent,
+            color: _isHovered
+                ? AppDesignSystem.primary.withOpacity(0.1)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
-            border: _isHovered 
-                ? Border.all(color: const Color(0xFFFF6000).withOpacity(0.3), width: 1)
+            border: _isHovered
+                ? Border.all(
+                    color: AppDesignSystem.primary.withOpacity(0.3), width: 1)
                 : null,
           ),
           child: Row(
@@ -1553,7 +1594,9 @@ class _CategoryLinkWidgetState extends State<_CategoryLinkWidget> {
                 duration: const Duration(milliseconds: 200),
                 style: GoogleFonts.inter(
                   fontSize: 14,
-                  color: _isHovered ? const Color(0xFFFF6000) : const Color(0xFF0F0F0F),
+                  color: _isHovered
+                      ? AppDesignSystem.primary
+                      : AppDesignSystem.textPrimary,
                   fontWeight: _isHovered ? FontWeight.w600 : FontWeight.w500,
                 ),
                 child: Text(widget.text),
@@ -1561,7 +1604,8 @@ class _CategoryLinkWidgetState extends State<_CategoryLinkWidget> {
               if (widget.isNew) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEF4444),
                     borderRadius: BorderRadius.circular(4),
@@ -1609,23 +1653,25 @@ class _AllCategoriesButtonState extends State<_AllCategoriesButton> {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppDesignSystem.surfaceElevated,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: _isHovered ? const Color(0xFFFF6000) : const Color(0xFFE8E8E8),
+              color: _isHovered
+                  ? AppDesignSystem.primary
+                  : AppDesignSystem.borderLight,
               width: _isHovered ? 2 : 1.5,
             ),
             boxShadow: _isHovered
                 ? [
                     BoxShadow(
-                      color: const Color(0xFFFF6000).withOpacity(0.15),
+                      color: AppDesignSystem.primary.withOpacity(0.15),
                       blurRadius: 8,
                       offset: const Offset(0, 2),
                     ),
                   ]
                 : [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withOpacity(0.28),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -1637,12 +1683,12 @@ class _AllCategoriesButtonState extends State<_AllCategoriesButton> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6000).withOpacity(0.1),
+                  color: AppDesignSystem.primary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Icon(
                   Icons.grid_view_rounded,
-                  color: const Color(0xFFFF6000),
+                  color: AppDesignSystem.primary,
                   size: 18,
                 ),
               ),
@@ -1652,15 +1698,19 @@ class _AllCategoriesButtonState extends State<_AllCategoriesButton> {
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: _isHovered ? const Color(0xFFFF6000) : const Color(0xFF0F0F0F),
-                  letterSpacing: -0.2,
+                  color: _isHovered
+                      ? AppDesignSystem.primary
+                      : AppDesignSystem.textPrimary,
+                  letterSpacing: 0,
                 ),
               ),
               const SizedBox(width: 6),
               Icon(
                 Icons.arrow_forward_ios,
                 size: 12,
-                color: _isHovered ? const Color(0xFFFF6000) : const Color(0xFF6A6A6A),
+                color: _isHovered
+                    ? AppDesignSystem.primary
+                    : AppDesignSystem.textSecondary,
               ),
             ],
           ),

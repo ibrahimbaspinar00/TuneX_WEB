@@ -52,16 +52,16 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _reviewsSectionKey = GlobalKey();
   String _reviewSortOption = 'Önerilen Sıralama';
-  
+
   // Renk ve beden seçimi
   String? _selectedColor;
   String? _selectedSize;
   int _selectedImageIndex = 0;
-  
+
   // Ürünün renk ve beden listelerini al
   List<String> get _availableColors => widget.product.colors ?? [];
   List<String> get _availableSizes => widget.product.sizes ?? [];
-  
+
   // Görsel listesi (gerçek uygulamada ürünün birden fazla görseli olabilir)
   List<String> get _productImages {
     final imageUrl = widget.product.imageUrl.trim();
@@ -82,7 +82,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
   void initState() {
     super.initState();
     _loadReviews();
-    
+
     // İlk renk ve bedeni seç (varsa)
     if (_availableColors.isNotEmpty) {
       _selectedColor = _availableColors.first;
@@ -90,7 +90,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
     if (_availableSizes.isNotEmpty) {
       _selectedSize = _availableSizes.first;
     }
-    
+
     if (widget.forceHasPurchased) {
       _hasPurchased = true;
       _isCheckingPurchase = false;
@@ -103,19 +103,25 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
   void didUpdateWidget(UrunDetaySayfasi oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Sepet veya favori ürünler değiştiğinde state'i güncelle
-    final cartChanged = widget.cartProducts.length != oldWidget.cartProducts.length ||
-        widget.cartProducts.any((p) => !oldWidget.cartProducts.any((op) => op.id == p.id)) ||
-        oldWidget.cartProducts.any((op) => !widget.cartProducts.any((p) => p.id == op.id));
-    
-    final favoriteChanged = widget.favoriteProducts.length != oldWidget.favoriteProducts.length ||
-        widget.favoriteProducts.any((p) => !oldWidget.favoriteProducts.any((op) => op.id == p.id)) ||
-        oldWidget.favoriteProducts.any((op) => !widget.favoriteProducts.any((p) => p.id == op.id));
-    
+    final cartChanged = widget.cartProducts.length !=
+            oldWidget.cartProducts.length ||
+        widget.cartProducts
+            .any((p) => !oldWidget.cartProducts.any((op) => op.id == p.id)) ||
+        oldWidget.cartProducts
+            .any((op) => !widget.cartProducts.any((p) => p.id == op.id));
+
+    final favoriteChanged = widget.favoriteProducts.length !=
+            oldWidget.favoriteProducts.length ||
+        widget.favoriteProducts.any(
+            (p) => !oldWidget.favoriteProducts.any((op) => op.id == p.id)) ||
+        oldWidget.favoriteProducts
+            .any((op) => !widget.favoriteProducts.any((p) => p.id == op.id));
+
     if (cartChanged || favoriteChanged) {
       setState(() {});
     }
   }
-  
+
   Future<void> _checkPurchaseStatus() async {
     if (!mounted) return;
     setState(() => _isCheckingPurchase = true);
@@ -148,7 +154,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
     _scrollController.dispose();
     super.dispose();
   }
-  
+
   void _scrollToReviews() {
     final context = _reviewsSectionKey.currentContext;
     if (context != null) {
@@ -172,17 +178,18 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
 
   Future<void> _loadReviews() async {
     if (!mounted || _isRefreshingReviews) return;
-    
+
     try {
       _isRefreshingReviews = true;
       if (mounted) setState(() => _isLoading = true);
-      
+
       final reviews = await ReviewService.getProductReviews(widget.product.id);
       if (!mounted) return;
-      
+
       if (!mounted) return;
-      final calculatedAverageRating = ProductReview.calculateAverageRating(reviews);
-      
+      final calculatedAverageRating =
+          ProductReview.calculateAverageRating(reviews);
+
       if (mounted) {
         setState(() {
           _reviews = reviews;
@@ -200,7 +207,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
           _isLoading = false;
           _isRefreshingReviews = false;
         });
-        _showSnackBar(SnackBar(content: Text('Yorumlar yüklenirken hata oluştu: $e')));
+        _showSnackBar(
+            SnackBar(content: Text('Yorumlar yüklenirken hata oluştu: $e')));
       }
     }
   }
@@ -209,7 +217,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
     if (!mounted || _isRefreshingReviews) return;
     await Future.delayed(const Duration(milliseconds: 800));
     if (!mounted || _isRefreshingReviews) return;
-    
+
     try {
       await _loadReviews();
     } catch (e) {
@@ -218,17 +226,16 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
         await _loadReviews();
       }
     }
-    
+
     // _userReview güncellemesi kaldırıldı - kullanıcılar istediği kadar yorum yapabilir
   }
-
-
 
   Future<bool> _checkIfUserPurchased() async {
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) return false;
-      return await ReviewService.hasUserPurchasedProduct(widget.product.id, user.uid);
+      return await ReviewService.hasUserPurchasedProduct(
+          widget.product.id, user.uid);
     } catch (e) {
       debugPrint('Purchase check error: $e');
       return false;
@@ -240,7 +247,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
       final productId = widget.product.id;
       final httpLink = 'https://tuning-app-789e.web.app/product/$productId';
       final shareText = httpLink;
-      
+
       try {
         await Share.share(shareText, subject: widget.product.name);
       } catch (error) {
@@ -273,27 +280,29 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
               'Anasayfa',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
             ),
           ),
           const SizedBox(width: 4),
           Text(
             '>',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6A6A6A)),
+            style:
+                GoogleFonts.inter(fontSize: 12, color: const Color(0xFFC7CDD6)),
           ),
           const SizedBox(width: 4),
           Text(
             widget.product.category,
             style: GoogleFonts.inter(
               fontSize: 12,
-              color: const Color(0xFF6A6A6A),
+              color: const Color(0xFFC7CDD6),
             ),
           ),
           const SizedBox(width: 4),
           Text(
             '>',
-            style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6A6A6A)),
+            style:
+                GoogleFonts.inter(fontSize: 12, color: const Color(0xFFC7CDD6)),
           ),
           const SizedBox(width: 4),
           Expanded(
@@ -328,7 +337,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: _productImages.isNotEmpty && _selectedImageIndex < _productImages.length
+              child: _productImages.isNotEmpty &&
+                      _selectedImageIndex < _productImages.length
                   ? OptimizedImage(
                       imageUrl: _productImages[_selectedImageIndex],
                       fit: BoxFit.contain,
@@ -367,7 +377,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.chevron_left, color: Color(0xFF0F0F0F)),
+                    child: const Icon(Icons.chevron_left,
+                        color: Color(0xFF0F0F0F)),
                   ),
                 ),
               ),
@@ -394,7 +405,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.chevron_right, color: Color(0xFF0F0F0F)),
+                    child: const Icon(Icons.chevron_right,
+                        color: Color(0xFF0F0F0F)),
                   ),
                 ),
               ),
@@ -471,10 +483,12 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                   ],
                 ),
                 child: Icon(
-                  widget.favoriteProducts.any((p) => p.name == widget.product.name)
+                  widget.favoriteProducts
+                          .any((p) => p.name == widget.product.name)
                       ? Icons.favorite
                       : Icons.favorite_border,
-                  color: widget.favoriteProducts.any((p) => p.name == widget.product.name)
+                  color: widget.favoriteProducts
+                          .any((p) => p.name == widget.product.name)
                       ? Colors.red
                       : const Color(0xFF0F0F0F),
                   size: 24,
@@ -489,7 +503,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
 
   // Sağ tarafta ürün bilgileri
   Widget _buildProductInfo() {
-    final isFavorite = widget.favoriteProducts.any((p) => p.id == widget.product.id);
+    final isFavorite =
+        widget.favoriteProducts.any((p) => p.id == widget.product.id);
     final inCart = widget.cartProducts.any((p) => p.id == widget.product.id);
     final originalPrice = widget.product.price * 1.11; // %11 indirim varsayımı
     final discountedPrice = widget.product.price;
@@ -510,19 +525,21 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
             style: AppDesignSystem.heading2.copyWith(height: 1.3),
           ),
           const SizedBox(height: AppDesignSystem.spacingM),
-          
+
           // Değerlendirme (tıklanabilir)
           GestureDetector(
             onTap: _scrollToReviews,
             child: Row(
               children: [
                 StarRating(
-                  rating: _reviewsLoaded ? _averageRating : widget.product.averageRating,
+                  rating: _reviewsLoaded
+                      ? _averageRating
+                      : widget.product.averageRating,
                   size: 18,
                 ),
                 const SizedBox(width: AppDesignSystem.spacingS),
                 Text(
-                  _reviewsLoaded 
+                  _reviewsLoaded
                       ? '${_averageRating.toStringAsFixed(1)}'
                       : '${widget.product.averageRating.toStringAsFixed(1)}',
                   style: AppDesignSystem.bodyMedium.copyWith(
@@ -531,7 +548,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                 ),
                 const SizedBox(width: AppDesignSystem.spacingXS),
                 Text(
-                  _reviewsLoaded 
+                  _reviewsLoaded
                       ? '(${_totalReviews} Değerlendirme)'
                       : '(${widget.product.reviewCount} Değerlendirme)',
                   style: AppDesignSystem.bodyMedium.copyWith(
@@ -542,7 +559,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
             ),
           ),
           const SizedBox(height: 20),
-          
+
           // Popülerlik bilgisi
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -552,13 +569,14 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
             ),
             child: Row(
               children: [
-                Icon(Icons.trending_up, size: 16, color: const Color(0xFFFF6000)),
+                Icon(Icons.trending_up,
+                    size: 16, color: const Color(0xFFFF6A00)),
                 const SizedBox(width: 8),
                 Text(
                   'Popüler ürün! Son 24 saatte ${804 + widget.product.salesCount} kişi görüntüledi!',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFFFF6000),
+                    color: const Color(0xFFFF6A00),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -566,7 +584,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Fiyat bilgisi
           Container(
             padding: const EdgeInsets.all(16),
@@ -582,7 +600,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                   style: GoogleFonts.inter(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFFFF6000),
+                    color: const Color(0xFFFF6A00),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -601,13 +619,14 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                       '${originalPrice.toStringAsFixed(2)} TL',
                       style: GoogleFonts.inter(
                         fontSize: 16,
-                        color: const Color(0xFF6A6A6A),
+                        color: const Color(0xFFC7CDD6),
                         decoration: TextDecoration.lineThrough,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEF4444),
                         borderRadius: BorderRadius.circular(4),
@@ -628,14 +647,14 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                   'Peşin Fiyatına 3 Taksit • 3x ${installmentAmount.toStringAsFixed(0)} TL',
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Renk seçenekleri (sadece admin panelinden eklenmişse göster)
           if (_availableColors.isNotEmpty) ...[
             Text(
@@ -658,15 +677,19 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                     height: 60,
                     decoration: BoxDecoration(
                       color: _getColorValue(color),
-                      borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                      borderRadius:
+                          BorderRadius.circular(AppDesignSystem.radiusS),
                       border: Border.all(
-                        color: isSelected ? AppDesignSystem.primary : AppDesignSystem.borderLight,
+                        color: isSelected
+                            ? AppDesignSystem.primary
+                            : AppDesignSystem.borderLight,
                         width: isSelected ? 3 : 1,
                       ),
                     ),
                     child: isSelected
                         ? const Center(
-                            child: Icon(Icons.check, color: Colors.white, size: 24),
+                            child: Icon(Icons.check,
+                                color: Colors.white, size: 24),
                           )
                         : null,
                   ),
@@ -675,7 +698,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
             ),
             const SizedBox(height: 24),
           ],
-          
+
           // Beden seçenekleri (sadece admin panelinden eklenmişse göster)
           if (_availableSizes.isNotEmpty) ...[
             Text(
@@ -694,12 +717,18 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                   onTap: () => setState(() => _selectedSize = size),
                   child: Container(
                     margin: const EdgeInsets.only(right: 12),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppDesignSystem.primary : AppDesignSystem.surface,
-                      borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                      color: isSelected
+                          ? AppDesignSystem.primary
+                          : AppDesignSystem.surface,
+                      borderRadius:
+                          BorderRadius.circular(AppDesignSystem.radiusS),
                       border: Border.all(
-                        color: isSelected ? AppDesignSystem.primary : AppDesignSystem.borderLight,
+                        color: isSelected
+                            ? AppDesignSystem.primary
+                            : AppDesignSystem.borderLight,
                         width: 1.5,
                       ),
                     ),
@@ -707,7 +736,9 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                       size,
                       style: AppDesignSystem.bodyMedium.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: isSelected ? AppDesignSystem.textOnPrimary : AppDesignSystem.textPrimary,
+                        color: isSelected
+                            ? AppDesignSystem.textOnPrimary
+                            : AppDesignSystem.textPrimary,
                       ),
                     ),
                   ),
@@ -719,12 +750,12 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
               'Kullanıcıların çoğu kendi bedeninizi almanızı öneriyor.',
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
             ),
             const SizedBox(height: 24),
           ],
-          
+
           // Butonlar
           Row(
             children: [
@@ -733,17 +764,19 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                   onPressed: () async {
                     // Şimdi Al - önce sepete ekle, sonra ödeme sayfasına git
                     widget.onAddToCart(widget.product);
-                    
+
                     // Kısa bir gecikme sonrası ödeme sayfasına yönlendir
                     await Future.delayed(const Duration(milliseconds: 300));
-                    
+
                     if (mounted) {
                       // Sepetteki ürünleri al (yeni eklenen ürün dahil)
-                      final updatedCartProducts = List<Product>.from(widget.cartProducts);
-                      if (!updatedCartProducts.any((p) => p.id == widget.product.id)) {
+                      final updatedCartProducts =
+                          List<Product>.from(widget.cartProducts);
+                      if (!updatedCartProducts
+                          .any((p) => p.id == widget.product.id)) {
                         updatedCartProducts.add(widget.product);
                       }
-                      
+
                       AppRoutes.navigateToPayment(
                         context,
                         updatedCartProducts,
@@ -773,12 +806,12 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                     } else {
                       // Sepete ekle - _addToCart kendi mesajını gösterir
                       await widget.onAddToCart(widget.product);
-                      
+
                       // State'i güncelle
                       if (mounted) {
                         setState(() {});
                       }
-                      
+
                       // Kısa bir gecikme sonrası tekrar state güncelle (parent widget'tan gelen güncellemeler için)
                       await Future.delayed(const Duration(milliseconds: 300));
                       if (mounted) {
@@ -811,7 +844,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
               ),
             ],
           ),
-          
+
           // Favori butonu (sağ alt)
           const SizedBox(height: 16),
           Align(
@@ -833,7 +866,9 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                 ),
                 child: Icon(
                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: isFavorite ? AppDesignSystem.favorite : AppDesignSystem.textSecondary,
+                  color: isFavorite
+                      ? AppDesignSystem.favorite
+                      : AppDesignSystem.textSecondary,
                   size: 24,
                 ),
               ),
@@ -857,23 +892,22 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
       case 'Yeşil':
         return const Color(0xFF228B22);
       default:
-        return const Color(0xFFE8E8E8);
+        return const Color(0xFF2A3340);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     return Scaffold(
       backgroundColor: AppDesignSystem.background,
       appBar: AppBar(
         backgroundColor: AppDesignSystem.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
           onPressed: () {
             // Ana sayfaya yönlendir
             AppRoutes.navigateToMain(context);
@@ -881,7 +915,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share, color: AppDesignSystem.textPrimary),
+            icon: Icon(Icons.share, color: AppDesignSystem.textPrimary),
             onPressed: _shareProduct,
           ),
         ],
@@ -890,7 +924,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
         children: [
           // Breadcrumb
           _buildBreadcrumb(),
-          
+
           // Ana içerik
           Expanded(
             child: SingleChildScrollView(
@@ -928,13 +962,14 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                             ],
                           ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Yorumlar bölümü
                   Container(
                     key: _reviewsSectionKey,
-                    margin: EdgeInsets.symmetric(horizontal: isDesktop ? 80 : 24),
+                    margin:
+                        EdgeInsets.symmetric(horizontal: isDesktop ? 80 : 24),
                     padding: const EdgeInsets.all(24),
                     decoration: AppDesignSystem.cardDecoration(
                       borderRadius: AppDesignSystem.radiusS,
@@ -949,17 +984,19 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                           style: AppDesignSystem.heading3,
                         ),
                         const SizedBox(height: 16),
-                        
+
                         // Genel puan ve yorum sayısı
                         Row(
                           children: [
                             StarRating(
-                              rating: _reviewsLoaded ? _averageRating : widget.product.averageRating,
+                              rating: _reviewsLoaded
+                                  ? _averageRating
+                                  : widget.product.averageRating,
                               size: 24,
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _reviewsLoaded 
+                              _reviewsLoaded
                                   ? '${_averageRating.toStringAsFixed(1)}'
                                   : '${widget.product.averageRating.toStringAsFixed(1)}',
                               style: GoogleFonts.inter(
@@ -970,18 +1007,18 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              _reviewsLoaded 
+                              _reviewsLoaded
                                   ? '$_totalReviews Değerlendirme ${_reviews.where((r) => r.comment.isNotEmpty).length} Yorum'
                                   : '${widget.product.reviewCount} Değerlendirme ${widget.product.reviewCount} Yorum',
                               style: GoogleFonts.inter(
                                 fontSize: 14,
-                                color: const Color(0xFF6A6A6A),
+                                color: const Color(0xFFC7CDD6),
                               ),
                             ),
                           ],
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Arama çubuğu ve sıralama
                         Row(
                           children: [
@@ -989,24 +1026,26 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                               child: Container(
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFFAFBFC),
+                                  color: const Color(0xFF0B0D10),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFE8E8E8)),
+                                  border: Border.all(
+                                      color: const Color(0xFF2A3340)),
                                 ),
                                 child: TextField(
                                   decoration: InputDecoration(
                                     hintText: 'Değerlendirmelerde Ara',
                                     hintStyle: GoogleFonts.inter(
                                       fontSize: 14,
-                                      color: const Color(0xFF9CA3AF),
+                                      color: const Color(0xFF8E98A8),
                                     ),
                                     prefixIcon: const Icon(
                                       Icons.search,
                                       size: 20,
-                                      color: Color(0xFF6A6A6A),
+                                      color: Color(0xFFC7CDD6),
                                     ),
                                     border: InputBorder.none,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 10),
                                   ),
                                   style: GoogleFonts.inter(fontSize: 14),
                                 ),
@@ -1015,16 +1054,19 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                             const SizedBox(width: 12),
                             Container(
                               height: 40,
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 12),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFFAFBFC),
+                                color: const Color(0xFF0B0D10),
                                 borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: const Color(0xFFE8E8E8)),
+                                border:
+                                    Border.all(color: const Color(0xFF2A3340)),
                               ),
                               child: DropdownButton<String>(
                                 value: _reviewSortOption,
                                 underline: const SizedBox(),
-                                icon: const Icon(Icons.arrow_drop_down, size: 20),
+                                icon:
+                                    const Icon(Icons.arrow_drop_down, size: 20),
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
                                   color: const Color(0xFF0F0F0F),
@@ -1053,7 +1095,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                           ],
                         ),
                         const SizedBox(height: 20),
-                        
+
                         // Fotoğraflı değerlendirmeler (varsa)
                         if (_reviews.any((r) => r.imageUrls.isNotEmpty)) ...[
                           Text(
@@ -1069,16 +1111,21 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                             height: 80,
                             child: ListView.builder(
                               scrollDirection: Axis.horizontal,
-                              itemCount: _reviews.where((r) => r.imageUrls.isNotEmpty).length,
+                              itemCount: _reviews
+                                  .where((r) => r.imageUrls.isNotEmpty)
+                                  .length,
                               itemBuilder: (context, index) {
-                                final reviewWithImage = _reviews.where((r) => r.imageUrls.isNotEmpty).toList()[index];
+                                final reviewWithImage = _reviews
+                                    .where((r) => r.imageUrls.isNotEmpty)
+                                    .toList()[index];
                                 return Container(
                                   margin: const EdgeInsets.only(right: 8),
                                   width: 80,
                                   height: 80,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFFE8E8E8)),
+                                    border: Border.all(
+                                        color: const Color(0xFF2A3340)),
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(8),
@@ -1090,7 +1137,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                                       borderRadius: BorderRadius.circular(8),
                                       errorWidget: Container(
                                         color: Colors.grey[200],
-                                        child: const Icon(Icons.image_not_supported),
+                                        child: const Icon(
+                                            Icons.image_not_supported),
                                       ),
                                       placeholder: Container(
                                         color: Colors.grey[200],
@@ -1104,7 +1152,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                           ),
                           const SizedBox(height: 20),
                         ],
-                        
+
                         if (FirebaseAuth.instance.currentUser != null)
                           if (_isCheckingPurchase)
                             const Center(child: CircularProgressIndicator())
@@ -1138,9 +1186,9 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                               ],
                             ),
                           ),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         if (_isLoading)
                           const Center(
                             child: Padding(
@@ -1157,7 +1205,8 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                             ),
                             child: Column(
                               children: [
-                                Icon(Icons.comment_outlined, size: 48, color: Colors.grey[400]),
+                                Icon(Icons.comment_outlined,
+                                    size: 48, color: Colors.grey[400]),
                                 const SizedBox(height: 12),
                                 Text(
                                   'Henüz yorum yok',
@@ -1180,12 +1229,14 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                           )
                         else
                           ReviewList(
-                            key: ValueKey('reviews_${widget.product.id}_${_totalReviews}'),
+                            key: ValueKey(
+                                'reviews_${widget.product.id}_${_totalReviews}'),
                             productId: widget.product.id,
                             reviews: _reviews,
                             onReviewUpdated: () {
                               if (!_isRefreshingReviews && mounted) {
-                                Future.delayed(const Duration(milliseconds: 500), () {
+                                Future.delayed(
+                                    const Duration(milliseconds: 500), () {
                                   if (mounted && !_isRefreshingReviews) {
                                     _loadReviews();
                                   }
@@ -1196,7 +1247,7 @@ class _UrunDetaySayfasiState extends State<UrunDetaySayfasi> {
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 24),
                 ],
               ),

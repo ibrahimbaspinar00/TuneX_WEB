@@ -376,7 +376,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
     
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: const Color(0xFF0B0D10),
       appBar: AppBar(
         title: Text(
           'Ödeme',
@@ -444,7 +444,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
             color: Colors.white,
             border: Border(
               left: BorderSide(
-                color: const Color(0xFFE8E8E8),
+                color: const Color(0xFF2A3340),
                 width: 1,
               ),
             ),
@@ -501,7 +501,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
         IconButton(
           icon: const Icon(Icons.language, size: 20),
           onPressed: () {},
-          color: const Color(0xFF6A6A6A),
+          color: const Color(0xFFC7CDD6),
         ),
       ],
     );
@@ -1049,7 +1049,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: const Color(0xFF2A3340)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1080,7 +1080,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 _selectedDeliveryMethod = value!;
               });
             },
-            activeColor: const Color(0xFFFF6000),
+            activeColor: const Color(0xFFFF6A00),
             contentPadding: EdgeInsets.zero,
           ),
           
@@ -1095,10 +1095,10 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                       hintText: 'Teslimat Adresi',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+                        borderSide: const BorderSide(color: Color(0xFF2A3340)),
                       ),
                       filled: true,
-                      fillColor: const Color(0xFFFAFBFC),
+                      fillColor: const Color(0xFF0B0D10),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     ),
                     style: GoogleFonts.inter(fontSize: 14),
@@ -1130,8 +1130,8 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFFFF6000),
-                    side: const BorderSide(color: Color(0xFFFF6000)),
+                    foregroundColor: const Color(0xFFFF6A00),
+                    side: const BorderSide(color: Color(0xFFFF6A00)),
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                   ),
@@ -1150,7 +1150,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   _sameAddressForInvoice = value ?? false;
                 });
               },
-              activeColor: const Color(0xFFFF6000),
+              activeColor: const Color(0xFFFF6A00),
               contentPadding: EdgeInsets.zero,
             ),
           ],
@@ -1177,7 +1177,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     'Nedir?',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: const Color(0xFFFF6000),
+                      color: const Color(0xFFFF6A00),
                     ),
                   ),
                 ),
@@ -1187,7 +1187,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
               'Sana en yakın noktadan güvenle al!',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
             ),
             value: 'pickup',
@@ -1197,7 +1197,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 _selectedDeliveryMethod = value!;
               });
             },
-            activeColor: const Color(0xFFFF6000),
+            activeColor: const Color(0xFFFF6A00),
             contentPadding: EdgeInsets.zero,
           ),
         ],
@@ -1212,7 +1212,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: const Color(0xFF2A3340)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1240,7 +1240,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
               'Kart ile ödemeyi seçtiniz. Banka veya Kredi Kartı kullanarak ödemenizi güvenle yapabilirsiniz.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
             ),
             value: 'credit_card',
@@ -1253,7 +1253,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 }
               });
             },
-            activeColor: const Color(0xFFFF6000),
+            activeColor: const Color(0xFFFF6A00),
             contentPadding: EdgeInsets.zero,
           ),
           
@@ -1272,7 +1272,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
               'Teslimat sırasında nakit veya kredi kartı ile ödeme yapabilirsiniz.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
             ),
             value: 'cash_on_delivery',
@@ -1283,7 +1283,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 _showCardForm = false;
               });
             },
-            activeColor: const Color(0xFFFF6000),
+            activeColor: const Color(0xFFFF6A00),
             contentPadding: EdgeInsets.zero,
           ),
           
@@ -1302,7 +1302,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
               'Banka hesabımıza havale/EFT yaparak ödeme yapabilirsiniz. Manuel onay gereklidir.',
               style: GoogleFonts.inter(
                 fontSize: 13,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
             ),
             value: 'bank_transfer',
@@ -1313,7 +1313,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 _showCardForm = false;
               });
             },
-            activeColor: const Color(0xFFFF6000),
+            activeColor: const Color(0xFFFF6A00),
             contentPadding: EdgeInsets.zero,
           ),
           
@@ -1354,7 +1354,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     style: GoogleFonts.inter(fontSize: 13),
                   ),
                   style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFFF6000),
+                    foregroundColor: const Color(0xFFFF6A00),
                   ),
                 ),
               ],
@@ -1382,7 +1382,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   _use3DSecure = value ?? false;
                 });
               },
-              activeColor: const Color(0xFFFF6000),
+              activeColor: const Color(0xFFFF6A00),
               contentPadding: EdgeInsets.zero,
             ),
             
@@ -1406,9 +1406,9 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFAFBFC),
+                color: const Color(0xFF0B0D10),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE8E8E8)),
+                border: Border.all(color: const Color(0xFF2A3340)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1426,7 +1426,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     'Aşağıdaki hesap bilgilerine ödemenizi yapabilirsiniz:',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: const Color(0xFF6A6A6A),
+                      color: const Color(0xFFC7CDD6),
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -1435,7 +1435,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE8E8E8)),
+                      border: Border.all(color: const Color(0xFF2A3340)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1449,7 +1449,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          'Hesap Adı: Tuning Store',
+                          'Hesap Adı: TuneX',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             color: const Color(0xFF0F0F0F),
@@ -1481,7 +1481,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     'Ödeme yaptıktan sonra dekontu WhatsApp hattımıza gönderebilirsiniz.',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: const Color(0xFF6A6A6A),
+                      color: const Color(0xFFC7CDD6),
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -1500,9 +1500,9 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFBFC),
+        color: const Color(0xFF0B0D10),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE8E8E8)),
+        border: Border.all(color: const Color(0xFF2A3340)),
       ),
       child: Row(
         children: [
@@ -1511,7 +1511,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFFF6000),
+              color: const Color(0xFFFF6A00),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Icon(Icons.credit_card, color: Colors.white, size: 24),
@@ -1533,7 +1533,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   '${_selectedSavedCard!.number.substring(0, 4)} ${_selectedSavedCard!.number.substring(4, 6)}******${_selectedSavedCard!.number.substring(_selectedSavedCard!.number.length - 4)}',
                   style: GoogleFonts.inter(
                     fontSize: 13,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -1541,7 +1541,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   _selectedSavedCard!.expiryDate,
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF9CA3AF),
+                    color: const Color(0xFF8E98A8),
                   ),
                 ),
               ],
@@ -1564,8 +1564,8 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFFFF6000),
-              side: const BorderSide(color: Color(0xFFFF6000)),
+              foregroundColor: const Color(0xFFFF6A00),
+              side: const BorderSide(color: Color(0xFFFF6A00)),
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
@@ -1633,7 +1633,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
               _selectedInstallment = value!;
             });
           },
-          activeColor: const Color(0xFFFF6000),
+          activeColor: const Color(0xFFFF6A00),
           contentPadding: EdgeInsets.zero,
         );
       }).toList(),
@@ -1667,7 +1667,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     '+ Kurumsal Adres Ekle',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: const Color(0xFFFF6000),
+                      color: const Color(0xFFFF6A00),
                     ),
                   ),
                 ),
@@ -1690,7 +1690,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                 ),
                 Text(
@@ -1713,7 +1713,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     'Kargo Bedava',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF18C964),
                     ),
                   ),
                   Text(
@@ -1721,7 +1721,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF18C964),
                     ),
                   ),
                 ],
@@ -1730,19 +1730,19 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF18C964).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.card_giftcard, color: const Color(0xFF10B981), size: 18),
+                    Icon(Icons.card_giftcard, color: const Color(0xFF18C964), size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Bu siparişinde ücretsiz kargo hakkı kullanılacaktır.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
-                          color: const Color(0xFF10B981),
+                          color: const Color(0xFF18C964),
                         ),
                       ),
                     ),
@@ -1752,7 +1752,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
             ],
             
             const SizedBox(height: 16),
-            const Divider(height: 1, color: Color(0xFFE8E8E8)),
+            const Divider(height: 1, color: Color(0xFF2A3340)),
             const SizedBox(height: 16),
             
             // Toplam
@@ -1788,14 +1788,14 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 onPressed: _agreeToTerms ? (_isLoading ? null : _onPayPressed) : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _agreeToTerms && !_isLoading 
-                      ? const Color(0xFFFF6000) 
-                      : const Color(0xFFE8E8E8),
+                      ? const Color(0xFFFF6A00) 
+                      : const Color(0xFF2A3340),
                   foregroundColor: _agreeToTerms && !_isLoading 
                       ? Colors.white 
-                      : const Color(0xFF9CA3AF),
+                      : const Color(0xFF8E98A8),
                   elevation: _agreeToTerms && !_isLoading ? 2 : 0,
                   shadowColor: _agreeToTerms && !_isLoading 
-                      ? const Color(0xFFFF6000).withOpacity(0.3) 
+                      ? const Color(0xFFFF6A00).withOpacity(0.3) 
                       : Colors.transparent,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1809,7 +1809,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            _agreeToTerms ? Colors.white : const Color(0xFF9CA3AF),
+                            _agreeToTerms ? Colors.white : const Color(0xFF8E98A8),
                           ),
                         ),
                       )
@@ -1830,7 +1830,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                             size: 16,
                             color: _agreeToTerms && !_isLoading 
                                 ? Colors.white 
-                                : const Color(0xFF9CA3AF),
+                                : const Color(0xFF8E98A8),
                           ),
                         ],
                       ),
@@ -1845,14 +1845,14 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                 text: TextSpan(
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                   children: [
                     const TextSpan(text: "Ön Bilgilendirme Koşulları'nı ve "),
                     TextSpan(
                       text: 'Mesafeli Satış Sözleşmesi',
                       style: GoogleFonts.inter(
-                        color: const Color(0xFFFF6000),
+                        color: const Color(0xFFFF6A00),
                         decoration: TextDecoration.underline,
                       ),
                     ),
@@ -1866,7 +1866,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
                   _agreeToTerms = value ?? false;
                 });
               },
-              activeColor: const Color(0xFFFF6000),
+              activeColor: const Color(0xFFFF6A00),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
             ),
@@ -1885,7 +1885,7 @@ class _OdemeSayfasiState extends State<OdemeSayfasi> {
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF6A6A6A),
+            color: const Color(0xFFC7CDD6),
           ),
         ),
         Text(

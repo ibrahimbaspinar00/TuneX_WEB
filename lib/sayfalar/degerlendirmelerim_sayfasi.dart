@@ -14,13 +14,14 @@ class DegerlendirmelerimSayfasi extends StatefulWidget {
   const DegerlendirmelerimSayfasi({super.key});
 
   @override
-  State<DegerlendirmelerimSayfasi> createState() => _DegerlendirmelerimSayfasiState();
+  State<DegerlendirmelerimSayfasi> createState() =>
+      _DegerlendirmelerimSayfasiState();
 }
 
 class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final ProductService _productService = ProductService();
-  
+
   List<ProductReview> _reviews = [];
   Map<String, Product> _products = {}; // productId -> Product mapping
   bool _isLoading = true;
@@ -34,7 +35,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
 
   Future<void> _loadReviews() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final user = _auth.currentUser;
       if (user == null) {
@@ -49,15 +50,16 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
       debugPrint('Loading reviews for user: ${user.uid}');
       final reviews = await ReviewService.getUserReviews(user.uid);
       debugPrint('Loaded ${reviews.length} reviews from Firebase');
-      
+
       // Ürün bilgilerini getir (ürün bulunamasa bile yorumlar gösterilecek)
       final products = <String, Product>{};
       for (final review in reviews) {
         // Ürün zaten yüklenmişse tekrar yükleme
         if (products.containsKey(review.productId)) continue;
-        
+
         try {
-          final product = await _productService.getProductById(review.productId);
+          final product =
+              await _productService.getProductById(review.productId);
           if (product != null) {
             products[review.productId] = product;
           }
@@ -86,13 +88,13 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
 
   List<ProductReview> get _filteredReviews {
     if (_searchQuery.isEmpty) return _reviews;
-    
+
     return _reviews.where((review) {
       final product = _products[review.productId];
       final productName = product?.name ?? 'Ürün bulunamadı';
-      
+
       return productName.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-             review.comment.toLowerCase().contains(_searchQuery.toLowerCase());
+          review.comment.toLowerCase().contains(_searchQuery.toLowerCase());
     }).toList();
   }
 
@@ -100,7 +102,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     return Scaffold(
       backgroundColor: AppDesignSystem.background,
       appBar: AppBar(
@@ -108,7 +110,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
         elevation: 0,
         automaticallyImplyLeading: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
           onPressed: () {
             // Ana sayfaya yönlendir
             AppRoutes.navigateToMain(context);
@@ -138,7 +140,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
               decoration: AppDesignSystem.inputDecoration(
                 label: '',
                 hint: 'Ürün veya yorum ara',
-                prefixIcon: const Icon(
+                prefixIcon: Icon(
                   Icons.search,
                   color: AppDesignSystem.textSecondary,
                   size: 20,
@@ -202,7 +204,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
   Widget _buildReviewsList(bool isDesktop) {
     return RefreshIndicator(
       onRefresh: _loadReviews,
-      color: const Color(0xFFFF6000),
+      color: const Color(0xFFFF6A00),
       child: ListView.builder(
         padding: EdgeInsets.symmetric(
           horizontal: isDesktop ? 80 : 24,
@@ -212,7 +214,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
         itemBuilder: (context, index) {
           final review = _filteredReviews[index];
           final product = _products[review.productId];
-          
+
           // Ürün bulunamasa bile yorumu göster
           return _buildReviewCard(review, product);
         },
@@ -222,7 +224,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
 
   Widget _buildReviewCard(ProductReview review, Product? product) {
     final hasProduct = product != null;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: AppDesignSystem.spacingM),
       decoration: AppDesignSystem.cardDecoration(
@@ -230,25 +232,27 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
         shadows: AppDesignSystem.shadowS,
       ),
       child: InkWell(
-        onTap: hasProduct ? () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => UrunDetaySayfasi(
-                product: product,
-                favoriteProducts: const [],
-                onFavoriteToggle: (_) async {
-                  return;
-                },
-                onAddToCart: (_) async {
-                  return;
-                },
-                onRemoveFromCart: (_) {},
-                cartProducts: const [],
-              ),
-            ),
-          );
-        } : null,
+        onTap: hasProduct
+            ? () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UrunDetaySayfasi(
+                      product: product,
+                      favoriteProducts: const [],
+                      onFavoriteToggle: (_) async {
+                        return;
+                      },
+                      onAddToCart: (_) async {
+                        return;
+                      },
+                      onRemoveFromCart: (_) {},
+                      cartProducts: const [],
+                    ),
+                  ),
+                );
+              }
+            : null,
         borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
         child: Padding(
           padding: const EdgeInsets.all(AppDesignSystem.spacingM),
@@ -304,7 +308,8 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
                         ),
                         decoration: BoxDecoration(
                           color: AppDesignSystem.warningLight,
-                          borderRadius: BorderRadius.circular(AppDesignSystem.radiusXS),
+                          borderRadius:
+                              BorderRadius.circular(AppDesignSystem.radiusXS),
                           border: Border.all(
                             color: AppDesignSystem.warning.withOpacity(0.3),
                             width: 1,
@@ -337,10 +342,12 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
                       children: [
                         ...List.generate(5, (index) {
                           return Icon(
-                            index < review.rating ? Icons.star : Icons.star_border,
+                            index < review.rating
+                                ? Icons.star
+                                : Icons.star_border,
                             size: 18,
                             color: index < review.rating
-                                ? const Color(0xFFD4AF37)
+                                ? const Color(0xFFFF6A00)
                                 : Colors.grey[300],
                           );
                         }),
@@ -372,22 +379,29 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
                         height: 60,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: review.imageUrls.length > 3 ? 3 : review.imageUrls.length,
+                          itemCount: review.imageUrls.length > 3
+                              ? 3
+                              : review.imageUrls.length,
                           itemBuilder: (context, index) {
                             return Container(
                               width: 60,
                               height: 60,
-                              margin: const EdgeInsets.only(right: AppDesignSystem.spacingS),
+                              margin: const EdgeInsets.only(
+                                  right: AppDesignSystem.spacingS),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
-                                border: Border.all(color: AppDesignSystem.borderLight),
+                                borderRadius: BorderRadius.circular(
+                                    AppDesignSystem.radiusS),
+                                border: Border.all(
+                                    color: AppDesignSystem.borderLight),
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(AppDesignSystem.radiusS - 1),
+                                borderRadius: BorderRadius.circular(
+                                    AppDesignSystem.radiusS - 1),
                                 child: Image.network(
                                   review.imageUrls[index],
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stack) => Container(
+                                  errorBuilder: (context, error, stack) =>
+                                      Container(
                                     color: AppDesignSystem.surfaceVariant,
                                     child: Icon(
                                       Icons.image_not_supported,
@@ -413,7 +427,7 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
                 ),
               ),
               // Sağ tarafta ok ikonu
-              const Icon(
+              Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
                 color: AppDesignSystem.textTertiary,
@@ -446,4 +460,3 @@ class _DegerlendirmelerimSayfasiState extends State<DegerlendirmelerimSayfasi> {
     }
   }
 }
-

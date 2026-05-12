@@ -283,7 +283,7 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
     final isSmallScreen = screenWidth < 400;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFF0B0D10),
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
         title: Column(
@@ -418,7 +418,7 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF3B82F6),
+                  backgroundColor: const Color(0xFF00D1FF),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -492,7 +492,7 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
                     ElevatedButton(
                       onPressed: _showAddProductsDialog,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFFF6000),
+                        backgroundColor: const Color(0xFFFF6A00),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         shape: RoundedRectangleBorder(
@@ -792,7 +792,7 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFF6000), // Trendyol turuncusu
+                      color: const Color(0xFFFF6A00), // Trendyol turuncusu
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     ),
                     child: Row(
@@ -902,7 +902,7 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
                                           color: isSelected 
-                                              ? const Color(0xFFFF6000) 
+                                              ? const Color(0xFFFF6A00) 
                                               : Colors.grey[300]!,
                                           width: isSelected ? 2 : 1,
                                         ),
@@ -1051,12 +1051,12 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
                                               height: 20,
                                               decoration: BoxDecoration(
                                                 color: isSelected 
-                                                    ? const Color(0xFFFF6000) 
+                                                    ? const Color(0xFFFF6A00) 
                                                     : Colors.white,
                                                 shape: BoxShape.circle,
                                                 border: Border.all(
                                                   color: isSelected 
-                                                      ? const Color(0xFFFF6000) 
+                                                      ? const Color(0xFFFF6A00) 
                                                       : Colors.grey[400]!,
                                                   width: 1.5,
                                                 ),
@@ -1117,7 +1117,7 @@ class _KoleksiyonDetaySayfasiState extends State<KoleksiyonDetaySayfasi> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: selectedProductIds.isEmpty 
                                 ? Colors.grey[300] 
-                                : const Color(0xFFFF6000),
+                                : const Color(0xFFFF6A00),
                             foregroundColor: selectedProductIds.isEmpty 
                                 ? Colors.grey[600] 
                                 : Colors.white,

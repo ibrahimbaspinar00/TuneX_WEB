@@ -11,6 +11,7 @@ import '../config/external_image_storage_config.dart';
 import '../widgets/error_handler.dart';
 import '../widgets/image_cropper_widget.dart';
 import '../config/app_routes.dart';
+import '../theme/app_design_system.dart';
 
 class ProfilDuzenlemeSayfasi extends StatefulWidget {
   const ProfilDuzenlemeSayfasi({super.key});
@@ -24,19 +25,19 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final UserAuthService _userAuthService = UserAuthService();
   final ImagePicker _picker = ImagePicker();
-  
+
   final _formKey = GlobalKey<FormState>();
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneCountryCodeController = TextEditingController(text: '+90');
   final _phoneNumberController = TextEditingController();
-  
+
   int? _selectedDay;
   int? _selectedMonth;
   int? _selectedYear;
   bool _isCorporate = false;
-  
+
   String? _profileImageUrl;
   bool _isLoading = false;
   bool _isSaving = false;
@@ -52,7 +53,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
     try {
       final userData = await _dataService.getUserProfile();
       final user = _auth.currentUser;
-      
+
       if (mounted) {
         // Ad Soyad: Firestore'dan, yoksa FirebaseAuth displayName'den, o da yoksa email'den
         String fullName = '';
@@ -65,7 +66,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         if (fullName.isEmpty && user?.email != null) {
           fullName = user!.email!.split('@')[0];
         }
-        
+
         // Ad ve Soyadı ayır
         String firstName = '';
         String lastName = '';
@@ -78,7 +79,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
             }
           }
         }
-        
+
         // Email: Firestore'dan, yoksa FirebaseAuth'tan
         String email = '';
         if (userData != null && userData['email'] != null) {
@@ -87,13 +88,13 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         if (email.isEmpty && user?.email != null) {
           email = user!.email!.trim();
         }
-        
+
         // Telefon: Firestore'dan
         String phone = '';
         if (userData != null && userData['phone'] != null) {
           phone = userData['phone'].toString().trim();
         }
-        
+
         // Telefon numarasını ülke kodu ve numara olarak ayır
         String countryCode = '+90';
         String phoneNumber = '';
@@ -108,7 +109,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
             phoneNumber = phone;
           }
         }
-        
+
         // Doğum tarihi
         int? day, month, year;
         if (userData != null && userData['birthDate'] != null) {
@@ -119,19 +120,19 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
             year = birthDate['year'] as int?;
           }
         }
-        
+
         // Kurumsal
         bool isCorporate = false;
         if (userData != null && userData['isCorporate'] != null) {
           isCorporate = userData['isCorporate'] as bool;
         }
-        
+
         // Profil fotoğrafı
         String? profileImageUrl;
         if (userData != null && userData['profileImageUrl'] != null) {
           profileImageUrl = userData['profileImageUrl'].toString();
         }
-        
+
         setState(() {
           _firstNameController.text = firstName;
           _lastNameController.text = lastName;
@@ -151,12 +152,13 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         // Hata durumunda FirebaseAuth'tan bilgileri al
         final user = _auth.currentUser;
         if (user != null) {
-          final fullName = user.displayName ?? 
-                          (user.email != null ? user.email!.split('@')[0] : '');
+          final fullName = user.displayName ??
+              (user.email != null ? user.email!.split('@')[0] : '');
           final parts = fullName.split(' ');
           setState(() {
             _firstNameController.text = parts.isNotEmpty ? parts.first : '';
-            _lastNameController.text = parts.length > 1 ? parts.sublist(1).join(' ') : '';
+            _lastNameController.text =
+                parts.length > 1 ? parts.sublist(1).join(' ') : '';
             _emailController.text = user.email ?? '';
             _phoneCountryCodeController.text = '+90';
             _phoneNumberController.text = '';
@@ -164,7 +166,8 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
           });
         } else {
           setState(() => _isLoading = false);
-          ErrorHandler.showError(context, 'Profil bilgileri yüklenirken hata: $e');
+          ErrorHandler.showError(
+              context, 'Profil bilgileri yüklenirken hata: $e');
         }
       }
     }
@@ -176,19 +179,21 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         ExternalImageStorageConfig.cloudinaryCloudName.isEmpty ||
         ExternalImageStorageConfig.cloudinaryCloudName == 'YOUR_CLOUD_NAME' ||
         ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset.isEmpty ||
-        ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset == 'YOUR_UPLOAD_PRESET') {
+        ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset ==
+            'YOUR_UPLOAD_PRESET') {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profil fotoğrafı yükleme özelliği şu anda kullanılamıyor. Cloudinary ayarları yapılandırılmalıdır.'),
-            backgroundColor: Colors.orange,
+          SnackBar(
+            content: Text(
+                'Profil fotoğrafı yükleme özelliği şu anda kullanılamıyor. Cloudinary ayarları yapılandırılmalıdır.'),
+            backgroundColor: AppDesignSystem.warning,
             duration: Duration(seconds: 3),
           ),
         );
       }
       return;
     }
-    
+
     try {
       // Web için özel kontrol
       if (kIsWeb) {
@@ -198,7 +203,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
           maxHeight: 800,
           imageQuality: 85,
         );
-        
+
         if (image != null) {
           // Önce crop ekranını göster
           final imageBytes = await image.readAsBytes();
@@ -227,7 +232,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
             ),
           ),
         );
-        
+
         if (source != null) {
           final XFile? image = await _picker.pickImage(
             source: source,
@@ -235,7 +240,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
             maxHeight: 800,
             imageQuality: 85,
           );
-          
+
           if (image != null) {
             // Önce crop ekranını göster
             final imageBytes = await image.readAsBytes();
@@ -248,28 +253,29 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         // Hata mesajını daha kullanıcı dostu yap
         String errorMessage = 'Profil fotoğrafı yüklenirken bir hata oluştu.';
         if (e.toString().contains('Cloudinary')) {
-          errorMessage = 'Cloudinary ayarları eksik. Lütfen yöneticiye başvurun.';
+          errorMessage =
+              'Cloudinary ayarları eksik. Lütfen yöneticiye başvurun.';
         } else if (e.toString().contains('boyutu')) {
           errorMessage = e.toString().replaceAll('Exception: ', '');
         } else {
           errorMessage = 'Bir hata oluştu. Lütfen tekrar deneyin.';
         }
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
-            backgroundColor: Colors.orange,
+            backgroundColor: AppDesignSystem.warning,
             duration: const Duration(seconds: 4),
           ),
         );
       }
     }
   }
-  
+
   /// Crop dialog'unu göster
   Future<void> _showCropDialog(Uint8List imageBytes) async {
     if (!mounted) return;
-    
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -283,13 +289,13 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
       ),
     );
   }
-  
+
   /// Crop edilmiş fotoğrafı yükle
   Future<void> _processAndUploadCroppedImage(Uint8List croppedBytes) async {
     try {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
                 SizedBox(
@@ -297,7 +303,9 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      AppDesignSystem.textOnPrimary,
+                    ),
                   ),
                 ),
                 SizedBox(width: 12),
@@ -308,10 +316,10 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
           ),
         );
       }
-      
+
       final user = _auth.currentUser;
       if (user == null) return;
-      
+
       if (croppedBytes.isEmpty) return;
 
       const maxSize = 3 * 1024 * 1024; // 3MB
@@ -323,42 +331,45 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
       if (!ExternalImageStorageConfig.enabled ||
           ExternalImageStorageConfig.cloudinaryCloudName == 'YOUR_CLOUD_NAME' ||
           ExternalImageStorageConfig.cloudinaryCloudName.isEmpty ||
-          ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset == 'YOUR_UPLOAD_PRESET' ||
+          ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset ==
+              'YOUR_UPLOAD_PRESET' ||
           ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset.isEmpty) {
-        throw Exception('Cloudinary ayarları eksik. Lütfen yöneticiye başvurun.');
+        throw Exception(
+            'Cloudinary ayarları eksik. Lütfen yöneticiye başvurun.');
       }
 
       // Cloudinary'ye yükle
       final external = ExternalImageUploadService();
       final url = await external.uploadImageBytes(
         bytes: croppedBytes,
-        fileName: 'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        fileName:
+            'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg',
         folder: ExternalImageStorageConfig.cloudinaryProfileFolder,
       );
-      
+
       if (mounted) {
         setState(() {
           _profileImageUrl = url;
         });
-        
+
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
+                Icon(Icons.check_circle, color: AppDesignSystem.textOnPrimary),
                 SizedBox(width: 8),
                 Text('Profil fotoğrafı başarıyla yüklendi!'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignSystem.success,
             duration: Duration(seconds: 2),
           ),
         );
-        
+
         // Profil bilgilerini kaydet
         await _saveProfileImageUrl(url);
-        
+
         // Hemen setState ile güncelle (hemen görünsün)
         if (mounted) {
           setState(() {
@@ -372,18 +383,20 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Hata: ${e.toString()}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppDesignSystem.error,
           ),
         );
       }
     }
   }
-  
+
   /// Sadece profil fotoğrafı URL'ini kaydet
   Future<void> _saveProfileImageUrl(String url) async {
     try {
       await _dataService.saveUserProfile(
-        fullName: '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim(),
+        fullName:
+            '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+                .trim(),
         username: '',
         email: _emailController.text.trim(),
         phone: null,
@@ -401,24 +414,28 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
 
     setState(() => _isSaving = true);
     try {
-      final fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'.trim();
+      final fullName =
+          '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}'
+              .trim();
       final phone = _phoneNumberController.text.trim().isNotEmpty
           ? '${_phoneCountryCodeController.text.trim()}${_phoneNumberController.text.trim()}'
           : null;
-      
+
       Map<String, dynamic>? birthDate;
-      if (_selectedDay != null && _selectedMonth != null && _selectedYear != null) {
+      if (_selectedDay != null &&
+          _selectedMonth != null &&
+          _selectedYear != null) {
         birthDate = {
           'day': _selectedDay,
           'month': _selectedMonth,
           'year': _selectedYear,
         };
       }
-      
+
       // Kullanıcı adını koru (varsa)
       final userData = await _dataService.getUserProfile();
       final existingUsername = userData?['username'] ?? '';
-      
+
       await _dataService.saveUserProfile(
         fullName: fullName,
         username: existingUsername.toString(),
@@ -426,7 +443,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
         phone: phone,
         profileImageUrl: _profileImageUrl,
       );
-      
+
       // Doğum tarihi ve kurumsal bilgisini kaydet
       final user = _auth.currentUser;
       if (user != null) {
@@ -441,9 +458,9 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Profil bilgileri başarıyla güncellendi!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignSystem.success,
           ),
         );
         Navigator.pop(context, true);
@@ -452,13 +469,14 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
       if (mounted) {
         // Hata mesajını daha anlaşılır hale getir
         String errorMessage = 'Profil güncellenirken hata oluştu: $e';
-        
-        if (e.toString().contains('operation-not-allowed') || 
+
+        if (e.toString().contains('operation-not-allowed') ||
             e.toString().contains('email-already-in-use') ||
             e.toString().contains('requires-recent-login')) {
-          errorMessage = 'E-posta değişikliği için doğrulama gereklidir. Profil bilgileriniz Firestore\'da güncellendi, ancak Firebase Authentication e-posta değişikliği için lütfen e-postanızı doğrulayın.';
+          errorMessage =
+              'E-posta değişikliği için doğrulama gereklidir. Profil bilgileriniz Firestore\'da güncellendi, ancak Firebase Authentication e-posta değişikliği için lütfen e-postanızı doğrulayın.';
         }
-        
+
         ErrorHandler.showError(
           context,
           errorMessage,
@@ -483,12 +501,25 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
 
   List<int> get _days => List.generate(31, (i) => i + 1);
   List<int> get _months => List.generate(12, (i) => i + 1);
-  List<int> get _years => List.generate(100, (i) => DateTime.now().year - 100 + i + 1).reversed.toList();
+  List<int> get _years =>
+      List.generate(100, (i) => DateTime.now().year - 100 + i + 1)
+          .reversed
+          .toList();
 
   String _getMonthName(int month) {
     const months = [
-      'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık'
     ];
     return months[month - 1];
   }
@@ -496,18 +527,18 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppDesignSystem.background,
       appBar: AppBar(
         title: const Text(
           'Kullanıcı Bilgilerim',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        backgroundColor: AppDesignSystem.surface,
+        foregroundColor: AppDesignSystem.textPrimary,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: AppDesignSystem.textPrimary),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          icon: Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
           onPressed: () {
             // Ana sayfaya yönlendir
             AppRoutes.navigateToMain(context);
@@ -526,7 +557,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
-                      color: Colors.white,
+                      color: AppDesignSystem.surfaceElevated,
                       child: Column(
                         children: [
                           // Profil fotoğrafı
@@ -534,15 +565,16 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             children: [
                               CircleAvatar(
                                 radius: 50,
-                                backgroundColor: Colors.grey[200],
-                                backgroundImage: (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+                                backgroundColor: AppDesignSystem.borderLight,
+                                backgroundImage: (_profileImageUrl != null &&
+                                        _profileImageUrl!.isNotEmpty)
                                     ? NetworkImage(_profileImageUrl!)
                                     : null,
                                 child: _profileImageUrl == null
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.person,
                                         size: 50,
-                                        color: Colors.grey,
+                                        color: AppDesignSystem.textTertiary,
                                       )
                                     : null,
                               ),
@@ -552,28 +584,47 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                 right: 0,
                                 child: GestureDetector(
                                   onTap: (ExternalImageStorageConfig.enabled &&
-                                          ExternalImageStorageConfig.cloudinaryCloudName.isNotEmpty &&
-                                          ExternalImageStorageConfig.cloudinaryCloudName != 'YOUR_CLOUD_NAME' &&
-                                          ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset.isNotEmpty &&
-                                          ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset != 'YOUR_UPLOAD_PRESET')
+                                          ExternalImageStorageConfig
+                                              .cloudinaryCloudName.isNotEmpty &&
+                                          ExternalImageStorageConfig
+                                                  .cloudinaryCloudName !=
+                                              'YOUR_CLOUD_NAME' &&
+                                          ExternalImageStorageConfig
+                                              .cloudinaryUnsignedUploadPreset
+                                              .isNotEmpty &&
+                                          ExternalImageStorageConfig
+                                                  .cloudinaryUnsignedUploadPreset !=
+                                              'YOUR_UPLOAD_PRESET')
                                       ? _pickProfileImage
                                       : null,
                                   child: Container(
                                     padding: const EdgeInsets.all(6),
                                     decoration: BoxDecoration(
-                                      color: (ExternalImageStorageConfig.enabled &&
-                                              ExternalImageStorageConfig.cloudinaryCloudName.isNotEmpty &&
-                                              ExternalImageStorageConfig.cloudinaryCloudName != 'YOUR_CLOUD_NAME' &&
-                                              ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset.isNotEmpty &&
-                                              ExternalImageStorageConfig.cloudinaryUnsignedUploadPreset != 'YOUR_UPLOAD_PRESET')
-                                          ? const Color(0xFFF27A1A)
-                                          : Colors.grey[400],
+                                      color: (ExternalImageStorageConfig
+                                                  .enabled &&
+                                              ExternalImageStorageConfig
+                                                  .cloudinaryCloudName
+                                                  .isNotEmpty &&
+                                              ExternalImageStorageConfig
+                                                      .cloudinaryCloudName !=
+                                                  'YOUR_CLOUD_NAME' &&
+                                              ExternalImageStorageConfig
+                                                  .cloudinaryUnsignedUploadPreset
+                                                  .isNotEmpty &&
+                                              ExternalImageStorageConfig
+                                                      .cloudinaryUnsignedUploadPreset !=
+                                                  'YOUR_UPLOAD_PRESET')
+                                          ? AppColors.brandOrange
+                                          : AppDesignSystem.textTertiary,
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(
+                                        color: AppDesignSystem.surfaceElevated,
+                                        width: 2,
+                                      ),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.camera_alt,
-                                      color: Colors.white,
+                                      color: AppDesignSystem.textOnPrimary,
                                       size: 18,
                                     ),
                                   ),
@@ -587,19 +638,19 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             style: GoogleFonts.inter(
                               fontSize: 20,
                               fontWeight: FontWeight.w600,
-                              color: Colors.black87,
+                              color: AppDesignSystem.textPrimary,
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 1),
-                    
+
                     // Form içeriği
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(20),
-                      color: Colors.white,
+                      color: AppDesignSystem.surfaceElevated,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -609,7 +660,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color: AppDesignSystem.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -619,19 +670,23 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                               hintText: 'Adınızı girin',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                borderSide: const BorderSide(
+                                    color: AppColors.brandOrange),
                               ),
                               filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                              fillColor: AppDesignSystem.surfaceElevated,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 16),
                             ),
                             style: GoogleFonts.inter(fontSize: 14),
                             validator: (value) {
@@ -642,14 +697,14 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             },
                           ),
                           const SizedBox(height: 20),
-                          
+
                           // Soyadı
                           Text(
                             'Soyadı',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color: AppDesignSystem.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -659,19 +714,23 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                               hintText: 'Soyadınızı girin',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                borderSide: BorderSide(color: Colors.grey[300]!),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(4),
-                                borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                borderSide: const BorderSide(
+                                    color: AppColors.brandOrange),
                               ),
                               filled: true,
-                              fillColor: Colors.white,
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                              fillColor: AppDesignSystem.surfaceElevated,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 16),
                             ),
                             style: GoogleFonts.inter(fontSize: 14),
                             validator: (value) {
@@ -682,67 +741,73 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             },
                           ),
                           const SizedBox(height: 20),
-                          
-                           // E-posta Adresi - Sadece görüntüleme (düzenlenemez)
-                           Text(
-                             'E-posta Adresi',
-                             style: GoogleFonts.inter(
-                               fontSize: 14,
-                               fontWeight: FontWeight.w500,
-                               color: Colors.black87,
-                             ),
-                           ),
-                           const SizedBox(height: 8),
-                           TextFormField(
-                             controller: _emailController,
-                             enabled: false, // Düzenlenemez
-                             keyboardType: TextInputType.emailAddress,
-                             decoration: InputDecoration(
-                               hintText: 'E-posta adresiniz',
-                               border: OutlineInputBorder(
-                                 borderRadius: BorderRadius.circular(4),
-                                 borderSide: BorderSide(color: Colors.grey[300]!),
-                               ),
-                               enabledBorder: OutlineInputBorder(
-                                 borderRadius: BorderRadius.circular(4),
-                                 borderSide: BorderSide(color: Colors.grey[300]!),
-                               ),
-                               disabledBorder: OutlineInputBorder(
-                                 borderRadius: BorderRadius.circular(4),
-                                 borderSide: BorderSide(color: Colors.grey[300]!),
-                               ),
-                               filled: true,
-                               fillColor: Colors.grey[100], // Disabled görünümü
-                               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                               suffixIcon: Icon(
-                                 Icons.lock_outline,
-                                 size: 18,
-                                 color: Colors.grey[600],
-                               ),
-                             ),
-                             style: GoogleFonts.inter(
-                               fontSize: 14,
-                               color: Colors.grey[700], // Disabled text rengi
-                             ),
-                           ),
-                           const SizedBox(height: 4),
-                           Text(
-                             'E-posta adresi güvenlik nedeniyle değiştirilemez',
-                             style: GoogleFonts.inter(
-                               fontSize: 12,
-                               color: Colors.grey[600],
-                               fontStyle: FontStyle.italic,
-                             ),
-                           ),
+
+                          // E-posta Adresi - Sadece görüntüleme (düzenlenemez)
+                          Text(
+                            'E-posta Adresi',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppDesignSystem.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: _emailController,
+                            enabled: false, // Düzenlenemez
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintText: 'E-posta adresiniz',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
+                              ),
+                              disabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderMedium),
+                              ),
+                              filled: true,
+                              fillColor: AppDesignSystem
+                                  .surfaceVariant, // Disabled görünümü
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 16),
+                              suffixIcon: Icon(
+                                Icons.lock_outline,
+                                size: 18,
+                                color: AppDesignSystem.textSecondary,
+                              ),
+                            ),
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              color: AppDesignSystem
+                                  .textPrimary, // Disabled text rengi
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'E-posta adresi güvenlik nedeniyle değiştirilemez',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: AppDesignSystem.textSecondary,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                           const SizedBox(height: 20),
-                          
+
                           // Cep Telefonu
                           Text(
                             'Cep Telefonu',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color: AppDesignSystem.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -757,19 +822,23 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                     hintText: '+90',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandOrange),
                                     ),
                                     filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+                                    fillColor: AppDesignSystem.surfaceElevated,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 16),
                                   ),
                                   style: GoogleFonts.inter(fontSize: 14),
                                   keyboardType: TextInputType.phone,
@@ -785,19 +854,23 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                     hintText: '5XX XXX XX XX',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandOrange),
                                     ),
                                     filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    fillColor: AppDesignSystem.surfaceElevated,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 16),
                                   ),
                                   style: GoogleFonts.inter(fontSize: 14),
                                 ),
@@ -805,14 +878,14 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          
+
                           // Doğum Tarihi
                           Text(
                             'Doğum Tarihi',
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: Colors.black87,
+                              color: AppDesignSystem.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -826,24 +899,30 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                     hintText: 'Gün',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandOrange),
                                     ),
                                     filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    fillColor: AppDesignSystem.surfaceElevated,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 16),
                                   ),
                                   items: _days.map((day) {
                                     return DropdownMenuItem<int>(
                                       value: day,
-                                      child: Text('$day', style: GoogleFonts.inter(fontSize: 14)),
+                                      child: Text('$day',
+                                          style:
+                                              GoogleFonts.inter(fontSize: 14)),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
@@ -860,24 +939,30 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                     hintText: 'Ay',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandOrange),
                                     ),
                                     filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    fillColor: AppDesignSystem.surfaceElevated,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 16),
                                   ),
                                   items: _months.map((month) {
                                     return DropdownMenuItem<int>(
                                       value: month,
-                                      child: Text(_getMonthName(month), style: GoogleFonts.inter(fontSize: 14)),
+                                      child: Text(_getMonthName(month),
+                                          style:
+                                              GoogleFonts.inter(fontSize: 14)),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
@@ -894,24 +979,30 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                     hintText: 'Yıl',
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     enabledBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: BorderSide(color: Colors.grey[300]!),
+                                      borderSide: BorderSide(
+                                          color: AppDesignSystem.borderMedium),
                                     ),
                                     focusedBorder: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(4),
-                                      borderSide: const BorderSide(color: Color(0xFFF27A1A)),
+                                      borderSide: const BorderSide(
+                                          color: AppColors.brandOrange),
                                     ),
                                     filled: true,
-                                    fillColor: Colors.white,
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                    fillColor: AppDesignSystem.surfaceElevated,
+                                    contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 16),
                                   ),
                                   items: _years.map((year) {
                                     return DropdownMenuItem<int>(
                                       value: year,
-                                      child: Text('$year', style: GoogleFonts.inter(fontSize: 14)),
+                                      child: Text('$year',
+                                          style:
+                                              GoogleFonts.inter(fontSize: 14)),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
@@ -922,7 +1013,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          
+
                           // Kurumsal checkbox
                           Row(
                             children: [
@@ -931,21 +1022,21 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                 onChanged: (value) {
                                   setState(() => _isCorporate = value ?? false);
                                 },
-                                activeColor: const Color(0xFFF27A1A),
+                                activeColor: AppColors.brandOrange,
                               ),
                               Expanded(
                                 child: Text(
                                   'İşyeri alışverişlerim için fırsatlardan haberdar olmak istiyorum.',
                                   style: GoogleFonts.inter(
                                     fontSize: 14,
-                                    color: Colors.black87,
+                                    color: AppDesignSystem.textPrimary,
                                   ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 32),
-                          
+
                           // Güncelle Butonu
                           SizedBox(
                             width: double.infinity,
@@ -953,20 +1044,23 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             child: ElevatedButton(
                               onPressed: _isSaving ? null : _saveProfile,
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.grey[300],
-                                foregroundColor: Colors.black87,
+                                backgroundColor: AppDesignSystem.borderMedium,
+                                foregroundColor: AppDesignSystem.textPrimary,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 elevation: 0,
                               ),
                               child: _isSaving
-                                  ? const SizedBox(
+                                  ? SizedBox(
                                       height: 20,
                                       width: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black87),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                          AppDesignSystem.textPrimary,
+                                        ),
                                       ),
                                     )
                                   : Text(
@@ -979,7 +1073,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Hesabımı Kapat
                           Align(
                             alignment: Alignment.centerRight,
@@ -990,7 +1084,8 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Hesabımı Kapat'),
-                                    content: const Text('Hesabınızı kapatmak istediğinizden emin misiniz? Bu işlem geri alınamaz.'),
+                                    content: const Text(
+                                        'Hesabınızı kapatmak istediğinizden emin misiniz? Bu işlem geri alınamaz.'),
                                     actions: [
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
@@ -1001,7 +1096,12 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                           Navigator.pop(context);
                                           await _deleteAccount();
                                         },
-                                        child: const Text('Kapat', style: TextStyle(color: Colors.red)),
+                                        child: Text(
+                                          'Kapat',
+                                          style: TextStyle(
+                                            color: AppDesignSystem.error,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1011,7 +1111,7 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
                                 'Hesabımı Kapat',
                                 style: GoogleFonts.inter(
                                   fontSize: 14,
-                                  color: Colors.grey[600],
+                                  color: AppDesignSystem.textSecondary,
                                   decoration: TextDecoration.underline,
                                 ),
                               ),
@@ -1043,7 +1143,10 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sil', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Sil',
+              style: TextStyle(color: AppDesignSystem.error),
+            ),
           ),
         ],
       ),
@@ -1067,15 +1170,16 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
       await _userAuthService.deleteAccount();
 
       if (!mounted) return;
-      
+
       // Loading dialogunu kapat
       Navigator.pop(context);
-      
+
       // Başarı mesajı göster
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hesabınız başarıyla silindi. E-postanız artık kullanılabilir.'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Text(
+              'Hesabınız başarıyla silindi. E-postanız artık kullanılabilir.'),
+          backgroundColor: AppDesignSystem.success,
           duration: Duration(seconds: 3),
         ),
       );
@@ -1089,22 +1193,23 @@ class _ProfilDuzenlemeSayfasiState extends State<ProfilDuzenlemeSayfasi> {
       }
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
-      
+
       // Loading dialogunu kapat
       Navigator.pop(context);
-      
+
       String errorMessage = 'Hesap silinirken bir hata oluştu.';
       if (e.code == 'requires-recent-login') {
-        errorMessage = 'Güvenlik nedeniyle lütfen tekrar giriş yapın ve işlemi tekrar deneyin.';
+        errorMessage =
+            'Güvenlik nedeniyle lütfen tekrar giriş yapın ve işlemi tekrar deneyin.';
       }
-      
+
       ErrorHandler.showError(context, errorMessage);
     } catch (e) {
       if (!mounted) return;
-      
+
       // Loading dialogunu kapat
       Navigator.pop(context);
-      
+
       ErrorHandler.showError(
         context,
         'Hesap silinirken bir hata oluştu: $e',

@@ -9,6 +9,7 @@ import '../model/product.dart';
 import '../services/review_service.dart';
 import '../widgets/optimized_image.dart';
 import '../config/app_routes.dart';
+import '../theme/app_design_system.dart';
 import '../utils/responsive_helper.dart';
 
 class SiparisDetaySayfasi extends StatefulWidget {
@@ -38,16 +39,16 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
     final status = widget.order.status.toLowerCase();
     setState(() {
       _canReview = widget.order.products.isNotEmpty &&
-                   (status == 'delivered' || 
-                    status == 'teslim edildi' || 
-                    status == 'confirmed' || 
-                    status == 'onaylandı');
+          (status == 'delivered' ||
+              status == 'teslim edildi' ||
+              status == 'confirmed' ||
+              status == 'onaylandı');
     });
   }
 
   Future<void> _loadProductReviews() async {
     if (!_canReview) return;
-    
+
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
@@ -62,9 +63,10 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
         setState(() {
           _isLoadingReviews[product.id] = true;
         });
-        
-        final review = await ReviewService.getUserReviewForProduct(product.id, user.uid);
-        
+
+        final review =
+            await ReviewService.getUserReviewForProduct(product.id, user.uid);
+
         if (mounted) {
           setState(() {
             _productReviews[product.id] = review;
@@ -84,7 +86,7 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
 
   Future<void> _navigateToReviewPage(Product product) async {
     if (!mounted) return;
-    
+
     // Ürün detay sayfasına git - forceHasPurchased = true ile
     // Böylece direkt yorum yapma formu görünecek
     try {
@@ -98,9 +100,9 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
       debugPrint('✗ Ürün detay sayfasına gidilemedi: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('Ürün detay sayfası açılamadı'),
-            backgroundColor: Colors.red,
+            backgroundColor: context.appTheme.error,
           ),
         );
       }
@@ -109,25 +111,27 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appTheme;
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text(
           'Sipariş #${widget.order.id}',
           style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w700,
-            color: const Color(0xFF1A1A1A),
+            color: colors.textPrimary,
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: colors.navSurface,
+        foregroundColor: colors.textPrimary,
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor:
+            colors.shadow.withValues(alpha: colors.isDark ? 0.28 : 0.05),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A1A)),
+          icon: Icon(Icons.arrow_back, color: colors.textPrimary),
           onPressed: () {
             // Ana sayfaya yönlendir
             AppRoutes.navigateToMain(context);
@@ -136,233 +140,252 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
       ),
       body: SafeArea(
         child: Container(
-          color: const Color(0xFFF8F9FA),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Sipariş durumu kartı
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: LinearGradient(
-                      colors: [Colors.white, Colors.orange[50]!],
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Sipariş Durumu',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: _getStatusColor(widget.order.status),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              widget.order.statusText,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
+          color: colors.background,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Sipariş durumu kartı
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          colors.surfaceElevated,
+                          AppDesignSystem.warningLight
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        'Sipariş Tarihi: ${_formatDate(widget.order.orderDate)}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      GestureDetector(
-                        onTap: () async {
-                          await Clipboard.setData(ClipboardData(text: widget.order.id));
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Row(
-                                  children: [
-                                    Icon(Icons.check_circle, color: Colors.white, size: 20),
-                                    SizedBox(width: 8),
-                                    Text('Sipariş numarası kopyalandı!'),
-                                  ],
-                                ),
-                                backgroundColor: Colors.green,
-                                duration: const Duration(seconds: 2),
-                                behavior: SnackBarBehavior.floating,
-                              ),
-                            );
-                          }
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              'Sipariş No: #${widget.order.id}',
+                              'Sipariş Durumu',
                               style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Icon(Icons.copy, size: 16, color: Colors.grey[600]),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _getStatusColor(widget.order.status),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                widget.order.statusText,
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Müşteri bilgileri
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: LinearGradient(
-                      colors: [Colors.white, Colors.blue[50]!],
+                        const SizedBox(height: 12),
+                        Text(
+                          'Sipariş Tarihi: ${_formatDate(widget.order.orderDate)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        GestureDetector(
+                          onTap: () async {
+                            await Clipboard.setData(
+                                ClipboardData(text: widget.order.id));
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Row(
+                                    children: [
+                                      Icon(Icons.check_circle,
+                                          color: AppColors.white, size: 20),
+                                      SizedBox(width: 8),
+                                      Text('Sipariş numarası kopyalandı!'),
+                                    ],
+                                  ),
+                                  backgroundColor: colors.success,
+                                  duration: const Duration(seconds: 2),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
+                              );
+                            }
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'Sipariş No: #${widget.order.id}',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: colors.textSecondary,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Icon(Icons.copy,
+                                  size: 16, color: colors.textSecondary),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Müşteri Bilgileri',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildInfoRow('Ad Soyad', widget.order.customerName),
-                      _buildInfoRow('E-posta', widget.order.customerEmail),
-                      _buildInfoRow('Teslimat Adresi', widget.order.shippingAddress),
-                    ],
-                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              
-              // Ürünler listesi
-              Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: LinearGradient(
-                      colors: [Colors.white, Colors.green[50]!],
+                const SizedBox(height: 16),
+
+                // Müşteri bilgileri
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          colors.surfaceElevated,
+                          AppDesignSystem.infoLight
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Müşteri Bilgileri',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildInfoRow('Ad Soyad', widget.order.customerName),
+                        _buildInfoRow('E-posta', widget.order.customerEmail),
+                        _buildInfoRow(
+                            'Teslimat Adresi', widget.order.shippingAddress),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Sipariş Detayları',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[800],
+                ),
+                const SizedBox(height: 16),
+
+                // Ürünler listesi
+                Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      gradient: LinearGradient(
+                        colors: [
+                          colors.surfaceElevated,
+                          AppDesignSystem.successLight
+                        ],
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Sipariş Detayları',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: colors.textPrimary,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      if (widget.order.products.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Center(
-                            child: Text(
-                              'Bu siparişte ürün bulunamadı',
-                              style: TextStyle(color: Colors.grey[600]),
+                        const SizedBox(height: 12),
+                        if (widget.order.products.isEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(
+                              child: Text(
+                                'Bu siparişte ürün bulunamadı',
+                                style: TextStyle(color: colors.textSecondary),
+                              ),
                             ),
-                          ),
-                        )
-                      else
-                        ...widget.order.products.map((product) => _buildProductItem(product)),
-                      const SizedBox(height: 16),
-                      const Divider(),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Toplam Ürün:',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.grey[700],
+                          )
+                        else
+                          ...widget.order.products
+                              .map((product) => _buildProductItem(product)),
+                        const SizedBox(height: 16),
+                        const Divider(),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Toplam Ürün:',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: colors.textSecondary,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${widget.order.totalItems} adet',
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                            Text(
+                              '${widget.order.totalItems} adet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colors.success,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'Toplam Tutar:',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.grey[800],
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Toplam Tutar:',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: colors.textPrimary,
+                              ),
                             ),
-                          ),
-                          Text(
-                            '${widget.order.totalAmount.toStringAsFixed(2)} TL',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                            Text(
+                              '${widget.order.totalAmount.toStringAsFixed(2)} TL',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: colors.success,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
         ),
       ),
     );
   }
 
   Widget _buildInfoRow(String label, String value) {
+    final colors = context.appTheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -375,16 +398,16 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[700],
+                color: colors.textSecondary,
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Colors.black87,
+                color: colors.textPrimary,
               ),
             ),
           ),
@@ -394,16 +417,17 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
   }
 
   Widget _buildProductItem(Product product) {
+    final colors = context.appTheme;
     final hasReview = _productReviews[product.id] != null;
     final isLoading = _isLoadingReviews[product.id] ?? false;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: colors.surfaceInteractive,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
+        border: Border.all(color: colors.borderSubtle),
       ),
       child: Column(
         children: [
@@ -433,7 +457,7 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
                     Text(
                       '${product.price.toStringAsFixed(2)} TL',
                       style: TextStyle(
-                        color: Colors.green[700],
+                        color: colors.success,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -442,7 +466,7 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
                     Text(
                       'Miktar: ${product.quantity}',
                       style: TextStyle(
-                        color: Colors.grey[600],
+                        color: colors.textSecondary,
                         fontSize: 12,
                       ),
                     ),
@@ -454,10 +478,10 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
                 children: [
                   Text(
                     '${product.totalPrice.toStringAsFixed(2)} TL',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
-                      color: Colors.green,
+                      color: colors.success,
                     ),
                   ),
                 ],
@@ -477,23 +501,26 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
             else if (hasReview)
               Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green[600], size: 18),
+                  Icon(Icons.check_circle, color: colors.success, size: 18),
                   const SizedBox(width: 6),
                   Text(
                     'Yorumunuz paylaşıldı',
                     style: TextStyle(
-                      color: Colors.green[700],
+                      color: colors.success,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 12.0)),
+                  SizedBox(
+                      width: ResponsiveHelper.responsiveSpacing(context,
+                          mobile: 8.0, desktop: 12.0)),
                   TextButton.icon(
                     onPressed: () => _navigateToReviewPage(product),
                     icon: const Icon(Icons.visibility, size: 16),
                     label: const Text('Yorumunu Gör'),
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
@@ -508,8 +535,8 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
                   icon: const Icon(Icons.rate_review, size: 16),
                   label: const Text('Yorum Yap'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue[600],
-                    foregroundColor: Colors.white,
+                    backgroundColor: colors.accent,
+                    foregroundColor: colors.textInverse,
                     padding: const EdgeInsets.symmetric(vertical: 8),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(6),
@@ -524,19 +551,20 @@ class _SiparisDetaySayfasiState extends State<SiparisDetaySayfasi> {
   }
 
   Color _getStatusColor(String status) {
+    final colors = context.appTheme;
     switch (status.toLowerCase()) {
       case 'pending':
-        return Colors.orange;
+        return colors.warning;
       case 'confirmed':
-        return Colors.blue;
+        return colors.accent;
       case 'shipped':
-        return Colors.purple;
+        return colors.accentSecondary;
       case 'delivered':
-        return Colors.green;
+        return colors.success;
       case 'cancelled':
-        return Colors.red;
+        return colors.error;
       default:
-        return Colors.grey;
+        return colors.textMuted;
     }
   }
 

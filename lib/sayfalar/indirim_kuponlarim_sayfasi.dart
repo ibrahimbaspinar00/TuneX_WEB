@@ -60,7 +60,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
     final isDesktop = screenWidth >= 1200;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: const Color(0xFF0B0D10),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -98,7 +98,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: const Color(0xFFE8E8E8),
+                        color: const Color(0xFF2A3340),
                         width: 1,
                       ),
                     ),
@@ -122,28 +122,28 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                                   hintText: 'Kupon kodunu girin',
                                   hintStyle: GoogleFonts.inter(
                                     fontSize: 14,
-                                    color: const Color(0xFF9CA3AF),
+                                    color: const Color(0xFF8E98A8),
                                   ),
                                   filled: true,
-                                  fillColor: const Color(0xFFFAFBFC),
+                                  fillColor: const Color(0xFF0B0D10),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(
-                                      color: const Color(0xFFE8E8E8),
+                                      color: const Color(0xFF2A3340),
                                       width: 1,
                                     ),
                                   ),
                                   enabledBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(
-                                      color: const Color(0xFFE8E8E8),
+                                      color: const Color(0xFF2A3340),
                                       width: 1,
                                     ),
                                   ),
                                   focusedBorder: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(8),
                                     borderSide: BorderSide(
-                                      color: const Color(0xFFFF6000),
+                                      color: const Color(0xFFFF6A00),
                                       width: 2,
                                     ),
                                   ),
@@ -160,7 +160,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                                 // Kupon ekleme işlemi
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6000),
+                                backgroundColor: const Color(0xFFFF6A00),
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 24,
@@ -212,8 +212,8 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isUsed || isExpired
-              ? const Color(0xFFE8E8E8)
-              : const Color(0xFFFF6000),
+              ? const Color(0xFF2A3340)
+              : const Color(0xFFFF6A00),
           width: 2,
         ),
       ),
@@ -237,7 +237,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                   decoration: BoxDecoration(
                     color: isUsed || isExpired
                         ? Colors.grey[200]
-                        : const Color(0xFFFF6000).withOpacity(0.1),
+                        : const Color(0xFFFF6A00).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Column(
@@ -251,7 +251,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                             fontWeight: FontWeight.w700,
                             color: isUsed || isExpired
                                 ? Colors.grey[600]
-                                : const Color(0xFFFF6000),
+                                : const Color(0xFFFF6A00),
                           ),
                         )
                       else
@@ -260,7 +260,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                           size: 32,
                           color: isUsed || isExpired
                               ? Colors.grey[600]
-                              : const Color(0xFFFF6000),
+                              : const Color(0xFFFF6A00),
                         ),
                       if (coupon['type'] == 'shipping')
                         Text(
@@ -270,7 +270,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                             fontWeight: FontWeight.w600,
                             color: isUsed || isExpired
                                 ? Colors.grey[600]
-                                : const Color(0xFFFF6000),
+                                : const Color(0xFFFF6A00),
                           ),
                         ),
                     ],
@@ -297,7 +297,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                         coupon['description'] as String,
                         style: GoogleFonts.inter(
                           fontSize: 14,
-                          color: const Color(0xFF6A6A6A),
+                          color: const Color(0xFFC7CDD6),
                         ),
                       ),
                       if (coupon['minPurchase'] > 0) ...[
@@ -306,7 +306,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                           'Min. ${coupon['minPurchase']}₺ alışveriş',
                           style: GoogleFonts.inter(
                             fontSize: 12,
-                            color: const Color(0xFF9CA3AF),
+                            color: const Color(0xFF8E98A8),
                           ),
                         ),
                       ],
@@ -318,7 +318,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                             size: 14,
                             color: isExpired
                                 ? Colors.red[400]
-                                : const Color(0xFF6A6A6A),
+                                : const Color(0xFFC7CDD6),
                           ),
                           const SizedBox(width: 4),
                           Text(
@@ -331,7 +331,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                               fontSize: 12,
                               color: isExpired
                                   ? Colors.red[400]
-                                  : const Color(0xFF6A6A6A),
+                                  : const Color(0xFFC7CDD6),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -346,7 +346,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                   decoration: BoxDecoration(
                     color: isUsed || isExpired
                         ? Colors.grey[200]
-                        : const Color(0xFFFF6000).withOpacity(0.1),
+                        : const Color(0xFFFF6A00).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Column(
@@ -358,7 +358,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                           fontWeight: FontWeight.w600,
                           color: isUsed || isExpired
                               ? Colors.grey[600]
-                              : const Color(0xFFFF6000),
+                              : const Color(0xFFFF6A00),
                           letterSpacing: 1,
                         ),
                       ),
@@ -370,7 +370,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
                           fontWeight: FontWeight.w700,
                           color: isUsed || isExpired
                               ? Colors.grey[600]
-                              : const Color(0xFFFF6000),
+                              : const Color(0xFFFF6A00),
                         ),
                       ),
                     ],
@@ -438,7 +438,7 @@ class _IndirimKuponlarimSayfasiState extends State<IndirimKuponlarimSayfasi> {
               'Kampanyalardan haberdar olmak için bildirimleri açın',
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
               textAlign: TextAlign.center,
             ),

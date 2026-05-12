@@ -72,7 +72,7 @@ class _SaticiMesajlarimSayfasiState extends State<SaticiMesajlarimSayfasi> {
               'Satıcılarla mesajlaşmak için sipariş verdiğiniz ürünlerden birini seçin',
               style: GoogleFonts.inter(
                 fontSize: 14,
-                color: const Color(0xFF6A6A6A),
+                color: const Color(0xFFC7CDD6),
               ),
               textAlign: TextAlign.center,
             ),

@@ -112,7 +112,7 @@ class _AdresYonetimiSayfasiState extends State<AdresYonetimiSayfasi> {
   Widget build(BuildContext context) {
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFF0B0D10),
       appBar: AppBar(
         title: Text(
           'Adreslerim',
@@ -136,7 +136,7 @@ class _AdresYonetimiSayfasiState extends State<AdresYonetimiSayfasi> {
         ),
       ),
       body: Container(
-        color: const Color(0xFFF8F9FA),
+        color: const Color(0xFF0B0D10),
         child: SafeArea(
           child: Column(
             children: [

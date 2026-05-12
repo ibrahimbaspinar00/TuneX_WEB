@@ -16,7 +16,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
     final isDesktop = screenWidth >= 1200;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: const Color(0xFF0B0D10),
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -52,7 +52,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    const Color(0xFFFF6000),
+                    const Color(0xFFFF6A00),
                     const Color(0xFFFF8C42),
                   ],
                   begin: Alignment.topLeft,
@@ -121,7 +121,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
               title: 'Taksitli Alışveriş',
               description: '3-12 ay arası taksit seçenekleri',
               icon: Icons.credit_card,
-              color: const Color(0xFF3B82F6),
+              color: const Color(0xFF00D1FF),
               onTap: () {
                 _showCreditInfoDialog(
                   title: 'Taksitli Alışveriş',
@@ -134,7 +134,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
               title: 'Hızlı Kredi',
               description: 'Anında onay, hızlı çözüm',
               icon: Icons.flash_on,
-              color: const Color(0xFF10B981),
+              color: const Color(0xFF18C964),
               onTap: () {
                 _showCreditInfoDialog(
                   title: 'Hızlı Kredi',
@@ -163,7 +163,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFE8E8E8),
+                  color: const Color(0xFF2A3340),
                   width: 1,
                 ),
               ),
@@ -174,7 +174,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
                     children: [
                       Icon(
                         Icons.info_outline,
-                        color: const Color(0xFF3B82F6),
+                        color: const Color(0xFF00D1FF),
                         size: 24,
                       ),
                       const SizedBox(width: 12),
@@ -221,7 +221,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: const Color(0xFFE8E8E8),
+            color: const Color(0xFF2A3340),
             width: 1,
           ),
         ),
@@ -257,7 +257,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
                     description,
                     style: GoogleFonts.inter(
                       fontSize: 14,
-                      color: const Color(0xFF6A6A6A),
+                      color: const Color(0xFFC7CDD6),
                     ),
                   ),
                 ],
@@ -283,7 +283,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: const Color(0xFF3B82F6),
+            color: const Color(0xFF00D1FF),
             shape: BoxShape.circle,
           ),
         ),
@@ -293,7 +293,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
             text,
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: const Color(0xFF6A6A6A),
+              color: const Color(0xFFC7CDD6),
               height: 1.5,
             ),
           ),
@@ -321,7 +321,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
           description,
           style: GoogleFonts.inter(
             fontSize: 14,
-            color: const Color(0xFF6A6A6A),
+            color: const Color(0xFFC7CDD6),
             height: 1.5,
           ),
         ),
@@ -333,7 +333,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
               style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFFF6000),
+                color: const Color(0xFFFF6A00),
               ),
             ),
           ),
@@ -343,7 +343,7 @@ class _KredilerSayfasiState extends State<KredilerSayfasi> {
               // Kredi başvurusu sayfasına yönlendirilebilir
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6000),
+              backgroundColor: const Color(0xFFFF6A00),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

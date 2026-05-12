@@ -4,7 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb, debugPrint;
 import '../model/notification.dart';
 // Web'de flutter_local_notifications kullanılmaz - conditional import
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     if (dart.library.html) '../services/flutter_local_notifications_stub.dart';
 // Web'de firebase_messaging kullanılmaz - conditional import
 import 'firebase_messaging_stub.dart'
@@ -28,7 +28,7 @@ class NotificationService {
 
   String? _fcmToken;
   bool _isInitialized = false;
-  
+
   // Stream subscriptions for memory leak prevention
   StreamSubscription<RemoteMessage>? _foregroundMessageSubscription;
   StreamSubscription<RemoteMessage>? _messageOpenedSubscription;
@@ -36,13 +36,15 @@ class NotificationService {
   /// Servisi başlat
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     // Web'de bazı özellikler çalışmaz
     if (kIsWeb) {
       try {
         await _getFCMToken();
-        _foregroundMessageSubscription = _messaging.onMessage.listen(_handleForegroundMessage);
-        _messageOpenedSubscription = _messaging.onMessageOpenedApp.listen(_handleNotificationTap);
+        _foregroundMessageSubscription =
+            FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+        _messageOpenedSubscription =
+            FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
         _isInitialized = true;
         debugPrint('✅ NotificationService (Web) başlatıldı');
       } catch (e) {
@@ -50,29 +52,33 @@ class NotificationService {
       }
       return;
     }
-    
+
     try {
       // İzinleri kontrol et ve iste
       await _requestPermissions();
-      
+
       // FCM token al
       await _getFCMToken();
-      
+
       // Local notifications ayarla
       await _setupLocalNotifications();
-      
+
       // Background message handler
-      _messaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-      
+      FirebaseMessaging.onBackgroundMessage(
+          _firebaseMessagingBackgroundHandler);
+
       // Foreground message handler
       // Memory leak önleme: Subscription'ları kaydet
-      _foregroundMessageSubscription?.cancel(); // Önceki subscription'ı iptal et
-      _foregroundMessageSubscription = _messaging.onMessage.listen(_handleForegroundMessage);
-      
+      _foregroundMessageSubscription
+          ?.cancel(); // Önceki subscription'ı iptal et
+      _foregroundMessageSubscription =
+          FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+
       // Notification tap handler
       _messageOpenedSubscription?.cancel(); // Önceki subscription'ı iptal et
-      _messageOpenedSubscription = _messaging.onMessageOpenedApp.listen(_handleNotificationTap);
-      
+      _messageOpenedSubscription =
+          FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
       _isInitialized = true;
       debugPrint('✅ NotificationService başlatıldı');
     } catch (e) {
@@ -95,7 +101,7 @@ class NotificationService {
     try {
       _fcmToken = await _messaging.getToken();
       print('📱 FCM Token: $_fcmToken');
-      
+
       // Token'ı Firestore'a kaydet
       if (_auth.currentUser != null && _fcmToken != null) {
         await _saveTokenToFirestore(_fcmToken!);
@@ -110,10 +116,7 @@ class NotificationService {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .update({
+        await _firestore.collection('users').doc(user.uid).update({
           'fcmToken': token,
           'lastTokenUpdate': FieldValue.serverTimestamp(),
         });
@@ -146,13 +149,13 @@ class NotificationService {
   /// Foreground message handler
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('📨 Foreground message alındı: ${message.messageId}');
-    
+
     // Web'de local notifications yok, sadece Firestore'a kaydet
     if (kIsWeb) {
       debugPrint('⚠️ Web\'de local notifications desteklenmiyor');
       return;
     }
-    
+
     final notification = message.notification;
     if (notification != null) {
       // Mobil platformlar için local notification göster
@@ -209,7 +212,7 @@ class NotificationService {
   /// Notification action handler
   Future<void> _handleNotificationAction(Map<String, dynamic> data) async {
     final action = data['action'];
-    
+
     // TODO: Navigation logic based on action
     print('🎯 Notification action: $action');
   }
@@ -241,7 +244,7 @@ class NotificationService {
       final notificationData = notification.toFirestore();
       notificationData['status'] = 'sent';
       notificationData['sentAt'] = FieldValue.serverTimestamp();
-      
+
       await _firestore
           .collection('notifications')
           .doc(notification.id)
@@ -253,18 +256,22 @@ class NotificationService {
       if (userId != null) {
         try {
           // Kullanıcının FCM token'ını al
-          final userDoc = await _firestore.collection('users').doc(userId).get();
+          final userDoc =
+              await _firestore.collection('users').doc(userId).get();
           final fcmToken = userDoc.data()?['fcmToken'];
-          
+
           if (fcmToken != null && fcmToken.isNotEmpty) {
             // Bildirim ayarlarını kontrol et
-            final settingsDoc = await _firestore.collection('notification_settings').doc(userId).get();
+            final settingsDoc = await _firestore
+                .collection('notification_settings')
+                .doc(userId)
+                .get();
             bool shouldSend = true;
-            
+
             if (settingsDoc.exists) {
               final settings = settingsDoc.data();
               final pushEnabled = settings?['pushNotifications'] ?? true;
-              
+
               if (!pushEnabled) {
                 print('⚠️ Kullanıcı push bildirimleri kapalı');
                 shouldSend = false;
@@ -293,7 +300,7 @@ class NotificationService {
                 }
               }
             }
-            
+
             if (shouldSend) {
               // googleapis ile FCM v1 API kullanarak bildirim gönder
               await FCMServiceAccountService().sendNotification(
@@ -304,17 +311,19 @@ class NotificationService {
                 type: type ?? 'system',
                 data: data,
               );
-              
+
               print('✅ FCM bildirimi googleapis ile gönderildi');
             } else {
               print('⚠️ Kullanıcı bildirim ayarları nedeniyle gönderilmedi');
             }
           } else {
-            print('⚠️ Kullanıcının FCM Token\'ı yok, notification_queue\'ya kaydediliyor');
+            print(
+                '⚠️ Kullanıcının FCM Token\'ı yok, notification_queue\'ya kaydediliyor');
             await _addToNotificationQueue(userId, title, body, type, data);
           }
         } catch (e) {
-          print('⚠️ FCM bildirimi gönderilemedi: $e, notification_queue\'ya kaydediliyor');
+          print(
+              '⚠️ FCM bildirimi gönderilemedi: $e, notification_queue\'ya kaydediliyor');
           await _addToNotificationQueue(userId, title, body, type, data);
         }
       } else {
@@ -339,7 +348,6 @@ class NotificationService {
       } else {
         print('⚠️ userId belirtilmedi, tüm kullanıcılara gönderilecek');
       }
-      
     } catch (e) {
       print('❌ Bildirim gönderilemedi: $e');
       rethrow;
@@ -370,10 +378,10 @@ class NotificationService {
             })
             .whereType<AppNotification>()
             .toList();
-        
+
         // Memory'de sırala (eğer orderBy kullanılamazsa)
         notifications.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        
+
         return notifications;
       } catch (e) {
         print('❌ Bildirimler parse edilirken hata: $e');
@@ -423,7 +431,6 @@ class NotificationService {
     }
   }
 
-
   /// notification_queue'ya kaydet (yedek yöntem)
   Future<void> _addToNotificationQueue(
     String? userId,
@@ -433,7 +440,8 @@ class NotificationService {
     Map<String, dynamic>? data,
   ) async {
     try {
-      final notificationQueueRef = _firestore.collection('notification_queue').doc();
+      final notificationQueueRef =
+          _firestore.collection('notification_queue').doc();
       await notificationQueueRef.set({
         if (userId != null) 'userId': userId,
         'title': title,
@@ -454,7 +462,7 @@ class NotificationService {
 
   /// Servis başlatıldı mı?
   bool get isInitialized => _isInitialized;
-  
+
   /// Servisi temizle (memory leak önleme)
   /// NOT: Singleton olduğu için genellikle çağrılmaz, ama test veya reset için kullanılabilir
   void dispose() {

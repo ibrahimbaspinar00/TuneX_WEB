@@ -60,7 +60,7 @@ class _BildirimAyarlariSayfasiState extends State<BildirimAyarlariSayfasi> {
     if (_isLoading) {
       return Scaffold(
         resizeToAvoidBottomInset: false,
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: const Color(0xFF0B0D10),
         appBar: AppBar(
           title: Text(
             'Ayarlar',
@@ -82,7 +82,7 @@ class _BildirimAyarlariSayfasiState extends State<BildirimAyarlariSayfasi> {
     }
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFF0B0D10),
       appBar: AppBar(
         title: Text(
           'Bildirim Ayarları',
@@ -106,7 +106,7 @@ class _BildirimAyarlariSayfasiState extends State<BildirimAyarlariSayfasi> {
         ),
       ),
       body: Container(
-        color: const Color(0xFFF8F9FA),
+        color: const Color(0xFF0B0D10),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(20),

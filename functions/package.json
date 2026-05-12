@@ -1,6 +1,6 @@
 {
   "name": "functions",
-  "description": "Cloud Functions for Tuning Web",
+  "description": "Cloud Functions for TuneX",
   "scripts": {
     "lint": "echo 'No linting configured'",
     "serve": "firebase emulators:start --only functions",

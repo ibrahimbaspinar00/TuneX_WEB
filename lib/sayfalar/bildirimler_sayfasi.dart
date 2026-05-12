@@ -49,7 +49,7 @@ class _BildirimlerSayfasiState extends State<BildirimlerSayfasi>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: const Color(0xFF0B0D10),
       body: CustomScrollView(
         slivers: [
           _buildAppBar(),

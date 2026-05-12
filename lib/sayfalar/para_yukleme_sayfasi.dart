@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'dart:async';
 import '../services/wallet_service.dart';
 import '../config/app_routes.dart';
+import '../theme/app_design_system.dart';
 
 class ParaYuklemeSayfasi extends StatefulWidget {
   const ParaYuklemeSayfasi({super.key});
@@ -21,20 +22,20 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
   final TextEditingController _amountController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  
+
   double _selectedAmount = 0.0;
   String _selectedPaymentMethod = 'Kredi Kartı';
   bool _isLoading = false;
   bool _isProcessing = false;
   double _walletBalance = 0.0;
   bool _isGuestUser = true;
-  
+
   StreamSubscription<DocumentSnapshot>? _walletSub;
-  
+
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
-  
+
   final List<Map<String, dynamic>> _quickAmounts = [
     {'amount': 50.0, 'label': '50₺', 'popular': false},
     {'amount': 100.0, 'label': '100₺', 'popular': true},
@@ -43,13 +44,12 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
     {'amount': 1000.0, 'label': '1000₺', 'popular': false},
     {'amount': 2000.0, 'label': '2000₺', 'popular': false},
   ];
-  
+
   final List<Map<String, dynamic>> _paymentMethods = [
     {
       'id': 'credit_card',
       'name': 'Kredi Kartı',
       'icon': Icons.credit_card,
-      'color': Colors.blue,
       'description': 'Visa, Mastercard, American Express',
       'fee': 0.0,
     },
@@ -57,7 +57,6 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       'id': 'debit_card',
       'name': 'Banka Kartı',
       'icon': Icons.account_balance,
-      'color': Colors.green,
       'description': 'Tüm banka kartları',
       'fee': 0.0,
     },
@@ -65,7 +64,6 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       'id': 'bank_transfer',
       'name': 'Havale/EFT',
       'icon': Icons.account_balance_wallet,
-      'color': Colors.orange,
       'description': 'Banka havalesi',
       'fee': 0.0,
     },
@@ -73,12 +71,36 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       'id': 'mobile_payment',
       'name': 'Mobil Ödeme',
       'icon': Icons.phone_android,
-      'color': Colors.purple,
       'description': 'PayPal, Apple Pay, Google Pay',
       'fee': 0.0,
     },
   ];
-  
+
+  Color _paymentMethodColor(BuildContext context, String methodId) {
+    final colors = context.appTheme;
+    switch (methodId) {
+      case 'credit_card':
+        return colors.accent;
+      case 'debit_card':
+        return colors.success;
+      case 'bank_transfer':
+        return colors.warning;
+      case 'mobile_payment':
+        return colors.accentSecondary;
+      default:
+        return colors.accent;
+    }
+  }
+
+  LinearGradient _successGradient(BuildContext context) {
+    final colors = context.appTheme;
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [colors.success, colors.accentSecondary],
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -104,11 +126,11 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
     _loadWalletData();
     _attachRealtimeListener();
   }
-  
+
   void _attachRealtimeListener() {
     final user = _auth.currentUser;
     if (user == null) return;
-    
+
     // Firebase'in initialize edilip edilmediğini kontrol et
     try {
       Firebase.app();
@@ -116,7 +138,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       debugPrint('Firebase not initialized, skipping real-time listener: $e');
       return;
     }
-    
+
     // Realtime wallet balance listener
     _walletSub?.cancel();
     _walletSub = _firestore
@@ -130,7 +152,8 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
         // Widget dispose edildiyse hiçbir şey yapma
         if (!mounted || _walletSub == null) return;
         if (snapshot.exists && snapshot.data() != null) {
-          final balance = (snapshot.data()!['balance'] as num?)?.toDouble() ?? 0.0;
+          final balance =
+              (snapshot.data()!['balance'] as num?)?.toDouble() ?? 0.0;
           // Double check mounted before setState
           if (mounted) {
             setState(() {
@@ -143,7 +166,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       onError: (error) {
         debugPrint('Error in wallet real-time listener: $error');
         // Quota hatası veya diğer hatalar durumunda listener'ı durdur
-        if (error.toString().contains('RESOURCE_EXHAUSTED') || 
+        if (error.toString().contains('RESOURCE_EXHAUSTED') ||
             error.toString().contains('Quota exceeded')) {
           debugPrint('Firestore quota exceeded, stopping wallet listener');
           _walletSub?.cancel();
@@ -152,13 +175,13 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       },
     );
   }
-  
+
   void _initializeAnimations() {
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -166,7 +189,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       parent: _animationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _slideAnimation = Tween<Offset>(
       begin: const Offset(0, 0.3),
       end: Offset.zero,
@@ -174,27 +197,27 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       parent: _animationController,
       curve: Curves.easeOutCubic,
     ));
-    
+
     _animationController.forward();
   }
-  
+
   Future<void> _loadWalletData() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       // WalletService'i initialize et (timeout ile)
       try {
         await _walletService.initialize().timeout(
-          const Duration(seconds: 2),
-        );
+              const Duration(seconds: 2),
+            );
       } catch (e) {
         debugPrint('WalletService initialize timeout or error: $e');
       }
-      
+
       // Başlangıç bakiyesini set et (mounted kontrolü ile)
       if (!mounted) {
         // Widget dispose edildiyse loading'i kapat ve çık
@@ -205,17 +228,17 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
         }
         return;
       }
-      
+
       setState(() {
         _walletBalance = _walletService.currentBalance;
       });
-      
+
       // Firebase initialize edilmişse Firestore'dan da çek (opsiyonel)
       final user = _auth.currentUser;
       if (user != null && mounted) {
         try {
           Firebase.app(); // Firebase kontrolü
-          
+
           // Firestore'dan güncel bakiyeyi çek (timeout ile, opsiyonel)
           final walletDoc = await _firestore
               .collection('users')
@@ -226,7 +249,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
               .timeout(
                 const Duration(seconds: 1),
               );
-          
+
           if (!mounted) {
             // Widget dispose edildiyse loading'i kapat ve çık
             if (mounted) {
@@ -236,9 +259,11 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             }
             return;
           }
-          
+
           if (walletDoc.exists && walletDoc.data() != null) {
-            final balance = (walletDoc.data()!['balance'] as num?)?.toDouble() ?? _walletBalance;
+            final balance =
+                (walletDoc.data()!['balance'] as num?)?.toDouble() ??
+                    _walletBalance;
             if (mounted) {
               setState(() {
                 _walletBalance = balance;
@@ -267,7 +292,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       }
     }
   }
-  
+
   @override
   void dispose() {
     // Listener'ı iptal et ve null yap
@@ -279,31 +304,33 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
     _amountController.dispose();
     super.dispose();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
-    
+    final colors = context.appTheme;
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text(
           'Para Yükle',
           style: GoogleFonts.inter(
             fontWeight: FontWeight.w700,
             fontSize: 18,
-            color: const Color(0xFF1A1A1A),
+            color: colors.textPrimary,
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: colors.navSurface,
+        foregroundColor: colors.textPrimary,
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.05),
+        shadowColor:
+            colors.shadow.withValues(alpha: colors.isDark ? 0.28 : 0.05),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1A1A1A)),
+          icon: Icon(Icons.arrow_back, color: colors.textPrimary),
           onPressed: () {
             // Ana sayfaya yönlendir
             AppRoutes.navigateToMain(context);
@@ -312,7 +339,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
         actions: [
           IconButton(
             onPressed: _showTransactionHistory,
-            icon: const Icon(Icons.history, color: Color(0xFF1A1A1A)),
+            icon: Icon(Icons.history, color: colors.textPrimary),
             tooltip: 'İşlem Geçmişi',
           ),
         ],
@@ -321,58 +348,53 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
           ? const Center(child: CircularProgressIndicator())
           : _isGuestUser
               ? _buildGuestRestriction()
-          : FadeTransition(
-              opacity: _fadeAnimation,
-              child: SlideTransition(
-                position: _slideAnimation,
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Cüzdan Bakiyesi
-                      _buildWalletBalance(),
-                      const SizedBox(height: 24),
-                      
-                      // Miktar Seçimi
-                      _buildAmountSelection(),
-                      const SizedBox(height: 24),
-                      
-                      // Ödeme Yöntemi
-                      _buildPaymentMethodSelection(),
-                      const SizedBox(height: 32),
-                      
-                      // Yükle Butonu
-                      _buildLoadButton(),
-                      const SizedBox(height: 24),
-                      
-                      // Güvenlik Bilgileri
-                      _buildSecurityInfo(),
-                    ],
+              : FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: SingleChildScrollView(
+                      padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Cüzdan Bakiyesi
+                          _buildWalletBalance(),
+                          const SizedBox(height: 24),
+
+                          // Miktar Seçimi
+                          _buildAmountSelection(),
+                          const SizedBox(height: 24),
+
+                          // Ödeme Yöntemi
+                          _buildPaymentMethodSelection(),
+                          const SizedBox(height: 32),
+
+                          // Yükle Butonu
+                          _buildLoadButton(),
+                          const SizedBox(height: 24),
+
+                          // Güvenlik Bilgileri
+                          _buildSecurityInfo(),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
     );
   }
-  
+
   Widget _buildWalletBalance() {
+    final colors = context.appTheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.green[400]!,
-            Colors.green[600]!,
-          ],
-        ),
+        gradient: _successGradient(context),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity( 0.3),
+            color:
+                colors.success.withValues(alpha: colors.isDark ? 0.22 : 0.30),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -384,14 +406,14 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             children: [
               Icon(
                 Icons.account_balance_wallet,
-                color: Colors.white,
+                color: colors.textInverse,
                 size: 28,
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Cüzdan Bakiyesi',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: colors.textInverse,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -404,8 +426,8 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             child: Text(
               '${_walletBalance.toStringAsFixed(2)} ₺',
               key: ValueKey(_walletBalance),
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: colors.textInverse,
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
               ),
@@ -415,7 +437,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
           Text(
             'Son güncelleme: ${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
             style: TextStyle(
-              color: Colors.white.withOpacity( 0.8),
+              color: colors.textInverse.withValues(alpha: 0.80),
               fontSize: 12,
             ),
           ),
@@ -425,13 +447,14 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
   }
 
   Widget _buildGuestRestriction() {
+    final colors = context.appTheme;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.lock_outline, size: 64, color: Colors.grey[500]),
+            Icon(Icons.lock_outline, size: 64, color: colors.textMuted),
             const SizedBox(height: 16),
             const Text(
               'Cüzdana para yüklemek için giriş yapmanız gerekir.',
@@ -447,7 +470,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.grey[600],
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
@@ -458,8 +481,10 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
               icon: const Icon(Icons.login),
               label: const Text('Giriş Yap'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                backgroundColor: Colors.green[600],
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: colors.success,
+                foregroundColor: colors.textInverse,
               ),
             ),
           ],
@@ -467,27 +492,22 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   Widget _buildAmountSelection() {
+    final colors = context.appTheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity( 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppDesignSystem.shadowS,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.attach_money, color: Colors.green[600]),
+              Icon(Icons.attach_money, color: colors.success),
               const SizedBox(width: 8),
               const Text(
                 'Yüklenecek Miktar',
@@ -499,7 +519,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Manuel Miktar Girişi
           TextField(
             controller: _amountController,
@@ -507,17 +527,17 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             decoration: InputDecoration(
               hintText: '0.00',
               prefixText: '₺ ',
-              prefixIcon: Icon(Icons.money, color: Colors.green[600]),
+              prefixIcon: Icon(Icons.money, color: colors.success),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: colors.borderSubtle),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(color: Colors.green[600]!, width: 2),
+                borderSide: BorderSide(color: colors.success, width: 2),
               ),
               filled: true,
-              fillColor: Colors.grey[50],
+              fillColor: colors.inputFill,
             ),
             onChanged: (value) {
               if (mounted) {
@@ -528,7 +548,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             },
           ),
           const SizedBox(height: 16),
-          
+
           // Hızlı Miktar Butonları
           const Text(
             'Hızlı Seçim',
@@ -544,7 +564,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             children: _quickAmounts.map((item) {
               final isSelected = _selectedAmount == item['amount'];
               final isPopular = item['popular'] as bool;
-              
+
               return GestureDetector(
                 onTap: () {
                   if (mounted) {
@@ -555,23 +575,22 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                   }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
-                    gradient: isSelected
-                        ? LinearGradient(
-                            colors: [Colors.green[400]!, Colors.green[600]!],
-                          )
-                        : null,
-                    color: isSelected ? null : Colors.white,
+                    gradient: isSelected ? _successGradient(context) : null,
+                    color: isSelected ? null : colors.surface,
                     borderRadius: BorderRadius.circular(25),
                     border: Border.all(
-                      color: isSelected ? Colors.green[600]! : Colors.grey[300]!,
+                      color: isSelected ? colors.success : colors.borderSubtle,
                       width: isSelected ? 2 : 1,
                     ),
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: Colors.green.withOpacity( 0.3),
+                              color: colors.success.withValues(
+                                alpha: colors.isDark ? 0.20 : 0.30,
+                              ),
                               blurRadius: 8,
                               offset: const Offset(0, 4),
                             ),
@@ -584,7 +603,9 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                       Text(
                         item['label'] as String,
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.grey[700],
+                          color: isSelected
+                              ? colors.textInverse
+                              : colors.textPrimary,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -593,7 +614,8 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                         const SizedBox(width: 4),
                         Icon(
                           Icons.star,
-                          color: isSelected ? Colors.white : Colors.orange[600],
+                          color:
+                              isSelected ? colors.textInverse : colors.warning,
                           size: 16,
                         ),
                       ],
@@ -607,27 +629,22 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   Widget _buildPaymentMethodSelection() {
+    final colors = context.appTheme;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.surfaceElevated,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity( 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppDesignSystem.shadowS,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.payment, color: Colors.blue[600]),
+              Icon(Icons.payment, color: colors.accent),
               const SizedBox(width: 8),
               const Text(
                 'Ödeme Yöntemi',
@@ -639,10 +656,13 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             ],
           ),
           const SizedBox(height: 16),
-          
           ..._paymentMethods.map((method) {
             final isSelected = _selectedPaymentMethod == method['name'];
-            
+            final methodColor = _paymentMethodColor(
+              context,
+              method['id'] as String,
+            );
+
             return GestureDetector(
               onTap: () {
                 if (mounted) {
@@ -655,10 +675,13 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: isSelected ? (method['color'] as Color).withOpacity( 0.1) : Colors.grey[50],
+                  color: isSelected
+                      ? methodColor.withValues(
+                          alpha: colors.isDark ? 0.16 : 0.10)
+                      : colors.inputFill,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: isSelected ? method['color'] as Color : Colors.grey[300]!,
+                    color: isSelected ? methodColor : colors.borderSubtle,
                     width: isSelected ? 2 : 1,
                   ),
                 ),
@@ -667,12 +690,14 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: (method['color'] as Color).withOpacity( 0.1),
+                        color: methodColor.withValues(
+                          alpha: colors.isDark ? 0.18 : 0.10,
+                        ),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         method['icon'] as IconData,
-                        color: method['color'] as Color,
+                        color: methodColor,
                         size: 24,
                       ),
                     ),
@@ -686,7 +711,8 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: isSelected ? method['color'] as Color : Colors.grey[800],
+                              color:
+                                  isSelected ? methodColor : colors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -694,7 +720,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                             method['description'] as String,
                             style: TextStyle(
                               fontSize: 12,
-                              color: Colors.grey[600],
+                              color: colors.textSecondary,
                             ),
                           ),
                         ],
@@ -703,7 +729,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                     if (isSelected)
                       Icon(
                         Icons.check_circle,
-                        color: method['color'] as Color,
+                        color: methodColor,
                         size: 24,
                       ),
                   ],
@@ -715,25 +741,23 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   Widget _buildLoadButton() {
     final isValid = _selectedAmount > 0 && _selectedAmount <= 10000;
-    
+    final colors = context.appTheme;
+
     return Container(
       width: double.infinity,
       height: 56,
       decoration: BoxDecoration(
-        gradient: isValid
-            ? LinearGradient(
-                colors: [Colors.green[400]!, Colors.green[600]!],
-              )
-            : null,
-        color: isValid ? null : Colors.grey[300],
+        gradient: isValid ? _successGradient(context) : null,
+        color: isValid ? null : colors.borderStrong,
         borderRadius: BorderRadius.circular(16),
         boxShadow: isValid
             ? [
                 BoxShadow(
-                  color: Colors.green.withOpacity( 0.3),
+                  color: colors.success
+                      .withValues(alpha: colors.isDark ? 0.22 : 0.30),
                   blurRadius: 15,
                   offset: const Offset(0, 8),
                 ),
@@ -741,7 +765,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             : null,
       ),
       child: Material(
-        color: Colors.transparent,
+        color: AppColors.transparent,
         child: InkWell(
           onTap: isValid && !_isProcessing ? _processPayment : null,
           borderRadius: BorderRadius.circular(16),
@@ -751,23 +775,23 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      color: Colors.white,
+                      color: AppColors.white,
                       strokeWidth: 2,
                     ),
                   )
                 : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.account_balance_wallet,
-                        color: Colors.white,
+                        color: colors.textInverse,
                         size: 24,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         '${_selectedAmount.toStringAsFixed(2)}₺ Yükle',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: colors.textInverse,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -779,28 +803,29 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   Widget _buildSecurityInfo() {
+    final colors = context.appTheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: AppDesignSystem.infoLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
+        border: Border.all(color: colors.accentSoft),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.security, color: Colors.blue[600], size: 20),
+              Icon(Icons.security, color: colors.accent, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Güvenlik Bilgileri',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[800],
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -810,29 +835,29 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             '• Tüm ödemeler SSL ile şifrelenir\n• Kart bilgileriniz saklanmaz\n• 7/24 güvenli ödeme',
             style: TextStyle(
               fontSize: 12,
-              color: Colors.blue[700],
+              color: colors.textSecondary,
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Future<void> _processPayment() async {
     if (!mounted) return;
     if (_isGuestUser || _auth.currentUser == null) {
       _showGuestWarning();
       return;
     }
-    
+
     setState(() {
       _isProcessing = true;
     });
-    
+
     try {
       // Simulate payment processing
       await Future.delayed(const Duration(seconds: 2));
-      
+
       if (!mounted) {
         // Widget dispose edildiyse processing'i kapat ve çık
         if (mounted) {
@@ -842,13 +867,13 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
         }
         return;
       }
-      
+
       final success = await _walletService.addMoney(
         _selectedAmount,
         _selectedPaymentMethod,
         'Para yükleme - ${_selectedPaymentMethod}',
       );
-      
+
       if (!mounted) {
         // Widget dispose edildiyse processing'i kapat ve çık
         if (mounted) {
@@ -858,7 +883,7 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
         }
         return;
       }
-      
+
       if (success) {
         // Önce WalletService'ten güncel bakiyeyi al (en hızlı)
         final newBalance = _walletService.currentBalance;
@@ -871,23 +896,24 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
           }
           return;
         }
-        
+
         setState(() {
           _walletBalance = newBalance;
         });
-        
+
         // Firestore'a yazma işleminin tamamlanması için kısa bir bekleme
         await Future.delayed(const Duration(milliseconds: 800));
-        
+
         if (!mounted) {
           // Widget unmount olduysa dialog gösterme
           return;
         }
-        
+
         // Firestore'dan da güncel bakiyeyi çek (doğrulama için) - Firebase initialize edilmişse
         double finalBalance = newBalance;
         try {
-          Firebase.app(); // Firebase'in initialize edilip edilmediğini kontrol et
+          Firebase
+              .app(); // Firebase'in initialize edilip edilmediğini kontrol et
           final user = _auth.currentUser;
           if (user != null && mounted) {
             try {
@@ -897,11 +923,13 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
                   .collection('wallet')
                   .doc('balance')
                   .get();
-              
+
               if (!mounted) {
                 finalBalance = newBalance;
               } else if (walletDoc.exists && walletDoc.data() != null) {
-                final balance = (walletDoc.data()!['balance'] as num?)?.toDouble() ?? newBalance;
+                final balance =
+                    (walletDoc.data()!['balance'] as num?)?.toDouble() ??
+                        newBalance;
                 finalBalance = balance;
                 if (mounted) {
                   setState(() {
@@ -915,10 +943,11 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
             }
           }
         } catch (e) {
-          debugPrint('Firebase not initialized, using WalletService balance: $e');
+          debugPrint(
+              'Firebase not initialized, using WalletService balance: $e');
           // Firebase initialize edilmemişse WalletService'ten alınan değeri kullan
         }
-        
+
         // Dialog'a güncel bakiyeyi geç (mounted kontrolü ile)
         if (mounted) {
           _showSuccessDialog(finalBalance);
@@ -956,13 +985,13 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   void _showSuccessDialog(double newBalance) {
     if (!mounted) return;
-    
+
     // Context'i güvenli bir şekilde sakla
     final navigator = Navigator.of(context, rootNavigator: false);
-    
+
     // Dialog'u StatefulWidget olarak oluştur ki bakiye güncellendiğinde otomatik güncellensin
     showDialog(
       context: context,
@@ -985,16 +1014,16 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   void _showErrorDialog(String message) {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.error, color: Colors.red[600]),
+            Icon(Icons.error, color: context.appTheme.error),
             const SizedBox(width: 8),
             const Text('Hata'),
           ],
@@ -1013,10 +1042,10 @@ class _ParaYuklemeSayfasiState extends State<ParaYuklemeSayfasi>
       ),
     );
   }
-  
+
   void _showTransactionHistory() {
     if (!mounted) return;
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -1046,7 +1075,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   Future<void> _loadTransactions() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
     });
@@ -1070,12 +1099,13 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appTheme;
     return Scaffold(
       resizeToAvoidBottomInset: false, // Klavye performansı için
       appBar: AppBar(
         title: const Text('İşlem Geçmişi'),
-        backgroundColor: Colors.blue[600],
-        foregroundColor: Colors.white,
+        backgroundColor: colors.navSurface,
+        foregroundColor: colors.textPrimary,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -1087,14 +1117,14 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                       Icon(
                         Icons.history,
                         size: 64,
-                        color: Colors.grey[400],
+                        color: colors.textMuted,
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'Henüz işlem yapılmamış',
                         style: TextStyle(
                           fontSize: 18,
-                          color: Colors.grey[600],
+                          color: colors.textSecondary,
                         ),
                       ),
                     ],
@@ -1105,37 +1135,29 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                   itemCount: _transactions.length,
                   itemBuilder: (context, index) {
                     final transaction = _transactions[index];
+                    final isDeposit =
+                        transaction.type == TransactionType.deposit;
                     return Container(
                       margin: const EdgeInsets.only(bottom: 12),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colors.surfaceElevated,
                         borderRadius: BorderRadius.circular(12),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity( 0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        boxShadow: AppDesignSystem.shadowS,
                       ),
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: transaction.type == TransactionType.deposit
-                                  ? Colors.green[100]
-                                  : Colors.red[100],
+                              color: isDeposit
+                                  ? AppDesignSystem.successLight
+                                  : AppDesignSystem.errorLight,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
-                              transaction.type == TransactionType.deposit
-                                  ? Icons.add
-                                  : Icons.remove,
-                              color: transaction.type == TransactionType.deposit
-                                  ? Colors.green[600]
-                                  : Colors.red[600],
+                              isDeposit ? Icons.add : Icons.remove,
+                              color: isDeposit ? colors.success : colors.error,
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -1153,7 +1175,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                                 Text(
                                   transaction.formattedDate,
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: colors.textSecondary,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -1164,9 +1186,7 @@ class _TransactionHistoryPageState extends State<TransactionHistoryPage> {
                             transaction.formattedAmount,
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              color: transaction.type == TransactionType.deposit
-                                  ? Colors.green[600]
-                                  : Colors.red[600],
+                              color: isDeposit ? colors.success : colors.error,
                             ),
                           ),
                         ],
@@ -1216,7 +1236,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
 
   Future<void> _updateBalance() async {
     if (_isDisposed || !mounted) return;
-    
+
     try {
       // Önce widget'tan gelen değeri kullan (en güncel)
       if (!_isDisposed && mounted) {
@@ -1224,9 +1244,9 @@ class _SuccessDialogState extends State<_SuccessDialog> {
           _displayBalance = widget.newBalance;
         });
       }
-      
+
       if (_isDisposed || !mounted) return;
-      
+
       // WalletService'ten de al (doğrulama için)
       final walletBalance = _walletService.currentBalance;
       if (walletBalance > widget.newBalance) {
@@ -1249,13 +1269,13 @@ class _SuccessDialogState extends State<_SuccessDialog> {
           debugPrint('Firebase not initialized in dialog: $e');
           return;
         }
-        
+
         final user = _auth.currentUser;
         if (user != null && !_isDisposed && mounted) {
           await Future.delayed(const Duration(milliseconds: 500));
-          
+
           if (_isDisposed || !mounted) return; // Dialog kapatıldıysa devam etme
-          
+
           // Firestore instance'ını güvenli bir şekilde kullan
           try {
             final walletDoc = await _firestore
@@ -1264,9 +1284,14 @@ class _SuccessDialogState extends State<_SuccessDialog> {
                 .collection('wallet')
                 .doc('balance')
                 .get();
-            
-            if (!_isDisposed && mounted && walletDoc.exists && walletDoc.data() != null) {
-              final balance = (walletDoc.data()!['balance'] as num?)?.toDouble() ?? _displayBalance;
+
+            if (!_isDisposed &&
+                mounted &&
+                walletDoc.exists &&
+                walletDoc.data() != null) {
+              final balance =
+                  (walletDoc.data()!['balance'] as num?)?.toDouble() ??
+                      _displayBalance;
               setState(() {
                 _displayBalance = balance;
               });
@@ -1292,11 +1317,12 @@ class _SuccessDialogState extends State<_SuccessDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appTheme;
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Row(
         children: [
-          Icon(Icons.check_circle, color: Colors.green[600], size: 28),
+          Icon(Icons.check_circle, color: colors.success, size: 28),
           const SizedBox(width: 12),
           const Text('Başarılı!'),
         ],
@@ -1312,12 +1338,12 @@ class _SuccessDialogState extends State<_SuccessDialog> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.green[50],
+              color: AppDesignSystem.successLight,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
               children: [
-                Icon(Icons.account_balance_wallet, color: Colors.green[600]),
+                Icon(Icons.account_balance_wallet, color: colors.success),
                 const SizedBox(width: 8),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 300),
@@ -1325,7 +1351,7 @@ class _SuccessDialogState extends State<_SuccessDialog> {
                     'Yeni Bakiye: ${_displayBalance.toStringAsFixed(2)}₺',
                     key: ValueKey(_displayBalance),
                     style: TextStyle(
-                      color: Colors.green[800],
+                      color: colors.success,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -1339,8 +1365,8 @@ class _SuccessDialogState extends State<_SuccessDialog> {
         ElevatedButton(
           onPressed: widget.onClose,
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.green[600],
-            foregroundColor: Colors.white,
+            backgroundColor: colors.success,
+            foregroundColor: colors.textInverse,
           ),
           child: const Text('Tamam'),
         ),

@@ -195,11 +195,11 @@ class _OdemeYontemleriSayfasiState extends State<OdemeYontemleriSayfasi> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFF18C964).withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.lock, color: const Color(0xFF4CAF50), size: 20),
+                        Icon(Icons.lock, color: const Color(0xFF18C964), size: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -207,7 +207,7 @@ class _OdemeYontemleriSayfasiState extends State<OdemeYontemleriSayfasi> {
                             style: GoogleFonts.inter(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF2E7D32),
+                              color: const Color(0xFFFF6A00),
                             ),
                           ),
                         ),
@@ -408,7 +408,7 @@ class _OdemeYontemleriSayfasiState extends State<OdemeYontemleriSayfasi> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFE8F5E9),
                       borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: const Color(0xFF4CAF50).withOpacity(0.3)),
+                      border: Border.all(color: const Color(0xFF18C964).withOpacity(0.3)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +418,7 @@ class _OdemeYontemleriSayfasiState extends State<OdemeYontemleriSayfasi> {
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
-                            color: const Color(0xFF2E7D32),
+                            color: const Color(0xFFFF6A00),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -457,7 +457,7 @@ class _OdemeYontemleriSayfasiState extends State<OdemeYontemleriSayfasi> {
           width: 4,
           height: 4,
           decoration: const BoxDecoration(
-            color: Color(0xFF2E7D32),
+            color: Color(0xFFFF6A00),
             shape: BoxShape.circle,
           ),
         ),

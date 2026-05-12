@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../model/admin_product.dart';
 import '../services/admin_service.dart';
+import '../theme/app_design_system.dart';
 import '../widgets/professional_image_uploader.dart';
 import '../widgets/professional_components.dart';
 import '../utils/responsive_helper.dart';
@@ -12,18 +13,22 @@ class WebAdminCategoryManagement extends StatefulWidget {
   const WebAdminCategoryManagement({super.key});
 
   @override
-  State<WebAdminCategoryManagement> createState() => _WebAdminCategoryManagementState();
+  State<WebAdminCategoryManagement> createState() =>
+      _WebAdminCategoryManagementState();
 }
 
-class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement> {
+class _WebAdminCategoryManagementState
+    extends State<WebAdminCategoryManagement> {
   final AdminService _adminService = AdminService();
   int _refreshKey = 0;
   final TextEditingController _categoryNameController = TextEditingController();
-  final TextEditingController _categoryDescriptionController = TextEditingController();
+  final TextEditingController _categoryDescriptionController =
+      TextEditingController();
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productPriceController = TextEditingController();
   final TextEditingController _productStockController = TextEditingController();
-  final TextEditingController _productDescriptionController = TextEditingController();
+  final TextEditingController _productDescriptionController =
+      TextEditingController();
   final _productFormKey = GlobalKey<FormState>();
 
   @override
@@ -101,9 +106,10 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                 final category = ProductCategory(
                   id: '', // ID otomatik oluşturulacak
                   name: _categoryNameController.text.trim(),
-                  description: _categoryDescriptionController.text.trim().isEmpty
-                      ? null
-                      : _categoryDescriptionController.text.trim(),
+                  description:
+                      _categoryDescriptionController.text.trim().isEmpty
+                          ? null
+                          : _categoryDescriptionController.text.trim(),
                   isActive: true,
                 );
 
@@ -111,9 +117,9 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Kategori başarıyla eklendi'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppDesignSystem.success,
                     ),
                   );
                   _refreshCategories();
@@ -123,15 +129,15 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Hata: $e'),
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppDesignSystem.error,
                     ),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
+              backgroundColor: AppDesignSystem.accent,
+              foregroundColor: AppDesignSystem.textOnPrimary,
             ),
             child: const Text('Kaydet'),
           ),
@@ -195,18 +201,19 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
               try {
                 final updatedCategory = category.copyWith(
                   name: _categoryNameController.text.trim(),
-                  description: _categoryDescriptionController.text.trim().isEmpty
-                      ? null
-                      : _categoryDescriptionController.text.trim(),
+                  description:
+                      _categoryDescriptionController.text.trim().isEmpty
+                          ? null
+                          : _categoryDescriptionController.text.trim(),
                 );
 
                 await _adminService.updateCategory(updatedCategory);
                 if (mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Text('Kategori başarıyla güncellendi'),
-                      backgroundColor: Colors.green,
+                      backgroundColor: AppDesignSystem.success,
                     ),
                   );
                   _refreshCategories();
@@ -216,15 +223,15 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Hata: $e'),
-                      backgroundColor: Colors.red,
+                      backgroundColor: AppDesignSystem.error,
                     ),
                   );
                 }
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B82F6),
-              foregroundColor: Colors.white,
+              backgroundColor: AppDesignSystem.accent,
+              foregroundColor: AppDesignSystem.textOnPrimary,
             ),
             child: const Text('Kaydet'),
           ),
@@ -238,7 +245,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Kategoriyi Sil'),
-        content: Text('${category.name} kategorisini silmek istediğinize emin misiniz?'),
+        content: Text(
+            '${category.name} kategorisini silmek istediğinize emin misiniz?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -247,8 +255,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+              backgroundColor: AppDesignSystem.error,
+              foregroundColor: AppDesignSystem.textOnPrimary,
             ),
             child: const Text('Sil'),
           ),
@@ -261,9 +269,9 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
         await _adminService.deleteCategory(category.id);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Text('Kategori başarıyla silindi'),
-              backgroundColor: Colors.green,
+              backgroundColor: AppDesignSystem.success,
             ),
           );
           _refreshCategories();
@@ -273,7 +281,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Hata: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: AppDesignSystem.error,
             ),
           );
         }
@@ -293,7 +301,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                   ? 'Kategori aktif yapıldı'
                   : 'Kategori pasif yapıldı',
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignSystem.success,
           ),
         );
         _refreshCategories();
@@ -303,7 +311,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Hata: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppDesignSystem.error,
           ),
         );
       }
@@ -349,19 +357,20 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                   'Toplam ${products.length} ürün',
                   style: GoogleFonts.inter(
                     fontSize: 14,
-                    color: Colors.grey[600],
+                    color: AppDesignSystem.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () => _showAddProductToCategoryDialog(category, setDialogState),
+                      onPressed: () => _showAddProductToCategoryDialog(
+                          category, setDialogState),
                       icon: const Icon(Icons.add, size: 18),
                       label: const Text('Kategoriye Ürün Ekle'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6366F1),
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppDesignSystem.accent,
+                        foregroundColor: AppDesignSystem.textOnPrimary,
                       ),
                     ),
                   ],
@@ -374,7 +383,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                             'Bu kategoride ürün bulunmuyor',
                             style: GoogleFonts.inter(
                               fontSize: 16,
-                              color: Colors.grey[600],
+                              color: AppDesignSystem.textSecondary,
                             ),
                           ),
                         )
@@ -382,7 +391,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                           itemCount: products.length,
                           itemBuilder: (context, index) {
                             final product = products[index];
-                            return _buildProductListItem(product, category, setDialogState);
+                            return _buildProductListItem(
+                                product, category, setDialogState);
                           },
                         ),
                 ),
@@ -414,7 +424,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                     return Container(
                       width: 60,
                       height: 60,
-                      color: Colors.grey[200],
+                      color: AppDesignSystem.borderLight,
                       child: const Icon(Icons.image),
                     );
                   },
@@ -423,7 +433,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
             : Container(
                 width: 60,
                 height: 60,
-                color: Colors.grey[200],
+                color: AppDesignSystem.borderLight,
                 child: const Icon(Icons.image),
               ),
         title: Text(
@@ -463,7 +473,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                     );
                   }).toList(),
                   onChanged: (newCategory) async {
-                    if (newCategory == null || newCategory == currentCategory) return;
+                    if (newCategory == null || newCategory == currentCategory)
+                      return;
 
                     try {
                       await _adminService.updateProductFields(
@@ -472,9 +483,9 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                       );
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text('Ürün kategorisi güncellendi'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppDesignSystem.success,
                           ),
                         );
                         // Dialog'u kapat ve yeniden aç
@@ -486,7 +497,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text('Hata: $e'),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppDesignSystem.error,
                           ),
                         );
                       }
@@ -499,7 +510,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
             const SizedBox(width: 8),
             // Düzenle butonu
             IconButton(
-              icon: const Icon(Icons.edit, color: Color(0xFF3B82F6)),
+              icon: Icon(Icons.edit, color: AppDesignSystem.accent),
               onPressed: () => _showEditProductDialog(product, category),
               tooltip: 'Düzenle',
             ),
@@ -509,7 +520,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
     );
   }
 
-  Future<void> _showEditProductDialog(AdminProduct product, ProductCategory category) async {
+  Future<void> _showEditProductDialog(
+      AdminProduct product, ProductCategory category) async {
     _productNameController.text = product.name;
     _productPriceController.text = product.price.toStringAsFixed(2);
     _productStockController.text = product.stock.toString();
@@ -594,7 +606,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                             ),
                             keyboardType: TextInputType.number,
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                              FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}')),
                             ],
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
@@ -636,7 +649,9 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: categoryNames.contains(selectedCategory) ? selectedCategory : null,
+                      value: categoryNames.contains(selectedCategory)
+                          ? selectedCategory
+                          : null,
                       decoration: InputDecoration(
                         labelText: 'Kategori *',
                         border: OutlineInputBorder(
@@ -683,10 +698,12 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                         const SizedBox(width: 8),
                         ElevatedButton(
                           onPressed: () async {
-                            if (!_productFormKey.currentState!.validate()) return;
+                            if (!_productFormKey.currentState!.validate())
+                              return;
                             if (selectedCategory == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Kategori seçiniz')),
+                                const SnackBar(
+                                    content: Text('Kategori seçiniz')),
                               );
                               return;
                             }
@@ -694,20 +711,23 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                             try {
                               final updatedProduct = product.copyWith(
                                 name: _productNameController.text.trim(),
-                                price: double.parse(_productPriceController.text),
+                                price:
+                                    double.parse(_productPriceController.text),
                                 stock: int.parse(_productStockController.text),
-                                description: _productDescriptionController.text.trim(),
+                                description:
+                                    _productDescriptionController.text.trim(),
                                 category: selectedCategory!,
                                 imageUrl: selectedImageUrl ?? '',
                               );
 
-                              await _adminService.updateProduct(product.id, updatedProduct);
+                              await _adminService.updateProduct(
+                                  product.id, updatedProduct);
                               if (mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text('Ürün başarıyla güncellendi'),
-                                    backgroundColor: Colors.green,
+                                    backgroundColor: AppDesignSystem.success,
                                   ),
                                 );
                                 // Kategori ürünleri dialog'unu yenile
@@ -719,15 +739,15 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Hata: $e'),
-                                    backgroundColor: Colors.red,
+                                    backgroundColor: AppDesignSystem.error,
                                   ),
                                 );
                               }
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3B82F6),
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppDesignSystem.accent,
+                            foregroundColor: AppDesignSystem.textOnPrimary,
                           ),
                           child: const Text('Kaydet'),
                         ),
@@ -748,8 +768,10 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
     StateSetter setDialogState,
   ) async {
     final allProducts = await _adminService.getProductsFromServer();
-    final categoryProducts = allProducts.where((p) => p.category == category.name).toList();
-    final availableProducts = allProducts.where((p) => p.category != category.name).toList();
+    final categoryProducts =
+        allProducts.where((p) => p.category == category.name).toList();
+    final availableProducts =
+        allProducts.where((p) => p.category != category.name).toList();
 
     if (!mounted) return;
 
@@ -784,11 +806,14 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                 // İstatistikler
                 Row(
                   children: [
-                    _buildStatCard('Toplam', allProducts.length, Colors.blue),
+                    _buildStatCard(
+                        'Toplam', allProducts.length, AppColors.brandCyan),
                     const SizedBox(width: 12),
-                    _buildStatCard('Bu Kategoride', categoryProducts.length, Colors.orange),
+                    _buildStatCard('Bu Kategoride', categoryProducts.length,
+                        AppColors.warning),
                     const SizedBox(width: 12),
-                    _buildStatCard('Eklenebilir', availableProducts.length, Colors.green),
+                    _buildStatCard('Eklenebilir', availableProducts.length,
+                        AppColors.success),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -799,7 +824,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                             'Eklenebilecek ürün bulunmuyor',
                             style: GoogleFonts.inter(
                               fontSize: 16,
-                              color: Colors.grey[600],
+                              color: AppDesignSystem.textSecondary,
                             ),
                           ),
                         )
@@ -807,12 +832,15 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                           itemCount: allProducts.length,
                           itemBuilder: (context, index) {
                             final product = allProducts[index];
-                            final isInCategory = product.category == category.name;
+                            final isInCategory =
+                                product.category == category.name;
                             final currentCategory = product.category;
 
                             return Card(
                               margin: const EdgeInsets.only(bottom: 12),
-                              color: isInCategory ? Colors.orange[50] : Colors.blue[50],
+                              color: isInCategory
+                                  ? AppDesignSystem.warningLight
+                                  : AppDesignSystem.infoLight,
                               child: ListTile(
                                 leading: product.imageUrl.isNotEmpty
                                     ? ClipRRect(
@@ -822,11 +850,13 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                                           width: 60,
                                           height: 60,
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) {
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
                                             return Container(
                                               width: 60,
                                               height: 60,
-                                              color: Colors.grey[200],
+                                              color:
+                                                  AppDesignSystem.borderLight,
                                               child: const Icon(Icons.image),
                                             );
                                           },
@@ -835,23 +865,27 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                                     : Container(
                                         width: 60,
                                         height: 60,
-                                        color: Colors.grey[200],
+                                        color: AppDesignSystem.borderLight,
                                         child: const Icon(Icons.image),
                                       ),
                                 title: Text(
                                   product.name,
-                                  style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                                  style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w600),
                                 ),
                                 subtitle: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Fiyat: ${product.price.toStringAsFixed(2)} ₺'),
+                                    Text(
+                                        'Fiyat: ${product.price.toStringAsFixed(2)} ₺'),
                                     Text(
                                       isInCategory
                                           ? 'Bu ürün bu kategoride zaten ekli'
                                           : 'Mevcut Kategori: $currentCategory',
                                       style: TextStyle(
-                                        color: isInCategory ? Colors.orange : Colors.blue,
+                                        color: isInCategory
+                                            ? AppDesignSystem.warning
+                                            : AppDesignSystem.info,
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
@@ -864,50 +898,60 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                                           vertical: 6,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey[300],
-                                          borderRadius: BorderRadius.circular(8),
+                                          color: AppDesignSystem.borderMedium,
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         child: Text(
                                           'Zaten Ekli',
                                           style: GoogleFonts.inter(
                                             fontSize: 12,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.grey[700],
+                                            color: AppDesignSystem.textPrimary,
                                           ),
                                         ),
                                       )
                                     : ElevatedButton(
                                         onPressed: () async {
                                           try {
-                                            await _adminService.updateProductFields(
+                                            await _adminService
+                                                .updateProductFields(
                                               product.id,
                                               {'category': category.name},
                                             );
                                             if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text('Ürün kategoriye eklendi'),
-                                                  backgroundColor: Colors.green,
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                      'Ürün kategoriye eklendi'),
+                                                  backgroundColor:
+                                                      AppDesignSystem.success,
                                                 ),
                                               );
                                               // Dialog'u kapat ve yeniden aç
                                               Navigator.pop(context);
-                                              _showAddProductToCategoryDialog(category, setDialogState);
+                                              _showAddProductToCategoryDialog(
+                                                  category, setDialogState);
                                             }
                                           } catch (e) {
                                             if (mounted) {
-                                              ScaffoldMessenger.of(context).showSnackBar(
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
                                                 SnackBar(
                                                   content: Text('Hata: $e'),
-                                                  backgroundColor: Colors.red,
+                                                  backgroundColor:
+                                                      AppDesignSystem.error,
                                                 ),
                                               );
                                             }
                                           }
                                         },
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: const Color(0xFF10B981),
-                                          foregroundColor: Colors.white,
+                                          backgroundColor:
+                                              AppDesignSystem.success,
+                                          foregroundColor:
+                                              AppDesignSystem.textOnPrimary,
                                         ),
                                         child: const Text('Ekle'),
                                       ),
@@ -925,13 +969,14 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
   }
 
   Widget _buildStatCard(String label, int value, Color color) {
+    final themeColors = context.appTheme;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
+          color: color.withValues(alpha: themeColors.isDark ? 0.18 : 0.10),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.28)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -940,7 +985,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
               label,
               style: GoogleFonts.inter(
                 fontSize: 12,
-                color: Colors.grey[600],
+                color: themeColors.textSecondary,
               ),
             ),
             const SizedBox(height: 4),
@@ -960,31 +1005,37 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
 
   // ==================== İSTATİSTİKLER ====================
 
-  Widget _buildStatisticsCards(List<ProductCategory> categories, List<AdminProduct> allProducts) {
+  Widget _buildStatisticsCards(
+      List<ProductCategory> categories, List<AdminProduct> allProducts) {
     final activeCategories = categories.where((c) => c.isActive).length;
     final passiveCategories = categories.where((c) => !c.isActive).length;
-    
+
     // Ürünlerden gelen kategoriler (Firestore'da olmayan)
     final productCategories = allProducts.map((p) => p.category).toSet();
     final firestoreCategories = categories.map((c) => c.name).toSet();
-    final productOnlyCategories = productCategories.difference(firestoreCategories).length;
+    final productOnlyCategories =
+        productCategories.difference(firestoreCategories).length;
 
     return Row(
       children: [
         Expanded(
-          child: _buildStatCard('Toplam Kategori', categories.length + productOnlyCategories, const Color(0xFF3B82F6)),
+          child: _buildStatCard('Toplam Kategori',
+              categories.length + productOnlyCategories, AppColors.brandCyan),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('Aktif Kategori', activeCategories, const Color(0xFF10B981)),
+          child: _buildStatCard(
+              'Aktif Kategori', activeCategories, AppColors.success),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('Pasif Kategori', passiveCategories, const Color(0xFFEF4444)),
+          child: _buildStatCard(
+              'Pasif Kategori', passiveCategories, AppColors.error),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildStatCard('Ürünlerden Gelen', productOnlyCategories, const Color(0xFFF59E0B)),
+          child: _buildStatCard(
+              'Ürünlerden Gelen', productOnlyCategories, AppColors.warning),
         ),
       ],
     );
@@ -998,13 +1049,17 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: category.isActive ? Colors.green : Colors.grey,
+          color: category.isActive
+              ? AppDesignSystem.success
+              : AppDesignSystem.textTertiary,
           width: 2,
         ),
       ),
       child: Container(
         decoration: BoxDecoration(
-          color: category.isActive ? Colors.green[50] : Colors.grey[100],
+          color: category.isActive
+              ? AppDesignSystem.successLight
+              : AppDesignSystem.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -1014,7 +1069,9 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: category.isActive ? Colors.green[100] : Colors.grey[200],
+                color: category.isActive
+                    ? AppDesignSystem.successLight
+                    : AppDesignSystem.borderLight,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(12),
                   topRight: Radius.circular(12),
@@ -1029,16 +1086,19 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                       style: GoogleFonts.inter(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F0F0F),
+                        color: context.appTheme.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: category.isActive ? Colors.green : Colors.grey,
+                      color: category.isActive
+                          ? AppDesignSystem.success
+                          : AppDesignSystem.textTertiary,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -1046,7 +1106,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: context.appTheme.textInverse,
                       ),
                     ),
                   ),
@@ -1059,12 +1119,13 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (category.description != null && category.description!.isNotEmpty)
+                  if (category.description != null &&
+                      category.description!.isNotEmpty)
                     Text(
                       category.description!,
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: Colors.grey[700],
+                        color: context.appTheme.textSecondary,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -1074,7 +1135,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                       'Açıklama yok',
                       style: GoogleFonts.inter(
                         fontSize: 14,
-                        color: Colors.grey[400],
+                        color: context.appTheme.textMuted,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -1083,7 +1144,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                     '$productCount ürün',
                     style: GoogleFonts.inter(
                       fontSize: 12,
-                      color: Colors.grey[600],
+                      color: context.appTheme.textSecondary,
                     ),
                   ),
                 ],
@@ -1094,7 +1155,7 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 border: Border(
-                  top: BorderSide(color: Colors.grey[300]!),
+                  top: BorderSide(color: context.appTheme.borderSubtle),
                 ),
               ),
               child: Row(
@@ -1103,28 +1164,30 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                   // Ürünleri Görüntüle
                   _buildActionButton(
                     icon: Icons.visibility,
-                    color: const Color(0xFF6366F1),
+                    color: AppDesignSystem.accent,
                     tooltip: 'Ürünleri Görüntüle',
                     onPressed: () => _showCategoryProductsDialog(category),
                   ),
                   // Düzenle
                   _buildActionButton(
                     icon: Icons.edit,
-                    color: const Color(0xFF3B82F6),
+                    color: AppDesignSystem.accent,
                     tooltip: 'Düzenle',
                     onPressed: () => _showEditCategoryDialog(category),
                   ),
                   // Aktif/Pasif Yap
                   _buildActionButton(
-                    icon: category.isActive ? Icons.visibility_off : Icons.visibility,
-                    color: const Color(0xFFF59E0B),
+                    icon: category.isActive
+                        ? Icons.visibility_off
+                        : Icons.visibility,
+                    color: AppDesignSystem.warning,
                     tooltip: category.isActive ? 'Pasif Yap' : 'Aktif Yap',
                     onPressed: () => _toggleCategoryStatus(category),
                   ),
                   // Sil
                   _buildActionButton(
                     icon: Icons.delete,
-                    color: const Color(0xFFEF4444),
+                    color: AppDesignSystem.error,
                     tooltip: 'Sil',
                     onPressed: () => _showDeleteCategoryDialog(category),
                   ),
@@ -1157,8 +1220,9 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.appTheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text(
           'Kategori Yönetimi',
@@ -1167,8 +1231,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
             fontWeight: FontWeight.w700,
           ),
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF1A1A1A),
+        backgroundColor: colors.navSurface,
+        foregroundColor: colors.textPrimary,
         elevation: 0,
         actions: [
           IconButton(
@@ -1182,8 +1246,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
         onPressed: _showAddCategoryDialog,
         icon: const Icon(Icons.add),
         label: const Text('Yeni Kategori'),
-        backgroundColor: const Color(0xFF6366F1),
-        foregroundColor: Colors.white,
+        backgroundColor: colors.accent,
+        foregroundColor: colors.textInverse,
       ),
       body: StreamBuilder<List<ProductCategory>>(
         key: ValueKey(_refreshKey),
@@ -1198,7 +1262,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
           if (categorySnapshot.hasError) {
             return ProfessionalComponents.createEmptyState(
               title: 'Hata',
-              message: 'Kategoriler yüklenirken bir hata oluştu: ${categorySnapshot.error}',
+              message:
+                  'Kategoriler yüklenirken bir hata oluştu: ${categorySnapshot.error}',
               icon: Icons.error_outline,
             );
           }
@@ -1209,11 +1274,11 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
             future: _adminService.getProductsFromServer(),
             builder: (context, productSnapshot) {
               final allProducts = productSnapshot.data ?? [];
-              
+
               // Kategori başına ürün sayısını hesapla
               final categoryProductCounts = <String, int>{};
               for (final product in allProducts) {
-                categoryProductCounts[product.category] = 
+                categoryProductCounts[product.category] =
                     (categoryProductCounts[product.category] ?? 0) + 1;
               }
 
@@ -1231,14 +1296,15 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                       style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF0F0F0F),
+                        color: context.appTheme.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 16),
                     if (categories.isEmpty)
                       ProfessionalComponents.createEmptyState(
                         title: 'Kategori Bulunamadı',
-                        message: 'Henüz kategori eklenmemiş. Yeni kategori eklemek için sağ alttaki butona tıklayın.',
+                        message:
+                            'Henüz kategori eklenmemiş. Yeni kategori eklemek için sağ alttaki butona tıklayın.',
                         icon: Icons.category_outlined,
                       )
                     else
@@ -1260,7 +1326,8 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
                           final category = categories[index];
-                          final productCount = categoryProductCounts[category.name] ?? 0;
+                          final productCount =
+                              categoryProductCounts[category.name] ?? 0;
                           return _buildCategoryCard(category, productCount);
                         },
                       ),
@@ -1274,4 +1341,3 @@ class _WebAdminCategoryManagementState extends State<WebAdminCategoryManagement>
     );
   }
 }
-

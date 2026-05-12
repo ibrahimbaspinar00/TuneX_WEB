@@ -38,13 +38,13 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
   bool _isFreeShippingCoupon = false; // FREESHIP kuponu için
   double _shippingCost = 44.99; // Trendyol tarzı kargo ücreti
   String? _couponError; // Kupon hatası için
-  
+
   // Services
   final FirebaseDataService _firebaseDataService = FirebaseDataService();
-  
+
   // Ürün miktarı controller'ları için Map
   final Map<String, TextEditingController> _quantityControllers = {};
-  
+
   @override
   void dispose() {
     _couponController.dispose();
@@ -55,10 +55,11 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
     _quantityControllers.clear();
     super.dispose();
   }
-  
+
   TextEditingController _getQuantityController(Product product) {
     if (!_quantityControllers.containsKey(product.id)) {
-      _quantityControllers[product.id] = TextEditingController(text: '${product.quantity}');
+      _quantityControllers[product.id] =
+          TextEditingController(text: '${product.quantity}');
     } else {
       // Controller varsa ama değer farklıysa güncelle
       final controller = _quantityControllers[product.id]!;
@@ -70,7 +71,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
   }
 
   double get _subtotal {
-    return widget.cartProducts.fold(0.0, (sum, product) => sum + (product.price * product.quantity));
+    return widget.cartProducts
+        .fold(0.0, (sum, product) => sum + (product.price * product.quantity));
   }
 
   double get _couponDiscountAmount {
@@ -170,7 +172,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       ProfessionalErrorHandler.showWarning(
         context: context,
         title: 'Yeterli Stok Yok',
-        message: 'Mevcut stok: ${product.stock} adet. Daha fazla ekleyemezsiniz.',
+        message:
+            'Mevcut stok: ${product.stock} adet. Daha fazla ekleyemezsiniz.',
       );
       // Controller'ı güncelle
       if (_quantityControllers.containsKey(product.id)) {
@@ -178,7 +181,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       }
       return;
     }
-    
+
     if (newQuantity <= 0) {
       widget.onRemoveFromCart(product);
       // Controller'ı temizle
@@ -191,7 +194,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       }
     }
   }
-  
+
   void _updateProductQuantityFromText(Product product, String value) {
     if (value.isEmpty) {
       // Boşsa eski değere geri dön
@@ -200,7 +203,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       }
       return;
     }
-    
+
     final newQuantity = int.tryParse(value);
     if (newQuantity == null || newQuantity < 1) {
       ProfessionalErrorHandler.showWarning(
@@ -214,7 +217,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       }
       return;
     }
-    
+
     _updateProductQuantity(product, newQuantity);
   }
 
@@ -267,7 +270,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
         elevation: 0,
         shadowColor: Colors.black.withOpacity(0.05),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
+          icon: Icon(Icons.arrow_back, color: AppDesignSystem.textPrimary),
           onPressed: () {
             // Ana sayfaya yönlendir
             AppRoutes.navigateToMain(context);
@@ -277,7 +280,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
           if (widget.cartProducts.isNotEmpty)
             TextButton(
               style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 minimumSize: const Size(0, 32),
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
@@ -313,7 +317,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 builder: (context, constraints) {
                   final screenWidth = MediaQuery.of(context).size.width;
                   final isDesktop = screenWidth >= 1024;
-                  
+
                   if (isDesktop) {
                     // Desktop: Sol ürün listesi, sağ sidebar özet
                     return Row(
@@ -340,7 +344,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                             color: Colors.white,
                             border: Border(
                               left: BorderSide(
-                                color: const Color(0xFFE8E8E8),
+                                color: const Color(0xFF2A3340),
                                 width: 1,
                               ),
                             ),
@@ -431,7 +435,6 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
     );
   }
 
-
   Widget _buildProductList() {
     return ProfessionalAnimations.createStaggeredList(
       children: widget.cartProducts.map((product) {
@@ -460,9 +463,9 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
               fit: BoxFit.cover,
             ),
           ),
-          
+
           const SizedBox(width: AppDesignSystem.spacingM),
-          
+
           // Ürün bilgileri
           Expanded(
             child: Column(
@@ -477,9 +480,9 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                
+
                 const SizedBox(height: AppDesignSystem.spacingS),
-                
+
                 Text(
                   '${product.price.toStringAsFixed(2)} ₺',
                   style: AppDesignSystem.bodyLarge.copyWith(
@@ -487,9 +490,9 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     color: AppDesignSystem.accent,
                   ),
                 ),
-                
+
                 const SizedBox(height: AppDesignSystem.spacingXS),
-                
+
                 // Miktar kontrolü ve stok bilgisi
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -500,13 +503,16 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                         Container(
                           decoration: BoxDecoration(
                             color: AppDesignSystem.surfaceVariant,
-                            borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                            borderRadius:
+                                BorderRadius.circular(AppDesignSystem.radiusS),
                           ),
                           child: IconButton(
-                            onPressed: () => _updateProductQuantity(product, product.quantity - 1),
+                            onPressed: () => _updateProductQuantity(
+                                product, product.quantity - 1),
                             icon: const Icon(Icons.remove, size: 18),
                             color: AppDesignSystem.textPrimary,
-                            padding: const EdgeInsets.all(AppDesignSystem.spacingS),
+                            padding:
+                                const EdgeInsets.all(AppDesignSystem.spacingS),
                             constraints: const BoxConstraints(
                               minWidth: 36,
                               minHeight: 36,
@@ -514,7 +520,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                           ),
                         ),
                         Container(
-                          margin: const EdgeInsets.symmetric(horizontal: AppDesignSystem.spacingS),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: AppDesignSystem.spacingS),
                           width: 60,
                           child: TextField(
                             controller: _getQuantityController(product),
@@ -532,16 +539,22 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                                 vertical: AppDesignSystem.spacingS,
                               ),
                               border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
-                                borderSide: BorderSide(color: AppDesignSystem.borderLight),
+                                borderRadius: BorderRadius.circular(
+                                    AppDesignSystem.radiusS),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderLight),
                               ),
                               enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
-                                borderSide: BorderSide(color: AppDesignSystem.borderLight),
+                                borderRadius: BorderRadius.circular(
+                                    AppDesignSystem.radiusS),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.borderLight),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
-                                borderSide: BorderSide(color: AppDesignSystem.accent, width: 2),
+                                borderRadius: BorderRadius.circular(
+                                    AppDesignSystem.radiusS),
+                                borderSide: BorderSide(
+                                    color: AppDesignSystem.accent, width: 2),
                               ),
                               isDense: true,
                             ),
@@ -550,7 +563,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                             },
                             onTap: () {
                               // Tıklanınca tüm metni seç
-                              final controller = _getQuantityController(product);
+                              final controller =
+                                  _getQuantityController(product);
                               controller.selection = TextSelection(
                                 baseOffset: 0,
                                 extentOffset: controller.text.length,
@@ -561,13 +575,16 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                         Container(
                           decoration: BoxDecoration(
                             color: AppDesignSystem.surfaceVariant,
-                            borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                            borderRadius:
+                                BorderRadius.circular(AppDesignSystem.radiusS),
                           ),
                           child: IconButton(
-                            onPressed: () => _updateProductQuantity(product, product.quantity + 1),
+                            onPressed: () => _updateProductQuantity(
+                                product, product.quantity + 1),
                             icon: const Icon(Icons.add, size: 18),
                             color: AppDesignSystem.textPrimary,
-                            padding: const EdgeInsets.all(AppDesignSystem.spacingS),
+                            padding:
+                                const EdgeInsets.all(AppDesignSystem.spacingS),
                             constraints: const BoxConstraints(
                               minWidth: 36,
                               minHeight: 36,
@@ -581,10 +598,10 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     Text(
                       'Stok: ${product.stock} adet',
                       style: AppDesignSystem.bodySmall.copyWith(
-                        color: product.stock > 0 
-                            ? (product.stock < 10 
-                                ? const Color(0xFFF59E0B) 
-                                : const Color(0xFF10B981))
+                        color: product.stock > 0
+                            ? (product.stock < 10
+                                ? const Color(0xFFFFB020)
+                                : const Color(0xFF18C964))
                             : const Color(0xFFEF4444),
                         fontWeight: FontWeight.w500,
                       ),
@@ -594,7 +611,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
               ],
             ),
           ),
-          
+
           // Toplam fiyat ve sil butonu
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -609,7 +626,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
               const SizedBox(height: AppDesignSystem.spacingS),
               IconButton(
                 onPressed: () => widget.onRemoveFromCart(product),
-                icon: const Icon(Icons.delete_outline, color: AppDesignSystem.error, size: 22),
+                icon: Icon(Icons.delete_outline,
+                    color: AppDesignSystem.error, size: 22),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(
                   minWidth: 40,
@@ -626,25 +644,29 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
   Widget _buildOrderSummary({required bool isDesktop}) {
     final hasFreeShipping = _subtotal >= 100 || _finalShippingCost == 0;
     final totalSavings = _couponDiscountAmount;
-    
+
     return Container(
       padding: EdgeInsets.all(isDesktop ? 24 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        boxShadow: isDesktop ? [] : [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
-            spreadRadius: 0,
-          ),
-        ],
-        border: isDesktop ? null : Border(
-          top: BorderSide(
-            color: const Color(0xFFE8E8E8),
-            width: 1,
-          ),
-        ),
+        boxShadow: isDesktop
+            ? []
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.08),
+                  blurRadius: 20,
+                  offset: const Offset(0, -4),
+                  spreadRadius: 0,
+                ),
+              ],
+        border: isDesktop
+            ? null
+            : Border(
+                top: BorderSide(
+                  color: const Color(0xFF2A3340),
+                  width: 1,
+                ),
+              ),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -660,12 +682,12 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 color: const Color(0xFF0F0F0F),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Ara Toplam
             _buildSummaryRow('Ara Toplam', _subtotal.toStringAsFixed(2)),
-            
+
             // Kupon İndirimi (eğer varsa)
             if (_isCouponApplied && _couponDiscount > 0) ...[
               const SizedBox(height: 12),
@@ -677,7 +699,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                       Icon(
                         Icons.local_offer,
                         size: 16,
-                        color: const Color(0xFF10B981),
+                        color: const Color(0xFF18C964),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -685,7 +707,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6A6A6A),
+                          color: const Color(0xFFC7CDD6),
                         ),
                       ),
                     ],
@@ -695,13 +717,13 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF18C964),
                     ),
                   ),
                 ],
               ),
             ],
-            
+
             // Ücretsiz Kargo Kuponu (FREESHIP)
             if (_isCouponApplied && _isFreeShippingCoupon) ...[
               const SizedBox(height: 12),
@@ -713,7 +735,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                       Icon(
                         Icons.local_offer,
                         size: 16,
-                        color: const Color(0xFF10B981),
+                        color: const Color(0xFF18C964),
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -721,15 +743,16 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF6A6A6A),
+                          color: const Color(0xFFC7CDD6),
                         ),
                       ),
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF18C964),
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -744,9 +767,9 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 ],
               ),
             ],
-            
+
             const SizedBox(height: 12),
-            
+
             // Kargo Tutarı
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -756,16 +779,17 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                   style: GoogleFonts.inter(
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                 ),
                 Row(
                   children: [
                     if (hasFreeShipping) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF10B981),
+                          color: const Color(0xFF18C964),
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
@@ -791,9 +815,11 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 ),
               ],
             ),
-            
+
             // Toplam Kazanç (sadece indirim kuponu varsa göster)
-            if (_isCouponApplied && _couponDiscount > 0 && totalSavings > 0) ...[
+            if (_isCouponApplied &&
+                _couponDiscount > 0 &&
+                totalSavings > 0) ...[
               const SizedBox(height: 12),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -805,14 +831,14 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                         style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.w500,
-                          color: const Color(0xFF10B981),
+                          color: const Color(0xFF18C964),
                         ),
                       ),
                       const SizedBox(width: 4),
                       Icon(
                         Icons.arrow_downward,
                         size: 16,
-                        color: const Color(0xFF10B981),
+                        color: const Color(0xFF18C964),
                       ),
                     ],
                   ),
@@ -821,17 +847,17 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF10B981),
+                      color: const Color(0xFF18C964),
                     ),
                   ),
                 ],
               ),
             ],
-            
+
             const SizedBox(height: 16),
-            const Divider(height: 1, color: Color(0xFFE8E8E8)),
+            const Divider(height: 1, color: Color(0xFF2A3340)),
             const SizedBox(height: 16),
-            
+
             // Toplam
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -854,18 +880,18 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 ),
               ],
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // İndirim Kodu butonu veya uygulanmış kupon bilgisi
             if (_isCouponApplied) ...[
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  color: const Color(0xFF18C964).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: const Color(0xFF10B981).withOpacity(0.3),
+                    color: const Color(0xFF18C964).withOpacity(0.3),
                     width: 1,
                   ),
                 ),
@@ -873,7 +899,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                   children: [
                     const Icon(
                       Icons.check_circle,
-                      color: Color(0xFF10B981),
+                      color: Color(0xFF18C964),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -886,7 +912,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                             style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: const Color(0xFF10B981),
+                              color: const Color(0xFF18C964),
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -896,7 +922,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                                 : '%${(_couponDiscount * 100).toStringAsFixed(0)} İndirim: $_appliedCoupon',
                             style: GoogleFonts.inter(
                               fontSize: 12,
-                              color: const Color(0xFF10B981),
+                              color: const Color(0xFF18C964),
                             ),
                           ),
                         ],
@@ -907,7 +933,8 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                         _removeCoupon();
                       },
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         minimumSize: const Size(0, 28),
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
@@ -924,34 +951,34 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 ),
               ),
             ] else ...[
-            SizedBox(
-              width: double.infinity,
-              height: 44,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  _showCouponDialog();
-                },
-                icon: const Icon(Icons.add, size: 20),
-                label: Text(
-                  'İndirim Kodu Gir',
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _showCouponDialog();
+                  },
+                  icon: const Icon(Icons.add, size: 20),
+                  label: Text(
+                    'İndirim Kodu Gir',
+                    style: GoogleFonts.inter(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF0F0F0F),
-                  side: const BorderSide(color: Color(0xFFE8E8E8)),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF0F0F0F),
+                    side: const BorderSide(color: Color(0xFF2A3340)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 ),
               ),
-            ),
             ],
-            
+
             const SizedBox(height: 16),
-            
+
             // Sepeti Onayla butonu
             SizedBox(
               width: double.infinity,
@@ -959,7 +986,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
               child: ElevatedButton(
                 onPressed: _proceedToCheckout,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFFF6000),
+                  backgroundColor: const Color(0xFFFF6A00),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -975,9 +1002,9 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 20),
-            
+
             // Gel Al noktası önerisi
             _buildPickupPointSuggestion(),
           ],
@@ -985,7 +1012,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       ),
     );
   }
-  
+
   Widget _buildSummaryRow(String label, String value) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -995,7 +1022,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
           style: GoogleFonts.inter(
             fontSize: 15,
             fontWeight: FontWeight.w500,
-            color: const Color(0xFF6A6A6A),
+            color: const Color(0xFFC7CDD6),
           ),
         ),
         Text(
@@ -1009,15 +1036,15 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       ],
     );
   }
-  
+
   Widget _buildPickupPointSuggestion() {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFAFBFC),
+        color: const Color(0xFF0B0D10),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(
-          color: const Color(0xFFE8E8E8),
+          color: const Color(0xFF2A3340),
           width: 1,
         ),
       ),
@@ -1031,7 +1058,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
             ),
             child: Icon(
               Icons.location_on,
-              color: const Color(0xFFFF6000),
+              color: const Color(0xFFFF6A00),
               size: 24,
             ),
           ),
@@ -1053,7 +1080,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                   'Siparişini sana uygun zamanda güvenle teslim al',
                   style: GoogleFonts.inter(
                     fontSize: 12,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1061,7 +1088,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                   'Teslimat noktasını ödeme adımında seçebilirsin',
                   style: GoogleFonts.inter(
                     fontSize: 11,
-                    color: const Color(0xFF9CA3AF),
+                    color: const Color(0xFF8E98A8),
                   ),
                 ),
               ],
@@ -1071,7 +1098,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       ),
     );
   }
-  
+
   void _showCouponDialog() {
     _couponError = null; // Dialog açılırken hatayı temizle
     showDialog(
@@ -1095,40 +1122,40 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFF6000).withOpacity(0.1),
+                        color: const Color(0xFFFF6A00).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.local_offer,
-                        color: Color(0xFFFF6000),
+                        color: Color(0xFFFF6A00),
                         size: 24,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-          'İndirim Kodu',
-          style: GoogleFonts.inter(
+                        'İndirim Kodu',
+                        style: GoogleFonts.inter(
                           fontSize: 22,
-            fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F0F0F),
                         ),
-          ),
-        ),
+                      ),
+                    ),
                     IconButton(
                       icon: const Icon(Icons.close, size: 20),
                       onPressed: () => Navigator.pop(context),
-                      color: const Color(0xFF6A6A6A),
+                      color: const Color(0xFFC7CDD6),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
                   ],
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Kupon kodu input
-            TextField(
-              controller: _couponController,
+                TextField(
+                  controller: _couponController,
                   autofocus: true,
                   textCapitalization: TextCapitalization.characters,
                   style: GoogleFonts.inter(
@@ -1136,36 +1163,36 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF0F0F0F),
                   ),
-              decoration: InputDecoration(
-                hintText: 'Kupon kodunuzu girin',
+                  decoration: InputDecoration(
+                    hintText: 'Kupon kodunuzu girin',
                     hintStyle: GoogleFonts.inter(
                       fontSize: 16,
-                      color: const Color(0xFF9CA3AF),
+                      color: const Color(0xFF8E98A8),
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFFAFBFC),
-                border: OutlineInputBorder(
+                    fillColor: const Color(0xFF0B0D10),
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: _couponError != null 
-                            ? const Color(0xFFEF4444) 
-                            : const Color(0xFFE8E8E8),
+                        color: _couponError != null
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF2A3340),
                         width: 1.5,
                       ),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(
-                        color: _couponError != null 
-                            ? const Color(0xFFEF4444) 
-                            : const Color(0xFFE8E8E8),
+                        color: _couponError != null
+                            ? const Color(0xFFEF4444)
+                            : const Color(0xFF2A3340),
                         width: 1.5,
                       ),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: const BorderSide(
-                        color: Color(0xFFFF6000),
+                        color: Color(0xFFFF6A00),
                         width: 2,
                       ),
                     ),
@@ -1196,7 +1223,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     }
                   },
                 ),
-                
+
                 // Hata mesajı
                 if (_couponError != null) ...[
                   const SizedBox(height: 12),
@@ -1204,7 +1231,7 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: const Color(0xFFEF4444).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: const Color(0xFFEF4444).withOpacity(0.3),
                         width: 1,
@@ -1225,65 +1252,65 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                               fontSize: 13,
                               color: const Color(0xFFEF4444),
                               fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
-                
+
                 // Uygulanmış kupon bilgisi
-            if (_isCouponApplied) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+                if (_isCouponApplied) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF18C964).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: const Color(0xFF10B981).withOpacity(0.3),
+                        color: const Color(0xFF18C964).withOpacity(0.3),
                         width: 1,
                       ),
-                ),
-                child: Row(
-                  children: [
+                    ),
+                    child: Row(
+                      children: [
                         const Icon(
                           Icons.check_circle,
-                          color: Color(0xFF10B981),
+                          color: Color(0xFF18C964),
                           size: 20,
                         ),
-                    const SizedBox(width: 8),
-                    Expanded(
+                        const SizedBox(width: 8),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Kupon Uygulandı',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w600,
-                          color: const Color(0xFF10B981),
-                        ),
+                                  color: const Color(0xFF18C964),
+                                ),
                               ),
                               const SizedBox(height: 2),
                               Text(
                                 'Kod: $_appliedCoupon',
                                 style: GoogleFonts.inter(
                                   fontSize: 12,
-                                  color: const Color(0xFF10B981),
-                      ),
+                                  color: const Color(0xFF18C964),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-                    ),
-        ),
+                  ),
                 ],
-                
+
                 const SizedBox(height: 24),
-                
+
                 // Butonlar
                 Row(
                   children: [
@@ -1298,52 +1325,52 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           side: const BorderSide(
-                            color: Color(0xFFE8E8E8),
+                            color: Color(0xFF2A3340),
                             width: 1.5,
                           ),
                         ),
-            child: Text(
-              'İptal',
-              style: GoogleFonts.inter(
+                        child: Text(
+                          'İptal',
+                          style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
-                color: const Color(0xFF6A6A6A),
-              ),
-            ),
-          ),
+                            color: const Color(0xFFC7CDD6),
+                          ),
+                        ),
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
                       child: ElevatedButton(
-            onPressed: () {
-              if (_isCouponApplied) {
-                _removeCoupon();
+                        onPressed: () {
+                          if (_isCouponApplied) {
+                            _removeCoupon();
                             Navigator.pop(context);
-              } else {
-                _applyCoupon();
+                          } else {
+                            _applyCoupon();
                             setDialogState(() {}); // State'i güncelle
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFF6000),
-              foregroundColor: Colors.white,
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF6A00),
+                          foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           elevation: 0,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-            ),
-            child: Text(
-              _isCouponApplied ? 'Kaldır' : 'Uygula',
-              style: GoogleFonts.inter(
+                        ),
+                        child: Text(
+                          _isCouponApplied ? 'Kaldır' : 'Uygula',
+                          style: GoogleFonts.inter(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                           ),
-              ),
-            ),
-          ),
-        ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -1352,7 +1379,6 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
       ),
     );
   }
-
 
   Future<void> _showClearCartDialog() async {
     ProfessionalErrorHandler.showWarning(
@@ -1364,13 +1390,13 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
         try {
           // Firebase'den tüm sepeti temizle
           await _firebaseDataService.clearCart();
-          
+
           // Local listeyi de temizle - tüm ürünleri kaldır
           final productsToRemove = List<Product>.from(widget.cartProducts);
           for (final product in productsToRemove) {
             widget.onRemoveFromCart(product);
           }
-          
+
           if (mounted) {
             Navigator.pop(context);
             ProfessionalErrorHandler.showSuccess(
@@ -1393,4 +1419,3 @@ class _SepetimSayfasiState extends State<SepetimSayfasi> {
     );
   }
 }
-

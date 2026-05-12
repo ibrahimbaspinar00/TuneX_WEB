@@ -30,35 +30,37 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
   List<Order> _orders = [];
   bool _isLoading = true;
   DateTime? _lastLoadTime;
-  
+
   @override
   void initState() {
     super.initState();
     _loadOrders();
   }
-  
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     // Sayfa her görünür olduğunda siparişleri yeniden yükle
     // Ancak çok sık yüklemeyi önlemek için son yüklemeden 2 saniye geçmiş olmalı
     final now = DateTime.now();
-    if (!_isLoading && (_lastLoadTime == null || now.difference(_lastLoadTime!).inSeconds > 2)) {
+    if (!_isLoading &&
+        (_lastLoadTime == null ||
+            now.difference(_lastLoadTime!).inSeconds > 2)) {
       _loadOrders();
     }
   }
-  
+
   Future<void> _loadOrders() async {
     if (!mounted) return;
-    
+
     setState(() {
       _isLoading = true;
     });
-    
+
     try {
       final orderService = OrderService();
       final userOrders = await orderService.getUserOrders();
-      
+
       if (mounted) {
         setState(() {
           _orders = userOrders;
@@ -77,22 +79,22 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
       }
     }
   }
-  
+
   List<Order> get _filteredOrders {
     // Önce widget.orders'ı kullan, eğer boşsa _orders'ı kullan
     var orders = widget.orders.isNotEmpty ? widget.orders : _orders;
-    
+
     // Tab filtresi
     switch (_selectedTab) {
       case 'Devam Eden':
         orders = orders.where((o) {
           final status = o.status.toLowerCase();
-          return status != 'delivered' && 
-                 status != 'teslim edildi' && 
-                 status != 'cancelled' && 
-                 status != 'iptal edildi' &&
-                 status != 'returned' &&
-                 status != 'iade edildi';
+          return status != 'delivered' &&
+              status != 'teslim edildi' &&
+              status != 'cancelled' &&
+              status != 'iptal edildi' &&
+              status != 'returned' &&
+              status != 'iade edildi';
         }).toList();
         break;
       case 'İptal Edilen':
@@ -112,15 +114,17 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
         // Tüm siparişler
         break;
     }
-    
+
     // Arama filtresi
     if (_searchQuery.isNotEmpty) {
       orders = orders.where((order) {
         return order.id.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-               order.customerName.toLowerCase().contains(_searchQuery.toLowerCase());
+            order.customerName
+                .toLowerCase()
+                .contains(_searchQuery.toLowerCase());
       }).toList();
     }
-    
+
     // Tarih sıralaması (en yeni önce) - Web'de güvenli
     try {
       orders.sort((a, b) {
@@ -135,14 +139,14 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
       debugPrint('Sıralama hatası (görmezden geliniyor): $e');
       // Sıralama başarısız olsa bile siparişleri döndür
     }
-    
+
     return orders;
   }
 
   @override
   Widget build(BuildContext context) {
     final isMobile = ResponsiveHelper.isMobile(context);
-    
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: AppDesignSystem.background,
@@ -151,7 +155,7 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
         elevation: 0,
         automaticallyImplyLeading: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back,
             color: AppDesignSystem.textPrimary,
           ),
@@ -188,8 +192,8 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                 ),
               ),
               if (!isMobile) ...[
-              if (!ResponsiveHelper.isMobile(context)) const Spacer(),
-              // Sağ tarafta arama ve tarih filtresi
+                if (!ResponsiveHelper.isMobile(context)) const Spacer(),
+                // Sağ tarafta arama ve tarih filtresi
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -203,19 +207,19 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                       ),
                       height: 40,
                       child: TextField(
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: const Color(0xFF0F0F0F),
-                      ),
+                        onChanged: (value) {
+                          setState(() {
+                            _searchQuery = value;
+                          });
+                        },
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: const Color(0xFF0F0F0F),
+                        ),
                         decoration: AppDesignSystem.inputDecoration(
                           label: '',
                           hint: 'Sipariş ara',
-                          prefixIcon: const Icon(
+                          prefixIcon: Icon(
                             Icons.search,
                             color: AppDesignSystem.textSecondary,
                             size: 20,
@@ -223,16 +227,20 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                         ),
                       ),
                     ),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 12.0)),
+                    SizedBox(
+                        width: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 8.0, desktop: 12.0)),
                     // Tarih filtresi
                     Container(
                       height: 40,
                       padding: EdgeInsets.symmetric(
-                        horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 12.0),
+                        horizontal: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 8.0, desktop: 12.0),
                       ),
                       decoration: BoxDecoration(
                         color: AppDesignSystem.surfaceVariant,
-                        borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                        borderRadius:
+                            BorderRadius.circular(AppDesignSystem.radiusS),
                         border: Border.all(
                           color: AppDesignSystem.borderLight,
                           width: 1,
@@ -248,7 +256,12 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                               desktop: 14.0,
                             ),
                           ),
-                          items: ['Tüm tarihler', 'Son 7 gün', 'Son 30 gün', 'Son 3 ay'].map((option) {
+                          items: [
+                            'Tüm tarihler',
+                            'Son 7 gün',
+                            'Son 30 gün',
+                            'Son 3 ay'
+                          ].map((option) {
                             return DropdownMenuItem(
                               value: option,
                               child: Text(
@@ -298,11 +311,17 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                 child: Row(
                   children: [
                     _buildTabButton('Tümü'),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 8.0)),
+                    SizedBox(
+                        width: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 6.0, desktop: 8.0)),
                     _buildTabButton('Devam Eden'),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 8.0)),
+                    SizedBox(
+                        width: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 6.0, desktop: 8.0)),
                     _buildTabButton('İptal Edilen'),
-                    SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 8.0)),
+                    SizedBox(
+                        width: ResponsiveHelper.responsiveSpacing(context,
+                            mobile: 6.0, desktop: 8.0)),
                     _buildTabButton('İade Edilen'),
                   ],
                 ),
@@ -322,7 +341,8 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(AppDesignSystem.spacingL),
+                                padding: const EdgeInsets.all(
+                                    AppDesignSystem.spacingL),
                                 decoration: BoxDecoration(
                                   color: AppDesignSystem.surfaceVariant,
                                   shape: BoxShape.circle,
@@ -341,7 +361,8 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                                 style: AppDesignSystem.heading4,
                               ),
                               if (widget.orders.isEmpty && _orders.isEmpty) ...[
-                                const SizedBox(height: AppDesignSystem.spacingS),
+                                const SizedBox(
+                                    height: AppDesignSystem.spacingS),
                                 Text(
                                   'Ürünleri sepete ekleyip sipariş verin',
                                   style: AppDesignSystem.bodyMedium.copyWith(
@@ -356,7 +377,8 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                           onRefresh: _loadOrders,
                           color: AppDesignSystem.primary,
                           child: ListView.builder(
-                            padding: ResponsiveHelper.responsiveHorizontalPadding(
+                            padding:
+                                ResponsiveHelper.responsiveHorizontalPadding(
                               context,
                               mobile: 16.0,
                               tablet: 24.0,
@@ -378,7 +400,7 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
       ),
     );
   }
-  
+
   // Trendyol tarzı tab butonu
   Widget _buildTabButton(String label) {
     final isSelected = _selectedTab == label;
@@ -390,14 +412,18 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
       },
       child: Container(
         padding: EdgeInsets.symmetric(
-          horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 12.0, desktop: 20.0),
-          vertical: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 10.0),
+          horizontal: ResponsiveHelper.responsiveSpacing(context,
+              mobile: 12.0, desktop: 20.0),
+          vertical: ResponsiveHelper.responsiveSpacing(context,
+              mobile: 8.0, desktop: 10.0),
         ),
         decoration: BoxDecoration(
           color: isSelected ? AppDesignSystem.primary : AppDesignSystem.surface,
           borderRadius: BorderRadius.circular(AppDesignSystem.radiusRound),
           border: Border.all(
-            color: isSelected ? AppDesignSystem.primary : AppDesignSystem.borderLight,
+            color: isSelected
+                ? AppDesignSystem.primary
+                : AppDesignSystem.borderLight,
             width: 1.5,
           ),
         ),
@@ -409,7 +435,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
               mobile: 12.0,
               desktop: 14.0,
             ),
-            color: isSelected ? AppDesignSystem.textOnPrimary : AppDesignSystem.textPrimary,
+            color: isSelected
+                ? AppDesignSystem.textOnPrimary
+                : AppDesignSystem.textPrimary,
           ),
         ),
       ),
@@ -420,16 +448,18 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
   Widget _buildTrendyolOrderCard(Order order) {
     final deliveryCount = 1; // Demo: 1 teslimat
     // Toplam ürün miktarını hesapla (her ürünün quantity'sini topla)
-    final totalProductQuantity = order.products.fold(0, (sum, product) => sum + product.quantity);
-    final isDelivered = order.status.toLowerCase() == 'delivered' || 
-                       order.status.toLowerCase() == 'teslim edildi';
-    final isCreated = order.status.toLowerCase() == 'pending' || 
-                     order.status.toLowerCase() == 'beklemede';
+    final totalProductQuantity =
+        order.products.fold(0, (sum, product) => sum + product.quantity);
+    final isDelivered = order.status.toLowerCase() == 'delivered' ||
+        order.status.toLowerCase() == 'teslim edildi';
+    final isCreated = order.status.toLowerCase() == 'pending' ||
+        order.status.toLowerCase() == 'beklemede';
     final isMobile = ResponsiveHelper.isMobile(context);
-    
+
     return Container(
       margin: EdgeInsets.only(
-        bottom: ResponsiveHelper.responsiveSpacing(context, mobile: 12.0, desktop: 16.0),
+        bottom: ResponsiveHelper.responsiveSpacing(context,
+            mobile: 12.0, desktop: 16.0),
       ),
       decoration: AppDesignSystem.cardDecoration(
         borderRadius: AppDesignSystem.radiusM,
@@ -467,7 +497,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0)),
+                      SizedBox(
+                          height: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 4.0, desktop: 8.0)),
                       // Sipariş özeti
                       Text(
                         '$deliveryCount Teslimat, $totalProductQuantity Ürün',
@@ -480,7 +512,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                           color: AppDesignSystem.textSecondary,
                         ),
                       ),
-                      SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 2.0, desktop: 4.0)),
+                      SizedBox(
+                          height: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 2.0, desktop: 4.0)),
                       // Alıcı
                       Text(
                         'Alıcı: ${order.customerName}',
@@ -496,7 +530,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (order.totalAmount > 0) ...[
-                        SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 2.0, desktop: 4.0)),
+                        SizedBox(
+                            height: ResponsiveHelper.responsiveSpacing(context,
+                                mobile: 2.0, desktop: 4.0)),
                         Text(
                           'Toplam: ${order.totalAmount.toStringAsFixed(2)} TL',
                           style: GoogleFonts.inter(
@@ -529,8 +565,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                       desktop: 80.0,
                     ),
                     child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                      itemCount: order.products.length > 4 ? 4 : order.products.length,
+                      scrollDirection: Axis.horizontal,
+                      itemCount:
+                          order.products.length > 4 ? 4 : order.products.length,
                       itemBuilder: (context, index) {
                         final product = order.products[index];
                         return Container(
@@ -547,17 +584,20 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                             desktop: 60.0,
                           ),
                           margin: EdgeInsets.only(
-                            right: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0),
+                            right: ResponsiveHelper.responsiveSpacing(context,
+                                mobile: 4.0, desktop: 8.0),
                           ),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                            borderRadius:
+                                BorderRadius.circular(AppDesignSystem.radiusS),
                             border: Border.all(
                               color: AppDesignSystem.borderLight,
                               width: 1,
                             ),
                           ),
                           child: ClipRRect(
-                            borderRadius: BorderRadius.circular(AppDesignSystem.radiusS - 1),
+                            borderRadius: BorderRadius.circular(
+                                AppDesignSystem.radiusS - 1),
                             child: OptimizedImage(
                               imageUrl: product.imageUrl,
                               width: ResponsiveHelper.responsiveValue(
@@ -572,25 +612,32 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                                 tablet: 55.0,
                                 desktop: 60.0,
                               ),
-                                    fit: BoxFit.cover,
-                              borderRadius: BorderRadius.circular(AppDesignSystem.radiusS - 1),
+                              fit: BoxFit.cover,
+                              borderRadius: BorderRadius.circular(
+                                  AppDesignSystem.radiusS - 1),
                               placeholder: Container(
                                 color: AppDesignSystem.surfaceVariant,
                                 child: Icon(
                                   Icons.image,
                                   color: AppDesignSystem.textTertiary,
-                                  size: ResponsiveHelper.responsiveIconSize(context, mobile: 16.0, desktop: 20.0),
+                                  size: ResponsiveHelper.responsiveIconSize(
+                                      context,
+                                      mobile: 16.0,
+                                      desktop: 20.0),
                                 ),
                               ),
                               errorWidget: Container(
-                                      color: AppDesignSystem.surfaceVariant,
-                                      child: Icon(
-                                        Icons.image_not_supported, 
-                                        color: AppDesignSystem.textTertiary,
-                                        size: ResponsiveHelper.responsiveIconSize(context, mobile: 16.0, desktop: 20.0),
-                                      ),
-                                    ),
-                                  ),
+                                color: AppDesignSystem.surfaceVariant,
+                                child: Icon(
+                                  Icons.image_not_supported,
+                                  color: AppDesignSystem.textTertiary,
+                                  size: ResponsiveHelper.responsiveIconSize(
+                                      context,
+                                      mobile: 16.0,
+                                      desktop: 20.0),
+                                ),
+                              ),
+                            ),
                           ),
                         );
                       },
@@ -598,7 +645,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                   ),
               ],
             ),
-            SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 12.0, desktop: 16.0)),
+            SizedBox(
+                height: ResponsiveHelper.responsiveSpacing(context,
+                    mobile: 12.0, desktop: 16.0)),
             // Durum ve detaylar butonu
             isMobile
                 ? Column(
@@ -607,16 +656,21 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                       // Durum kutusu
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 10.0, desktop: 16.0),
-                          vertical: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 8.0),
+                          horizontal: ResponsiveHelper.responsiveSpacing(
+                              context,
+                              mobile: 10.0,
+                              desktop: 16.0),
+                          vertical: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 6.0, desktop: 8.0),
                         ),
                         decoration: BoxDecoration(
-                          color: isDelivered 
+                          color: isDelivered
                               ? AppDesignSystem.successLight
                               : AppDesignSystem.infoLight,
-                          borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                          borderRadius:
+                              BorderRadius.circular(AppDesignSystem.radiusS),
                           border: Border.all(
-                            color: isDelivered 
+                            color: isDelivered
                                 ? AppDesignSystem.success
                                 : AppDesignSystem.info,
                             width: 1.5,
@@ -627,15 +681,20 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                           children: [
                             Icon(
                               isDelivered ? Icons.check_circle : Icons.thumb_up,
-                              size: ResponsiveHelper.responsiveIconSize(context, mobile: 14.0, desktop: 16.0),
-                              color: isDelivered 
+                              size: ResponsiveHelper.responsiveIconSize(context,
+                                  mobile: 14.0, desktop: 16.0),
+                              color: isDelivered
                                   ? AppDesignSystem.success
                                   : AppDesignSystem.info,
                             ),
-                            SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0)),
+                            SizedBox(
+                                width: ResponsiveHelper.responsiveSpacing(
+                                    context,
+                                    mobile: 4.0,
+                                    desktop: 8.0)),
                             Flexible(
                               child: Text(
-                                isDelivered 
+                                isDelivered
                                     ? 'Teslim edildi'
                                     : isCreated
                                         ? 'Sipariş oluşturuldu'
@@ -647,7 +706,7 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                                     desktop: 12.0,
                                   ),
                                   fontWeight: FontWeight.w600,
-                                  color: isDelivered 
+                                  color: isDelivered
                                       ? AppDesignSystem.success
                                       : AppDesignSystem.info,
                                 ),
@@ -658,7 +717,9 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                           ],
                         ),
                       ),
-                      SizedBox(height: ResponsiveHelper.responsiveSpacing(context, mobile: 8.0, desktop: 12.0)),
+                      SizedBox(
+                          height: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 8.0, desktop: 12.0)),
                       // Detaylar butonu
                       SizedBox(
                         width: double.infinity,
@@ -667,12 +728,14 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                             Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => SiparisDetaySayfasi(order: order),
+                                builder: (context) =>
+                                    SiparisDetaySayfasi(order: order),
                               ),
                             );
                           },
                           style: AppDesignSystem.primaryButtonStyle(
-                            padding: ResponsiveHelper.responsiveSpacing(context, mobile: 10.0, desktop: 16.0),
+                            padding: ResponsiveHelper.responsiveSpacing(context,
+                                mobile: 10.0, desktop: 16.0),
                             borderRadius: AppDesignSystem.radiusS,
                           ),
                           child: Text(
@@ -695,16 +758,23 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                       Flexible(
                         child: Container(
                           padding: EdgeInsets.symmetric(
-                            horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 10.0, desktop: 16.0),
-                            vertical: ResponsiveHelper.responsiveSpacing(context, mobile: 6.0, desktop: 8.0),
+                            horizontal: ResponsiveHelper.responsiveSpacing(
+                                context,
+                                mobile: 10.0,
+                                desktop: 16.0),
+                            vertical: ResponsiveHelper.responsiveSpacing(
+                                context,
+                                mobile: 6.0,
+                                desktop: 8.0),
                           ),
                           decoration: BoxDecoration(
-                            color: isDelivered 
+                            color: isDelivered
                                 ? AppDesignSystem.successLight
                                 : AppDesignSystem.infoLight,
-                            borderRadius: BorderRadius.circular(AppDesignSystem.radiusS),
+                            borderRadius:
+                                BorderRadius.circular(AppDesignSystem.radiusS),
                             border: Border.all(
-                              color: isDelivered 
+                              color: isDelivered
                                   ? AppDesignSystem.success
                                   : AppDesignSystem.info,
                               width: 1.5,
@@ -714,28 +784,38 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isDelivered ? Icons.check_circle : Icons.thumb_up,
-                                size: ResponsiveHelper.responsiveIconSize(context, mobile: 14.0, desktop: 16.0),
-                                color: isDelivered 
+                                isDelivered
+                                    ? Icons.check_circle
+                                    : Icons.thumb_up,
+                                size: ResponsiveHelper.responsiveIconSize(
+                                    context,
+                                    mobile: 14.0,
+                                    desktop: 16.0),
+                                color: isDelivered
                                     ? AppDesignSystem.success
                                     : AppDesignSystem.info,
                               ),
-                              SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0)),
+                              SizedBox(
+                                  width: ResponsiveHelper.responsiveSpacing(
+                                      context,
+                                      mobile: 4.0,
+                                      desktop: 8.0)),
                               Flexible(
                                 child: Text(
-                                  isDelivered 
+                                  isDelivered
                                       ? 'Teslim edildi'
                                       : isCreated
                                           ? 'Sipariş oluşturuldu'
                                           : order.statusText,
                                   style: AppDesignSystem.bodySmall.copyWith(
-                                    fontSize: ResponsiveHelper.responsiveFontSize(
+                                    fontSize:
+                                        ResponsiveHelper.responsiveFontSize(
                                       context,
                                       mobile: 11.0,
                                       desktop: 12.0,
                                     ),
                                     fontWeight: FontWeight.w600,
-                                    color: isDelivered 
+                                    color: isDelivered
                                         ? AppDesignSystem.success
                                         : AppDesignSystem.info,
                                   ),
@@ -747,11 +827,13 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                           ),
                         ),
                       ),
-                      SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0)),
+                      SizedBox(
+                          width: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 4.0, desktop: 8.0)),
                       if (!isMobile)
                         Flexible(
                           child: Text(
-                            isDelivered 
+                            isDelivered
                                 ? '$totalProductQuantity ürün teslim edildi'
                                 : isCreated
                                     ? '$totalProductQuantity ürün için sipariş oluşturuldu'
@@ -766,21 +848,25 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                      SizedBox(width: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0)),
+                      SizedBox(
+                          width: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 4.0, desktop: 8.0)),
                       // Detaylar butonu
                       ElevatedButton(
                         onPressed: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => SiparisDetaySayfasi(order: order),
+                              builder: (context) =>
+                                  SiparisDetaySayfasi(order: order),
                             ),
                           );
                         },
                         style: AppDesignSystem.primaryButtonStyle(
-                          padding: ResponsiveHelper.responsiveSpacing(context, mobile: 10.0, desktop: 16.0),
+                          padding: ResponsiveHelper.responsiveSpacing(context,
+                              mobile: 10.0, desktop: 16.0),
                           borderRadius: AppDesignSystem.radiusS,
                         ),
                         child: Text(
@@ -801,13 +887,23 @@ class _SiparislerSayfasiState extends State<SiparislerSayfasi> {
       ),
     );
   }
-  
+
   String _formatOrderDate(DateTime date) {
     final months = [
-      '', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+      '',
+      'Ocak',
+      'Şubat',
+      'Mart',
+      'Nisan',
+      'Mayıs',
+      'Haziran',
+      'Temmuz',
+      'Ağustos',
+      'Eylül',
+      'Ekim',
+      'Kasım',
+      'Aralık'
     ];
     return '${date.day} ${months[date.month]} ${date.year}';
   }
-
 }

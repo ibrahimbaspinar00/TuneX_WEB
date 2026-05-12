@@ -31,14 +31,15 @@ class HesabimSayfasi extends StatefulWidget {
   State<HesabimSayfasi> createState() => _HesabimSayfasiState();
 }
 
-class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObserver {
+class _HesabimSayfasiState extends State<HesabimSayfasi>
+    with WidgetsBindingObserver {
   String _userName = 'Kullanıcı';
   String _userEmail = 'kullanici@example.com';
   String? _profileImageUrl;
   double _walletBalance = 0.0;
   int _orderCount = 0;
   int _favoriteCount = 0;
-  
+
   // Services
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseDataService _firebaseDataService = FirebaseDataService();
@@ -58,7 +59,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
     _loadUserData();
     _attachRealtimeListeners();
   }
-  
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
@@ -67,7 +68,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
       _refreshWalletBalance();
     }
   }
-  
+
   Future<void> _initializeWallet() async {
     try {
       await _walletService.initialize();
@@ -92,20 +93,23 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
             _userName = 'Misafir Kullanıcı';
             _userEmail = 'Giriş yapmak için tıklayın';
             // Oturum yoksa, favori sayısını uygulama state'inden al (kalıcılık için fallback)
-            _favoriteCount = context.read<AppStateProvider>().favoriteProducts.length;
+            _favoriteCount =
+                context.read<AppStateProvider>().favoriteProducts.length;
             _orderCount = 0;
           });
         }
         return;
       }
-      
+
       // Firebase'den kullanıcı bilgilerini yükle (timeout ile)
       try {
-        final userProfile = await _firebaseDataService.getUserProfile()
+        final userProfile = await _firebaseDataService
+            .getUserProfile()
             .timeout(const Duration(seconds: 5));
-        final userStats = await _firebaseDataService.getUserStats()
+        final userStats = await _firebaseDataService
+            .getUserStats()
             .timeout(const Duration(seconds: 5));
-        
+
         if (mounted) {
           // Ad Soyad: Önce Firestore'dan, yoksa FirebaseAuth displayName'den, o da yoksa email'den
           String fullName = '';
@@ -122,7 +126,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
           if (fullName.isEmpty) {
             fullName = 'Kullanıcı';
           }
-          
+
           // Email: Önce Firestore'dan, yoksa FirebaseAuth'tan
           String email = '';
           if (userProfile != null && userProfile['email'] != null) {
@@ -134,14 +138,14 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
           if (email.isEmpty) {
             email = 'kullanici@example.com';
           }
-          
+
           // Profil fotoğrafı URL'i
           String? profileImageUrl;
           if (userProfile != null && userProfile['profileImageUrl'] != null) {
             profileImageUrl = userProfile['profileImageUrl'].toString().trim();
             if (profileImageUrl.isEmpty) profileImageUrl = null;
           }
-          
+
           setState(() {
             _userName = fullName;
             _userEmail = email;
@@ -155,8 +159,8 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
         // Hata durumunda FirebaseAuth'tan bilgileri al
         if (mounted) {
           setState(() {
-            _userName = user.displayName ?? 
-                       (user.email != null ? user.email!.split('@')[0] : 'Kullanıcı');
+            _userName = user.displayName ??
+                (user.email != null ? user.email!.split('@')[0] : 'Kullanıcı');
             _userEmail = user.email ?? 'kullanici@example.com';
           });
         }
@@ -228,7 +232,8 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
       (snapshot) {
         if (!mounted) return;
         if (snapshot.exists && snapshot.data() != null) {
-          final balance = (snapshot.data()!['balance'] as num?)?.toDouble() ?? 0.0;
+          final balance =
+              (snapshot.data()!['balance'] as num?)?.toDouble() ?? 0.0;
           setState(() {
             _walletBalance = balance;
           });
@@ -239,7 +244,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
       onError: (error) {
         debugPrint('Error in wallet real-time listener: $error');
         // Quota hatası veya diğer hatalar durumunda listener'ı durdur
-        if (error.toString().contains('RESOURCE_EXHAUSTED') || 
+        if (error.toString().contains('RESOURCE_EXHAUSTED') ||
             error.toString().contains('Quota exceeded')) {
           debugPrint('Firestore quota exceeded, stopping wallet listener');
           _walletSub?.cancel();
@@ -260,12 +265,12 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
     _walletSub = null;
     super.dispose();
   }
-  
+
   // Cüzdan bakiyesini manuel olarak güncelle
   Future<void> _refreshWalletBalance() async {
     final user = _auth.currentUser;
     if (user == null || !mounted) return;
-    
+
     try {
       // Önce WalletService'ten al (en hızlı ve güvenilir)
       await _walletService.initialize();
@@ -274,7 +279,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
           _walletBalance = _walletService.currentBalance;
         });
       }
-      
+
       // Firebase initialize edilmişse Firestore'dan da doğrula (non-blocking)
       try {
         Firebase.app();
@@ -286,12 +291,13 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
             .doc('balance')
             .get()
             .timeout(const Duration(seconds: 3), onTimeout: () {
-              // Timeout durumunda mevcut değeri kullan
-              throw Exception('Timeout - using current balance');
-            });
-        
+          // Timeout durumunda mevcut değeri kullan
+          throw Exception('Timeout - using current balance');
+        });
+
         if (walletDoc.exists && walletDoc.data() != null && mounted) {
-          final balance = (walletDoc.data()!['balance'] as num?)?.toDouble() ?? _walletBalance;
+          final balance = (walletDoc.data()!['balance'] as num?)?.toDouble() ??
+              _walletBalance;
           setState(() {
             _walletBalance = balance;
           });
@@ -300,7 +306,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
         // Firebase hatası - WalletService'ten alınan değer zaten set edildi
         // Offline durumunda hata gösterme, sadece logla
         final errorString = e.toString().toLowerCase();
-        if (!errorString.contains('offline') && 
+        if (!errorString.contains('offline') &&
             !errorString.contains('unavailable') &&
             !errorString.contains('timeout')) {
           debugPrint('Firebase error in refreshWalletBalance: $e');
@@ -310,8 +316,6 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
       debugPrint('Error refreshing wallet balance: $e');
     }
   }
-
-  
 
   Future<void> _signOut() async {
     try {
@@ -333,7 +337,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     return Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Colors.white,
@@ -380,19 +384,19 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
             children: [
               // Profil kartı - Trendyol tarzı
               _buildTrendyolProfileCard(),
-              
+
               const SizedBox(height: 16),
-              
+
               // Cüzdan kartı
               _buildWalletCard(),
-              
+
               const SizedBox(height: 16),
-              
+
               // İstatistikler
               _buildStatsCard(),
 
               const SizedBox(height: 16),
-              
+
               // Menü seçenekleri - Trendyol tarzı (içinde çıkış yap da var)
               _buildTrendyolMenuOptions(),
             ],
@@ -406,7 +410,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
   Widget _buildTrendyolProfileCard() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isDesktop ? 80 : 24,
@@ -437,12 +441,15 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: AppDesignSystem.primaryContainer,
-                  backgroundImage: (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
-                      ? NetworkImage(_profileImageUrl!)
-                      : null,
+                  backgroundImage:
+                      (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+                          ? NetworkImage(_profileImageUrl!)
+                          : null,
                   child: _profileImageUrl == null
                       ? Text(
-                          _userName.isNotEmpty ? _userName[0].toUpperCase() : 'K',
+                          _userName.isNotEmpty
+                              ? _userName[0].toUpperCase()
+                              : 'K',
                           style: AppDesignSystem.heading3.copyWith(
                             color: AppDesignSystem.primary,
                           ),
@@ -494,7 +501,8 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
                   ),
                   decoration: BoxDecoration(
                     color: AppDesignSystem.successLight,
-                    borderRadius: BorderRadius.circular(AppDesignSystem.radiusXS),
+                    borderRadius:
+                        BorderRadius.circular(AppDesignSystem.radiusXS),
                   ),
                   child: Text(
                     'Aktif Üye',
@@ -526,20 +534,19 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
                 }
               }
             },
-            icon: const Icon(Icons.edit, color: AppDesignSystem.textSecondary),
+            icon: Icon(Icons.edit, color: AppDesignSystem.textSecondary),
             tooltip: 'Profili Düzenle',
           ),
         ],
       ),
     );
   }
-  
 
   // Trendyol tarzı cüzdan kartı
   Widget _buildWalletCard() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isDesktop ? 80 : 24,
@@ -557,7 +564,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
               color: AppDesignSystem.successLight,
               borderRadius: BorderRadius.circular(AppDesignSystem.radiusM),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.account_balance_wallet,
               color: AppDesignSystem.success,
               size: 24,
@@ -618,7 +625,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
   Widget _buildStatsCard() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: isDesktop ? 80 : 24,
@@ -635,7 +642,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
               'Siparişler',
               '$_orderCount',
               Icons.shopping_bag,
-              const Color(0xFF3B82F6),
+              const Color(0xFF00D1FF),
             ),
           ),
           Container(
@@ -661,7 +668,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
               'Puan',
               '4.8',
               Icons.star,
-              const Color(0xFFD4AF37),
+              const Color(0xFFFF6A00),
             ),
           ),
         ],
@@ -669,9 +676,8 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
     );
   }
 
-  
-
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+      String label, String value, IconData icon, Color color) {
     return Column(
       children: [
         Icon(icon, color: color, size: 24),
@@ -697,7 +703,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
   Widget _buildTrendyolMenuOptions() {
     final screenWidth = MediaQuery.of(context).size.width;
     final isDesktop = screenWidth >= 1200;
-    
+
     final menuItems = [
       _MenuItem(
         title: 'Tüm Siparişlerim',
@@ -859,12 +865,12 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
                     color: item.color,
                   ),
                 ),
-                trailing: item.title == 'Çıkış Yap' 
+                trailing: item.title == 'Çıkış Yap'
                     ? null
                     : const Icon(
                         Icons.arrow_forward_ios,
                         size: 16,
-                        color: Color(0xFF9CA3AF),
+                        color: Color(0xFF8E98A8),
                       ),
                 onTap: item.onTap,
               ),
@@ -872,7 +878,7 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
                 Divider(
                   height: 1,
                   thickness: 1,
-                  color: const Color(0xFFE8E8E8),
+                  color: const Color(0xFF2A3340),
                   indent: 60,
                 ),
             ],
@@ -881,13 +887,8 @@ class _HesabimSayfasiState extends State<HesabimSayfasi> with WidgetsBindingObse
       ),
     );
   }
-  
-
-
 
   // Ayarlar dialog'u kaldırıldı
-
-
 }
 
 class _MenuItem {

@@ -6,6 +6,7 @@ import '../model/product_review.dart';
 import '../services/review_service.dart';
 import 'star_rating.dart';
 import 'review_form.dart';
+import '../theme/app_design_system.dart';
 
 class ReviewList extends StatefulWidget {
   final String productId;
@@ -36,19 +37,21 @@ class _ReviewListState extends State<ReviewList> {
   @override
   void didUpdateWidget(ReviewList oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     bool shouldReload = false;
-    
+
     // Eğer reviews prop'u değiştiyse güncelle
     if (widget.reviews != null && widget.reviews != oldWidget.reviews) {
       final oldLength = oldWidget.reviews?.length ?? 0;
       final newLength = widget.reviews!.length;
-      
-      debugPrint('ReviewList: Widget.reviews değişti (${oldLength} → ${newLength}), güncelleniyor...');
-      
+
+      debugPrint(
+          'ReviewList: Widget.reviews değişti (${oldLength} → ${newLength}), güncelleniyor...');
+
       // Eğer yeni yorum eklendiyse (sayı arttı), Firestore'dan da yükle
       if (newLength > oldLength) {
-        debugPrint('ReviewList: Yeni yorum eklendi görünüyor, Firestore\'dan yeniden yüklenecek');
+        debugPrint(
+            'ReviewList: Yeni yorum eklendi görünüyor, Firestore\'dan yeniden yüklenecek');
         shouldReload = true;
       } else {
         // Sadece state'i güncelle
@@ -62,19 +65,19 @@ class _ReviewListState extends State<ReviewList> {
       debugPrint('ReviewList: Widget.reviews null oldu, yeniden yükleniyor...');
       shouldReload = true;
     }
-    
+
     // ProductId değiştiyse yeniden yükle
     if (widget.productId != oldWidget.productId) {
       debugPrint('ReviewList: ProductId değişti, yeniden yükleniyor...');
       shouldReload = true;
     }
-    
+
     // Key değiştiyse de yeniden yükle (zorla refresh için)
     if (widget.key != oldWidget.key) {
       debugPrint('ReviewList: Key değişti, yeniden yükleniyor...');
       shouldReload = true;
     }
-    
+
     if (shouldReload) {
       _loadReviews();
     }
@@ -85,23 +88,24 @@ class _ReviewListState extends State<ReviewList> {
       if (mounted) {
         setState(() => _isLoading = true);
       }
-      
+
       debugPrint('=== ReviewList: Yorumlar yükleniyor ===');
       debugPrint('Product ID: ${widget.productId}');
-      
+
       // Her zaman Firestore'dan yükle (güncel veri için - Source.server ile)
       final reviews = await ReviewService.getProductReviews(widget.productId);
-      
+
       debugPrint('ReviewList: Firestore\'dan ${reviews.length} yorum yüklendi');
-      
+
       if (mounted) {
         setState(() {
           _reviews = reviews;
           _isLoading = false;
         });
-        
-        debugPrint('✓ ReviewList state güncellendi: ${_reviews.length} yorum gösteriliyor');
-        
+
+        debugPrint(
+            '✓ ReviewList state güncellendi: ${_reviews.length} yorum gösteriliyor');
+
         // Callback'i çağır (ana sayfa bilgilendirmesi için)
         // Ama sadece gerçekten bir değişiklik varsa çağır (sonsuz döngü önlemek için)
         // Not: Bu callback artık sadece bilgilendirme amaçlı, otomatik yenileme yapmıyor
@@ -117,7 +121,7 @@ class _ReviewListState extends State<ReviewList> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Yorumlar yüklenirken hata oluştu: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppDesignSystem.error,
           ),
         );
       }
@@ -148,7 +152,7 @@ class _ReviewListState extends State<ReviewList> {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: AppDesignSystem.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -156,14 +160,14 @@ class _ReviewListState extends State<ReviewList> {
             Icon(
               Icons.comment_outlined,
               size: 48,
-              color: Colors.grey[400],
+              color: AppDesignSystem.textTertiary,
             ),
             const SizedBox(height: 12),
             Text(
               'Henüz yorum yok',
               style: TextStyle(
                 fontSize: isSmallScreen ? 16 : 18,
-                color: Colors.grey[600],
+                color: AppDesignSystem.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -172,7 +176,7 @@ class _ReviewListState extends State<ReviewList> {
               'İlk yorumu siz yapın!',
               style: TextStyle(
                 fontSize: isSmallScreen ? 14 : 16,
-                color: Colors.grey[500],
+                color: AppDesignSystem.textTertiary,
               ),
             ),
             const SizedBox(height: 16),
@@ -181,9 +185,10 @@ class _ReviewListState extends State<ReviewList> {
               icon: const Icon(Icons.add_comment),
               label: const Text('Yorum Yap'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                backgroundColor: AppDesignSystem.info,
+                foregroundColor: AppDesignSystem.textOnPrimary,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -207,7 +212,7 @@ class _ReviewListState extends State<ReviewList> {
                 style: TextStyle(
                   fontSize: isSmallScreen ? 16 : 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
+                  color: AppDesignSystem.textPrimary,
                 ),
               ),
               Row(
@@ -217,9 +222,10 @@ class _ReviewListState extends State<ReviewList> {
                     icon: const Icon(Icons.add_comment, size: 16),
                     label: const Text('Yorum Yap'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[600],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      backgroundColor: AppDesignSystem.info,
+                      foregroundColor: AppDesignSystem.textOnPrimary,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(6),
                       ),
@@ -230,7 +236,7 @@ class _ReviewListState extends State<ReviewList> {
             ],
           ),
         ),
-        
+
         // Yorum listesi
         ListView.builder(
           shrinkWrap: true,
@@ -245,17 +251,18 @@ class _ReviewListState extends State<ReviewList> {
     );
   }
 
-  Widget _buildReviewCard(ProductReview review, bool isSmallScreen, bool isTablet) {
+  Widget _buildReviewCard(
+      ProductReview review, bool isSmallScreen, bool isTablet) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppDesignSystem.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[200]!),
+        border: Border.all(color: AppDesignSystem.borderLight),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: AppDesignSystem.activeColors.shadow.withValues(alpha: 0.02),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -269,13 +276,13 @@ class _ReviewListState extends State<ReviewList> {
             children: [
               CircleAvatar(
                 radius: isSmallScreen ? 18 : 20,
-                backgroundColor: Colors.blue[100],
+                backgroundColor: AppDesignSystem.infoLight,
                 child: Text(
                   (review.userName.trim().isNotEmpty)
                       ? review.userName.trim()[0].toUpperCase()
                       : 'A',
                   style: TextStyle(
-                    color: Colors.blue[800],
+                    color: AppDesignSystem.info,
                     fontWeight: FontWeight.bold,
                     fontSize: isSmallScreen ? 14 : 16,
                   ),
@@ -291,7 +298,7 @@ class _ReviewListState extends State<ReviewList> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: isSmallScreen ? 14 : 16,
-                        color: Colors.grey[800],
+                        color: AppDesignSystem.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -311,7 +318,7 @@ class _ReviewListState extends State<ReviewList> {
                       child: Text(
                         _formatDate(review.createdAt),
                         style: TextStyle(
-                          color: Colors.grey[500],
+                          color: AppDesignSystem.textTertiary,
                           fontSize: isSmallScreen ? 11 : 12,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -319,10 +326,15 @@ class _ReviewListState extends State<ReviewList> {
                     ),
                     // Düzenleme butonu (sadece kullanıcının kendi yorumu için)
                     if (FirebaseAuth.instance.currentUser != null &&
-                        FirebaseAuth.instance.currentUser!.uid == review.userId) ...[
+                        FirebaseAuth.instance.currentUser!.uid ==
+                            review.userId) ...[
                       const SizedBox(width: 8),
                       IconButton(
-                        icon: Icon(Icons.edit, size: isSmallScreen ? 16 : 18, color: Colors.blue[600]),
+                        icon: Icon(
+                          Icons.edit,
+                          size: isSmallScreen ? 16 : 18,
+                          color: AppDesignSystem.info,
+                        ),
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
                         onPressed: () => _showEditReviewDialog(context, review),
@@ -334,42 +346,43 @@ class _ReviewListState extends State<ReviewList> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 12),
-          
+
           // Yorum metni
           Text(
             review.comment,
             style: TextStyle(
               fontSize: isSmallScreen ? 13 : 14,
-              color: Colors.grey[700],
+              color: AppDesignSystem.textPrimary,
               height: 1.4,
             ),
           ),
-          
+
           // Fotoğraflar
           if (review.imageUrls.isNotEmpty) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: AppDesignSystem.surfaceVariant,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(color: AppDesignSystem.borderLight),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.photo_library, size: 16, color: Colors.blue[700]),
+                      Icon(Icons.photo_library,
+                          size: 16, color: AppDesignSystem.info),
                       const SizedBox(width: 6),
                       Text(
                         'Fotoğraflar (${review.imageUrls.length})',
                         style: TextStyle(
                           fontSize: isSmallScreen ? 12 : 13,
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey[700],
+                          color: AppDesignSystem.textPrimary,
                         ),
                       ),
                     ],
@@ -384,7 +397,8 @@ class _ReviewListState extends State<ReviewList> {
                         return Container(
                           margin: const EdgeInsets.only(right: 10),
                           child: GestureDetector(
-                            onTap: () => _showImageGallery(context, review.imageUrls, index),
+                            onTap: () => _showImageGallery(
+                                context, review.imageUrls, index),
                             child: Stack(
                               children: [
                                 ClipRRect(
@@ -393,7 +407,7 @@ class _ReviewListState extends State<ReviewList> {
                                     width: 100,
                                     height: 100,
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[200],
+                                      color: AppDesignSystem.borderLight,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: CachedNetworkImage(
@@ -404,18 +418,20 @@ class _ReviewListState extends State<ReviewList> {
                                       placeholder: (context, url) => Container(
                                         width: 100,
                                         height: 100,
-                                        color: Colors.grey[200],
+                                        color: AppDesignSystem.borderLight,
                                         child: const Center(
-                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
                                         ),
                                       ),
-                                      errorWidget: (context, url, error) => Container(
+                                      errorWidget: (context, url, error) =>
+                                          Container(
                                         width: 100,
                                         height: 100,
-                                        color: Colors.grey[300],
-                                        child: const Icon(
+                                        color: AppDesignSystem.borderMedium,
+                                        child: Icon(
                                           Icons.image_not_supported,
-                                          color: Colors.grey,
+                                          color: AppDesignSystem.textTertiary,
                                         ),
                                       ),
                                     ),
@@ -427,15 +443,18 @@ class _ReviewListState extends State<ReviewList> {
                                     top: 4,
                                     right: 4,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 6, vertical: 2),
                                       decoration: BoxDecoration(
-                                        color: Colors.black54,
+                                        color: AppDesignSystem
+                                            .activeColors.shadow
+                                            .withValues(alpha: 0.54),
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                       child: Text(
                                         '+${review.imageUrls.length}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
+                                        style: TextStyle(
+                                          color: AppDesignSystem.textOnPrimary,
                                           fontSize: 10,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -453,16 +472,18 @@ class _ReviewListState extends State<ReviewList> {
               ),
             ),
           ],
-          
+
           // Admin yanıtı
           if (review.adminResponse != null) ...[
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.green[50],
+                color: AppDesignSystem.successLight,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.green[200]!),
+                border: Border.all(
+                  color: AppDesignSystem.success.withValues(alpha: 0.28),
+                ),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,14 +493,14 @@ class _ReviewListState extends State<ReviewList> {
                       Icon(
                         Icons.admin_panel_settings,
                         size: isSmallScreen ? 14 : 16,
-                        color: Colors.green[700],
+                        color: AppDesignSystem.success,
                       ),
                       const SizedBox(width: 6),
                       Text(
                         'Admin Yanıtı',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
+                          color: AppDesignSystem.success,
                           fontSize: isSmallScreen ? 12 : 13,
                         ),
                       ),
@@ -490,7 +511,7 @@ class _ReviewListState extends State<ReviewList> {
                     review.adminResponse!,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 12 : 13,
-                      color: Colors.green[800],
+                      color: AppDesignSystem.success,
                       height: 1.3,
                     ),
                   ),
@@ -500,7 +521,7 @@ class _ReviewListState extends State<ReviewList> {
                       _formatDate(review.adminResponseDate!),
                       style: TextStyle(
                         fontSize: isSmallScreen ? 10 : 11,
-                        color: Colors.green[600],
+                        color: AppDesignSystem.success,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
@@ -518,7 +539,7 @@ class _ReviewListState extends State<ReviewList> {
     showDialog(
       context: context,
       builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.transparent,
         insetPadding: const EdgeInsets.all(20),
         child: Stack(
           children: [
@@ -530,19 +551,23 @@ class _ReviewListState extends State<ReviewList> {
                   imageUrl: imageUrl,
                   fit: BoxFit.contain,
                   placeholder: (context, url) => Container(
-                    color: Colors.black87,
-                    child: const Center(
+                    color: AppDesignSystem.activeColors.shadow
+                        .withValues(alpha: 0.87),
+                    child: Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppDesignSystem.textOnPrimary,
+                        ),
                       ),
                     ),
                   ),
                   errorWidget: (context, url, error) => Container(
-                    color: Colors.black87,
-                    child: const Center(
+                    color: AppDesignSystem.activeColors.shadow
+                        .withValues(alpha: 0.87),
+                    child: Center(
                       child: Icon(
                         Icons.error_outline,
-                        color: Colors.white,
+                        color: AppDesignSystem.textOnPrimary,
                         size: 50,
                       ),
                     ),
@@ -555,11 +580,16 @@ class _ReviewListState extends State<ReviewList> {
               right: 8,
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: AppDesignSystem.activeColors.shadow
+                      .withValues(alpha: 0.54),
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                  icon: Icon(
+                    Icons.close,
+                    color: AppDesignSystem.textOnPrimary,
+                    size: 24,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
               ),
@@ -570,13 +600,15 @@ class _ReviewListState extends State<ReviewList> {
     );
   }
 
-  void _showImageGallery(BuildContext context, List<String> imageUrls, int initialIndex) {
+  void _showImageGallery(
+      BuildContext context, List<String> imageUrls, int initialIndex) {
     int currentIndex = initialIndex;
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => Dialog(
-          backgroundColor: Colors.black87,
+          backgroundColor:
+              AppDesignSystem.activeColors.shadow.withValues(alpha: 0.87),
           insetPadding: EdgeInsets.zero,
           child: Stack(
             children: [
@@ -597,19 +629,23 @@ class _ReviewListState extends State<ReviewList> {
                         imageUrl: imageUrls[index],
                         fit: BoxFit.contain,
                         placeholder: (context, url) => Container(
-                          color: Colors.black87,
-                          child: const Center(
+                          color: AppDesignSystem.activeColors.shadow
+                              .withValues(alpha: 0.87),
+                          child: Center(
                             child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppDesignSystem.textOnPrimary,
+                              ),
                             ),
                           ),
                         ),
                         errorWidget: (context, url, error) => Container(
-                          color: Colors.black87,
-                          child: const Center(
+                          color: AppDesignSystem.activeColors.shadow
+                              .withValues(alpha: 0.87),
+                          child: Center(
                             child: Icon(
                               Icons.error_outline,
-                              color: Colors.white,
+                              color: AppDesignSystem.textOnPrimary,
                               size: 50,
                             ),
                           ),
@@ -624,11 +660,16 @@ class _ReviewListState extends State<ReviewList> {
                 right: 8,
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.black54,
+                    color: AppDesignSystem.activeColors.shadow
+                        .withValues(alpha: 0.54),
                     shape: BoxShape.circle,
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white, size: 24),
+                    icon: Icon(
+                      Icons.close,
+                      color: AppDesignSystem.textOnPrimary,
+                      size: 24,
+                    ),
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),
@@ -640,15 +681,17 @@ class _ReviewListState extends State<ReviewList> {
                   right: 0,
                   child: Center(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black54,
+                        color: AppDesignSystem.activeColors.shadow
+                            .withValues(alpha: 0.54),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${currentIndex + 1} / ${imageUrls.length}',
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: AppDesignSystem.textOnPrimary,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -667,11 +710,11 @@ class _ReviewListState extends State<ReviewList> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.9,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppDesignSystem.surfaceElevated,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -687,7 +730,7 @@ class _ReviewListState extends State<ReviewList> {
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                      color: AppDesignSystem.textPrimary,
                     ),
                   ),
                   IconButton(
@@ -744,11 +787,11 @@ class _ReviewListState extends State<ReviewList> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: AppColors.transparent,
       builder: (context) => Container(
         height: MediaQuery.of(context).size.height * 0.7,
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppDesignSystem.surfaceElevated,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -759,7 +802,7 @@ class _ReviewListState extends State<ReviewList> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey[300],
+                color: AppDesignSystem.borderMedium,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -768,7 +811,7 @@ class _ReviewListState extends State<ReviewList> {
               padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
-                  const Icon(Icons.add_comment, color: Colors.blue),
+                  Icon(Icons.add_comment, color: AppDesignSystem.info),
                   const SizedBox(width: 8),
                   const Text(
                     'Yorum Yap',
@@ -817,18 +860,21 @@ class _ReviewListState extends State<ReviewList> {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.orange[50],
+              color: AppDesignSystem.warningLight,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.orange[200]!),
+              border: Border.all(
+                color: AppDesignSystem.warning.withValues(alpha: 0.28),
+              ),
             ),
             child: Column(
               children: [
-                Icon(Icons.shopping_cart, color: Colors.orange[600], size: 48),
+                Icon(Icons.shopping_cart,
+                    color: AppDesignSystem.warning, size: 48),
                 const SizedBox(height: 12),
                 Text(
                   'Bu ürünü satın aldıktan sonra yorum yapabilirsiniz',
                   style: TextStyle(
-                    color: Colors.orange[700],
+                    color: AppDesignSystem.warning,
                     fontWeight: FontWeight.w500,
                     fontSize: 16,
                   ),
@@ -838,7 +884,7 @@ class _ReviewListState extends State<ReviewList> {
                 Text(
                   'Ürünü satın almak için ürün detay sayfasına gidin.',
                   style: TextStyle(
-                    color: Colors.orange[600],
+                    color: AppDesignSystem.warning,
                     fontSize: 14,
                   ),
                   textAlign: TextAlign.center,
@@ -874,7 +920,7 @@ class _ReviewListState extends State<ReviewList> {
                   },
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Comment
                 const Text(
                   'Yorumunuz:',
@@ -893,7 +939,7 @@ class _ReviewListState extends State<ReviewList> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Submit button
                 SizedBox(
                   width: double.infinity,
@@ -905,42 +951,46 @@ class _ReviewListState extends State<ReviewList> {
                         );
                         return;
                       }
-                      
+
                       try {
                         await ReviewService.addReview(
                           productId: widget.productId,
                           rating: rating,
                           comment: commentController.text.trim(),
                         );
-                        
+
                         Navigator.pop(context);
                         _loadReviews();
-                        
+
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
+                          SnackBar(
                             content: Text('Yorumunuz başarıyla eklendi!'),
-                            backgroundColor: Colors.green,
+                            backgroundColor: AppDesignSystem.success,
                           ),
                         );
                       } catch (e) {
                         String errorMessage = 'Yorum eklenirken hata oluştu';
                         if (e.toString().toLowerCase().contains('satın al')) {
-                          errorMessage = 'Bu ürünü satın aldıktan sonra yorum yapabilirsiniz';
-                        } else if (e.toString().toLowerCase().contains('zaten yorum')) {
+                          errorMessage =
+                              'Bu ürünü satın aldıktan sonra yorum yapabilirsiniz';
+                        } else if (e
+                            .toString()
+                            .toLowerCase()
+                            .contains('zaten yorum')) {
                           errorMessage = 'Bu ürün için zaten yorum yaptınız';
                         }
-                        
+
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(errorMessage),
-                            backgroundColor: Colors.red,
+                            backgroundColor: AppDesignSystem.error,
                           ),
                         );
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[600],
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppDesignSystem.info,
+                      foregroundColor: AppDesignSystem.textOnPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
@@ -966,8 +1016,9 @@ class _ReviewListState extends State<ReviewList> {
       if (user == null) {
         return false;
       }
-      
-      return await ReviewService.hasUserPurchasedProduct(widget.productId, user.uid);
+
+      return await ReviewService.hasUserPurchasedProduct(
+          widget.productId, user.uid);
     } catch (e) {
       debugPrint('Purchase check error: $e');
       return false;

@@ -11,7 +11,7 @@ import '../main.dart' show navigatorKey;
 import '../services/order_service.dart';
 
 // Web'de flutter_local_notifications kullanılmaz - conditional import
-import 'package:flutter_local_notifications/flutter_local_notifications.dart' 
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'
     if (dart.library.html) '../services/flutter_local_notifications_stub.dart';
 
 // Web'de firebase_messaging kullanılmaz - conditional import
@@ -22,7 +22,8 @@ import 'firebase_messaging_stub.dart'
 
 /// Gelişmiş bildirim servisi - Kampanya, indirim, sipariş, kargo bildirimleri
 class EnhancedNotificationService {
-  static final EnhancedNotificationService _instance = EnhancedNotificationService._internal();
+  static final EnhancedNotificationService _instance =
+      EnhancedNotificationService._internal();
   factory EnhancedNotificationService() => _instance;
   EnhancedNotificationService._internal();
 
@@ -35,7 +36,7 @@ class EnhancedNotificationService {
 
   String? _fcmToken;
   bool _isInitialized = false;
-  
+
   // Stream subscriptions for memory leak prevention
   StreamSubscription<RemoteMessage>? _foregroundMessageSubscription;
   StreamSubscription<RemoteMessage>? _messageOpenedSubscription;
@@ -43,13 +44,15 @@ class EnhancedNotificationService {
   /// Servisi başlat
   Future<void> initialize() async {
     if (_isInitialized) return;
-    
+
     // Web'de bazı özellikler çalışmaz
     if (kIsWeb) {
       try {
         await _getFCMToken();
-        _foregroundMessageSubscription = _messaging.onMessage.listen(_handleForegroundMessage);
-        _messageOpenedSubscription = _messaging.onMessageOpenedApp.listen(_handleNotificationTap);
+        _foregroundMessageSubscription =
+            FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+        _messageOpenedSubscription =
+            FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
         _isInitialized = true;
         debugPrint('✅ EnhancedNotificationService (Web) başlatıldı');
       } catch (e) {
@@ -57,20 +60,22 @@ class EnhancedNotificationService {
       }
       return;
     }
-    
+
     try {
       await _requestPermissions();
       await _getFCMToken();
       await _setupLocalNotifications();
       await _createNotificationChannels();
-      
+
       // Message handlers
       // Background handler main.dart'ta kaydedilmiş olmalı (main() içinde)
       // onBackgroundMessage sadece main() içinde çağrılmalı
       // Memory leak önleme: Subscription'ları kaydet
-      _foregroundMessageSubscription = _messaging.onMessage.listen(_handleForegroundMessage);
-      _messageOpenedSubscription = _messaging.onMessageOpenedApp.listen(_handleNotificationTap);
-      
+      _foregroundMessageSubscription =
+          FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+      _messageOpenedSubscription =
+          FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
       // Uygulama kapalıyken açılan bildirimleri kontrol et
       // Geç çağrılır (plugin'in tamamen hazır olması için)
       Future.delayed(const Duration(milliseconds: 500), () {
@@ -78,7 +83,7 @@ class EnhancedNotificationService {
           debugPrint('⚠️ Initial message check hatası (normal olabilir): $e');
         });
       });
-      
+
       _isInitialized = true;
       debugPrint('✅ EnhancedNotificationService başlatıldı');
     } catch (e) {
@@ -89,7 +94,7 @@ class EnhancedNotificationService {
   /// İzinleri iste (Web'de çalışmaz)
   Future<void> _requestPermissions() async {
     if (kIsWeb) return; // Web'de permission handler yok
-    
+
     // ignore: avoid_print
     debugPrint('⚠️ Permission handler web\'de desteklenmiyor');
   }
@@ -99,7 +104,7 @@ class EnhancedNotificationService {
     try {
       _fcmToken = await _messaging.getToken();
       print('📱 FCM Token: $_fcmToken');
-      
+
       if (_auth.currentUser != null && _fcmToken != null) {
         await _saveTokenToFirestore(_fcmToken!);
       }
@@ -113,10 +118,7 @@ class EnhancedNotificationService {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        await _firestore
-            .collection('users')
-            .doc(user.uid)
-            .update({
+        await _firestore.collection('users').doc(user.uid).update({
           'fcmToken': token,
           'lastTokenUpdate': FieldValue.serverTimestamp(),
         });
@@ -146,25 +148,26 @@ class EnhancedNotificationService {
   /// Bu metod background isolate'de çalışır, singleton instance kullanılamaz
   Future<void> handleBackgroundMessage(RemoteMessage message) async {
     debugPrint('📱 Background mesaj işleniyor: ${message.messageId}');
-    
+
     // Web'de local notifications yok
     if (kIsWeb) {
       debugPrint('⚠️ Web\'de background notifications desteklenmiyor');
       return;
     }
-    
+
     // Web'de local notifications desteklenmiyor - sadece Firestore'a kaydet
     if (kIsWeb) {
-      debugPrint('⚠️ Web\'de background notifications desteklenmiyor - sadece Firestore\'a kaydediliyor');
+      debugPrint(
+          '⚠️ Web\'de background notifications desteklenmiyor - sadece Firestore\'a kaydediliyor');
       // Web'de sadece Firestore'a kaydet, local notification gösterilmez
       return;
     }
-    
+
     // Mobil platformlar için local notifications kodu buraya gelecek
     // Ancak web projesinde bu kod çalışmayacak çünkü flutter_local_notifications web'de desteklenmiyor
     debugPrint('⚠️ Local notifications web\'de desteklenmiyor');
   }
-  
+
   /// Helper methods for background handler (static-like, but instance methods)
   // ignore: unused_element
   String _getChannelIdHelper(Map<String, dynamic> data) {
@@ -182,7 +185,7 @@ class EnhancedNotificationService {
         return 'system_notifications';
     }
   }
-  
+
   // ignore: unused_element
   String _getChannelNameHelper(String channelId) {
     switch (channelId) {
@@ -214,11 +217,11 @@ class EnhancedNotificationService {
         return 'Sistem güncellemeleri ve önemli duyurular';
     }
   }
-  
+
   /// Foreground message handler
   Future<void> _handleForegroundMessage(RemoteMessage message) async {
     debugPrint('📨 Foreground message alındı: ${message.messageId}');
-    
+
     final notification = message.notification;
     if (notification != null) {
       await _showLocalNotification(
@@ -229,12 +232,12 @@ class EnhancedNotificationService {
         channelId: _getChannelId(message.data ?? {}),
         type: message.data?['type'] ?? 'system',
       );
-      
+
       // Firestore'a kaydet
       await _saveNotificationToFirestore(message);
     }
   }
-  
+
   /// Uygulama kapalıyken açılan bildirimleri kontrol et
   Future<void> _checkInitialMessage() async {
     try {
@@ -247,19 +250,21 @@ class EnhancedNotificationService {
       // Method channel kontrolü - Bazı durumlarda plugin henüz hazır olmayabilir
       // Bu durumda hatayı yakalayıp sessizce devam et
       try {
-        final initialMessage = await _messaging.getInitialMessage()
+        final initialMessage = await _messaging
+            .getInitialMessage()
             .timeout(const Duration(seconds: 2), onTimeout: () {
           debugPrint('⚠️ getInitialMessage timeout');
           return null;
         });
-        
+
         if (initialMessage != null) {
           debugPrint('📱 Uygulama kapalıyken gelen bildirim var');
           await _handleNotificationTap(initialMessage);
         }
       } on MissingPluginException catch (e) {
         // Plugin henüz hazır değil veya platform desteklemiyor
-        debugPrint('⚠️ Firebase Messaging plugin henüz hazır değil (normal olabilir): $e');
+        debugPrint(
+            '⚠️ Firebase Messaging plugin henüz hazır değil (normal olabilir): $e');
         // Uygulama çalışmaya devam eder, bu kritik bir hata değil
       } on PlatformException catch (e) {
         // Platform-specific hata
@@ -271,15 +276,16 @@ class EnhancedNotificationService {
       // Hata durumunda sessizce devam et, uygulama çalışmaya devam eder
     }
   }
-  
+
   /// Bildirimi Firestore'a kaydet
   Future<void> _saveNotificationToFirestore(RemoteMessage message) async {
     try {
       final user = _auth.currentUser;
       if (user == null) return;
-      
+
       final notification = AppNotification(
-        id: message.messageId ?? DateTime.now().millisecondsSinceEpoch.toString(),
+        id: message.messageId ??
+            DateTime.now().millisecondsSinceEpoch.toString(),
         title: message.notification?.title ?? 'Bildirim',
         body: message.notification?.body ?? '',
         type: message.data?['type'] ?? 'system',
@@ -288,7 +294,7 @@ class EnhancedNotificationService {
         actionUrl: message.data?['action']?.toString(),
         data: message.data ?? {},
       );
-      
+
       await _firestore
           .collection('users')
           .doc(user.uid)
@@ -310,18 +316,18 @@ class EnhancedNotificationService {
   // ignore: unused_element
   void _onNotificationTap(NotificationResponse response) {
     print('👆 Local notification tıklandı: ${response.payload}');
-    
+
     if (response.payload == null || response.payload!.isEmpty) {
       // Payload yoksa bildirimler sayfasına git
       _navigateToNotifications();
       return;
     }
-    
+
     try {
       // Payload'dan data parse et
       final payload = response.payload!;
       Map<String, dynamic>? data;
-      
+
       // JSON decode dene
       try {
         data = json.decode(payload) as Map<String, dynamic>?;
@@ -331,7 +337,7 @@ class EnhancedNotificationService {
         // Eski format için basit parse (fallback)
         data = _parseLegacyPayload(payload);
       }
-      
+
       if (data != null && data.isNotEmpty) {
         _handleNotificationAction(data);
       } else {
@@ -343,7 +349,7 @@ class EnhancedNotificationService {
       _navigateToNotifications();
     }
   }
-  
+
   /// Eski format payload'ı parse et (toString() formatı için fallback)
   Map<String, dynamic>? _parseLegacyPayload(String payload) {
     try {
@@ -354,7 +360,7 @@ class EnhancedNotificationService {
         final cleaned = payload.replaceAll('{', '').replaceAll('}', '');
         final pairs = cleaned.split(',');
         final Map<String, dynamic> result = {};
-        
+
         for (final pair in pairs) {
           final parts = pair.split(':');
           if (parts.length == 2) {
@@ -369,13 +375,13 @@ class EnhancedNotificationService {
             result[key] = value;
           }
         }
-        
+
         return result.isNotEmpty ? result : null;
       }
     } catch (e) {
       debugPrint('Legacy payload parse hatası: $e');
     }
-    
+
     return null;
   }
 
@@ -410,7 +416,7 @@ class EnhancedNotificationService {
       debugPrint('⚠️ Web\'de local notifications desteklenmiyor: $title');
       return;
     }
-    
+
     // Mobil platformlar için local notifications kodu
     // Web'de bu kod çalışmayacak çünkü flutter_local_notifications web'de desteklenmiyor
     // Not: Bu dosya web projesi için olduğundan, bu kod asla çalışmayacak
@@ -456,32 +462,32 @@ class EnhancedNotificationService {
   Future<void> _handleNotificationAction(Map<String, dynamic> data) async {
     final action = data['action']?.toString();
     final type = data['type']?.toString();
-    
+
     print('🎯 Notification action: $action, type: $type');
-    
+
     if (navigatorKey.currentContext == null) {
       debugPrint('⚠️ Navigator context yok, navigasyon yapılamıyor');
       return;
     }
-    
+
     final context = navigatorKey.currentContext!;
-    
+
     try {
       switch (action) {
         case 'view_campaign':
           // Kampanya sayfasına git (şimdilik ana sayfaya)
           await Navigator.pushNamed(context, AppRoutes.main);
           break;
-          
+
         case 'view_flash_sale':
           // Flash sale sayfasına git (şimdilik ana sayfaya)
           await Navigator.pushNamed(context, AppRoutes.main);
           break;
-          
+
         case 'view_product':
           // Ürün detay sayfasına git
-          final productId = data['product_id']?.toString() ?? 
-                           data['productId']?.toString();
+          final productId =
+              data['product_id']?.toString() ?? data['productId']?.toString();
           if (productId != null && productId.isNotEmpty) {
             await AppRoutes.navigateToProductDetailById(context, productId);
           } else {
@@ -489,11 +495,11 @@ class EnhancedNotificationService {
             await Navigator.pushNamed(context, AppRoutes.main);
           }
           break;
-          
+
         case 'view_order':
           // Sipariş detay sayfasına git
-          final orderId = data['order_id']?.toString() ?? 
-                         data['orderId']?.toString();
+          final orderId =
+              data['order_id']?.toString() ?? data['orderId']?.toString();
           if (orderId != null && orderId.isNotEmpty) {
             await _navigateToOrderDetail(context, orderId);
           } else {
@@ -501,40 +507,40 @@ class EnhancedNotificationService {
             await Navigator.pushNamed(context, AppRoutes.orders);
           }
           break;
-          
+
         case 'track_shipment':
           // Kargo takip - sipariş detay sayfasına git
-          final orderId = data['order_id']?.toString() ?? 
-                         data['orderId']?.toString();
+          final orderId =
+              data['order_id']?.toString() ?? data['orderId']?.toString();
           if (orderId != null && orderId.isNotEmpty) {
             await _navigateToOrderDetail(context, orderId);
           } else {
             await Navigator.pushNamed(context, AppRoutes.orders);
           }
           break;
-          
+
         case 'rate_order':
           // Sipariş değerlendirme - sipariş detay sayfasına git
-          final orderId = data['order_id']?.toString() ?? 
-                         data['orderId']?.toString();
+          final orderId =
+              data['order_id']?.toString() ?? data['orderId']?.toString();
           if (orderId != null && orderId.isNotEmpty) {
             await _navigateToOrderDetail(context, orderId);
           } else {
             await Navigator.pushNamed(context, AppRoutes.orders);
           }
           break;
-          
+
         case 'view_refund':
           // İade detay - sipariş detay sayfasına git
-          final orderId = data['order_id']?.toString() ?? 
-                         data['orderId']?.toString();
+          final orderId =
+              data['order_id']?.toString() ?? data['orderId']?.toString();
           if (orderId != null && orderId.isNotEmpty) {
             await _navigateToOrderDetail(context, orderId);
           } else {
             await Navigator.pushNamed(context, AppRoutes.orders);
           }
           break;
-          
+
         default:
           // Bilinmeyen action - bildirimler sayfasına git
           _navigateToNotifications();
@@ -546,13 +552,14 @@ class EnhancedNotificationService {
       _navigateToNotifications();
     }
   }
-  
+
   /// Sipariş detay sayfasına git
-  Future<void> _navigateToOrderDetail(BuildContext context, String orderId) async {
+  Future<void> _navigateToOrderDetail(
+      BuildContext context, String orderId) async {
     try {
       final orderService = OrderService();
       final orderModel = await orderService.getOrderById(orderId);
-      
+
       if (orderModel != null) {
         // OrderModel.Order'ı Order'a çevir
         final order = _convertOrderModelToOrder(orderModel);
@@ -567,21 +574,21 @@ class EnhancedNotificationService {
       await Navigator.pushNamed(context, AppRoutes.orders);
     }
   }
-  
+
   /// OrderModel.Order'ı Order'a çevir
   dynamic _convertOrderModelToOrder(dynamic orderModel) {
     // OrderModel.Order aslında Order sınıfı (aynı model)
     // Direkt kullanabiliriz
     return orderModel;
   }
-  
+
   /// Bildirimler sayfasına git
   void _navigateToNotifications() {
     if (navigatorKey.currentContext == null) {
       debugPrint('⚠️ Navigator context yok');
       return;
     }
-    
+
     Navigator.pushNamed(navigatorKey.currentContext!, AppRoutes.notifications);
   }
 
@@ -598,7 +605,7 @@ class EnhancedNotificationService {
     String? imageUrl,
   }) async {
     final body = '🎉 %${discountPercentage.toInt()} indirim! $description';
-    
+
     await sendNotification(
       title: title,
       body: body,
@@ -622,10 +629,12 @@ class EnhancedNotificationService {
     required double salePrice,
     required int timeLeftMinutes,
   }) async {
-    final discountPercentage = ((originalPrice - salePrice) / originalPrice * 100).round();
+    final discountPercentage =
+        ((originalPrice - salePrice) / originalPrice * 100).round();
     final title = '⚡ Flash Sale!';
-    final body = '$productName - %$discountPercentage indirim! Sadece $timeLeftMinutes dakika kaldı!';
-    
+    final body =
+        '$productName - %$discountPercentage indirim! Sadece $timeLeftMinutes dakika kaldı!';
+
     await sendNotification(
       title: title,
       body: body,
@@ -649,7 +658,7 @@ class EnhancedNotificationService {
   }) async {
     final title = '🆕 Yeni Ürün!';
     final body = '$productName $category kategorisinde! Hemen keşfet!';
-    
+
     await sendNotification(
       title: title,
       body: body,
@@ -674,8 +683,9 @@ class EnhancedNotificationService {
     required String estimatedDelivery,
   }) async {
     final title = '✅ Siparişiniz Onaylandı!';
-    final body = 'Sipariş #$orderId onaylandı. $itemCount ürün, ${totalAmount.toStringAsFixed(2)} ₺. Tahmini teslimat: $estimatedDelivery';
-    
+    final body =
+        'Sipariş #$orderId onaylandı. $itemCount ürün, ${totalAmount.toStringAsFixed(2)} ₺. Tahmini teslimat: $estimatedDelivery';
+
     await sendNotification(
       title: title,
       body: body,
@@ -697,8 +707,9 @@ class EnhancedNotificationService {
     required String status,
   }) async {
     final title = '📦 Siparişiniz Hazırlanıyor';
-    final body = 'Sipariş #$orderId $status aşamasında. Kısa sürede kargoya verilecek.';
-    
+    final body =
+        'Sipariş #$orderId $status aşamasında. Kısa sürede kargoya verilecek.';
+
     await sendNotification(
       title: title,
       body: body,
@@ -721,8 +732,9 @@ class EnhancedNotificationService {
     required String courierCompany,
   }) async {
     final title = '🚚 Siparişiniz Kargoya Verildi!';
-    final body = 'Sipariş #$orderId kargoya verildi. Takip no: $trackingNumber ($courierCompany)';
-    
+    final body =
+        'Sipariş #$orderId kargoya verildi. Takip no: $trackingNumber ($courierCompany)';
+
     await sendNotification(
       title: title,
       body: body,
@@ -743,8 +755,9 @@ class EnhancedNotificationService {
     required String deliveryDate,
   }) async {
     final title = '📦 Siparişiniz Teslim Edildi!';
-    final body = 'Sipariş #$orderId $deliveryDate tarihinde teslim edildi. Memnuniyetinizi değerlendirin!';
-    
+    final body =
+        'Sipariş #$orderId $deliveryDate tarihinde teslim edildi. Memnuniyetinizi değerlendirin!';
+
     await sendNotification(
       title: title,
       body: body,
@@ -767,8 +780,9 @@ class EnhancedNotificationService {
     required String paymentMethod,
   }) async {
     final title = '💳 Ödemeniz Onaylandı!';
-    final body = 'Sipariş #$orderId için ${amount.toStringAsFixed(2)} ₺ ödeme onaylandı ($paymentMethod)';
-    
+    final body =
+        'Sipariş #$orderId için ${amount.toStringAsFixed(2)} ₺ ödeme onaylandı ($paymentMethod)';
+
     await sendNotification(
       title: title,
       body: body,
@@ -790,8 +804,9 @@ class EnhancedNotificationService {
     required String reason,
   }) async {
     final title = '💰 İadeniz Onaylandı!';
-    final body = 'Sipariş #$orderId için ${refundAmount.toStringAsFixed(2)} ₺ iade onaylandı. Sebep: $reason';
-    
+    final body =
+        'Sipariş #$orderId için ${refundAmount.toStringAsFixed(2)} ₺ iade onaylandı. Sebep: $reason';
+
     await sendNotification(
       title: title,
       body: body,
@@ -819,14 +834,15 @@ class EnhancedNotificationService {
     DateTime? scheduledAt,
   }) async {
     String? fcmToken;
-    
+
     // Eğer userId belirtilmişse, kullanıcının FCM token'ını al
     if (userId != null) {
       try {
         final userDoc = await _firestore.collection('users').doc(userId).get();
         if (userDoc.exists) {
           fcmToken = userDoc.data()?['fcmToken'];
-          print('📱 Kullanıcının FCM Token\'ı alındı: ${fcmToken != null ? fcmToken.substring(0, 20) + '...' : 'yok'}');
+          print(
+              '📱 Kullanıcının FCM Token\'ı alındı: ${fcmToken != null ? fcmToken.substring(0, 20) + '...' : 'yok'}');
         }
       } catch (e) {
         print('⚠️ Kullanıcı FCM Token alınamadı: $e');
@@ -838,7 +854,8 @@ class EnhancedNotificationService {
 
     // notification_queue koleksiyonuna kaydet - Firebase Functions bunu dinleyip FCM bildirimi gönderecek
     try {
-      final notificationQueueRef = _firestore.collection('notification_queue').doc();
+      final notificationQueueRef =
+          _firestore.collection('notification_queue').doc();
       await notificationQueueRef.set({
         if (fcmToken != null) 'fcmToken': fcmToken,
         if (userId != null) 'userId': userId,
@@ -847,9 +864,11 @@ class EnhancedNotificationService {
         'type': type,
         'data': data ?? {},
         'createdAt': FieldValue.serverTimestamp(),
-        'status': 'pending', // Firebase Functions bunu 'sent' veya 'failed' olarak güncelleyecek
+        'status':
+            'pending', // Firebase Functions bunu 'sent' veya 'failed' olarak güncelleyecek
       });
-      print('✅ Bildirim kuyruğa eklendi, Firebase Functions gönderecek: $title');
+      print(
+          '✅ Bildirim kuyruğa eklendi, Firebase Functions gönderecek: $title');
     } catch (e) {
       print('❌ Bildirim kuyruğa eklenemedi: $e');
     }
@@ -870,13 +889,13 @@ class EnhancedNotificationService {
       final notificationData = notification.toFirestore();
       notificationData['status'] = 'sent';
       notificationData['sentAt'] = FieldValue.serverTimestamp();
-      
+
       await _firestore
           .collection('notifications')
           .doc(notification.id)
           .set(notificationData)
           .timeout(const Duration(seconds: 5));
-      
+
       print('✅ Bildirim Firestore\'a kaydedildi: $title');
     } catch (e) {
       // Firestore hatası olsa bile local notification gösterilmeye devam edilmeli
@@ -910,10 +929,10 @@ class EnhancedNotificationService {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
-      return snapshot.docs
-          .map((doc) => AppNotification.fromFirestore(doc))
-          .toList();
-    });
+          return snapshot.docs
+              .map((doc) => AppNotification.fromFirestore(doc))
+              .toList();
+        });
   }
 
   /// Bildirimi okundu olarak işaretle
@@ -957,7 +976,7 @@ class EnhancedNotificationService {
 
   /// Servis başlatıldı mı?
   bool get isInitialized => _isInitialized;
-  
+
   /// Servisi temizle (memory leak önleme)
   /// NOT: Singleton olduğu için genellikle çağrılmaz, ama test veya reset için kullanılabilir
   void dispose() {

@@ -7,6 +7,7 @@ import '../services/review_service.dart';
 import '../services/storage_service.dart';
 import '../model/product_review.dart';
 import 'star_rating.dart';
+import '../theme/app_design_system.dart';
 
 class ReviewForm extends StatefulWidget {
   final String productId;
@@ -41,7 +42,8 @@ class _ReviewFormState extends State<ReviewForm> {
     super.initState();
     // Düzenleme modunda mevcut verileri yükle
     if (widget.existingReview != null) {
-      _commentController = TextEditingController(text: widget.existingReview!.comment);
+      _commentController =
+          TextEditingController(text: widget.existingReview!.comment);
       _selectedRating = widget.existingReview!.rating;
       _existingImageUrls = List.from(widget.existingReview!.imageUrls);
     } else {
@@ -67,7 +69,7 @@ class _ReviewFormState extends State<ReviewForm> {
           return Container(
             width: 100,
             height: 100,
-            color: Colors.grey[300],
+            color: AppDesignSystem.borderMedium,
             child: const Center(child: CircularProgressIndicator()),
           );
         }
@@ -82,7 +84,7 @@ class _ReviewFormState extends State<ReviewForm> {
         return Container(
           width: 100,
           height: 100,
-          color: Colors.grey[300],
+          color: AppDesignSystem.borderMedium,
           child: const Icon(Icons.error),
         );
       },
@@ -104,27 +106,29 @@ class _ReviewFormState extends State<ReviewForm> {
     debugPrint('hasPurchased: ${widget.hasPurchased}');
     debugPrint('selectedRating: $_selectedRating');
     debugPrint('comment length: ${_commentController.text.trim().length}');
-    
+
     // Satın alma kontrolü - sadece sipariş verilen ürünlere yorum yapılabilir
     if (!widget.hasPurchased) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Row(
+          content: Row(
             children: [
-              Icon(Icons.shopping_cart, color: Colors.white, size: 20),
+              Icon(Icons.shopping_cart,
+                  color: AppDesignSystem.textOnPrimary, size: 20),
               SizedBox(width: 8),
               Expanded(
-                child: Text('Bu ürünü satın aldıktan sonra yorum yapabilirsiniz'),
+                child:
+                    Text('Bu ürünü satın aldıktan sonra yorum yapabilirsiniz'),
               ),
             ],
           ),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppDesignSystem.warning,
           duration: const Duration(seconds: 3),
           action: SnackBarAction(
             label: 'Anladım',
-            textColor: Colors.white,
+            textColor: AppDesignSystem.textOnPrimary,
             onPressed: () {},
           ),
         ),
@@ -135,9 +139,9 @@ class _ReviewFormState extends State<ReviewForm> {
     if (_selectedRating == 0) {
       debugPrint('✗ Puan seçilmedi');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Lütfen bir puan verin'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppDesignSystem.warning,
           duration: Duration(seconds: 2),
         ),
       );
@@ -148,9 +152,9 @@ class _ReviewFormState extends State<ReviewForm> {
     if (commentText.isEmpty) {
       debugPrint('✗ Yorum boş');
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Lütfen yorumunuzu yazın'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppDesignSystem.warning,
           duration: Duration(seconds: 2),
         ),
       );
@@ -161,8 +165,9 @@ class _ReviewFormState extends State<ReviewForm> {
       debugPrint('✗ Yorum çok kısa: ${commentText.length} karakter');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Yorumunuz en az 10 karakter olmalı (şu anda ${commentText.length} karakter)'),
-          backgroundColor: Colors.orange,
+          content: Text(
+              'Yorumunuz en az 10 karakter olmalı (şu anda ${commentText.length} karakter)'),
+          backgroundColor: AppDesignSystem.warning,
           duration: const Duration(seconds: 3),
         ),
       );
@@ -170,15 +175,16 @@ class _ReviewFormState extends State<ReviewForm> {
     }
 
     debugPrint('✓ Validasyonlar geçildi, yorum gönderiliyor...');
-    
+
     if (!mounted) return;
     setState(() => _isSubmitting = true);
 
     try {
       debugPrint('Product ID: ${widget.productId}');
       debugPrint('Rating: $_selectedRating');
-      debugPrint('Comment: ${commentText.substring(0, commentText.length > 50 ? 50 : commentText.length)}...');
-      
+      debugPrint(
+          'Comment: ${commentText.substring(0, commentText.length > 50 ? 50 : commentText.length)}...');
+
       if (!mounted) return;
 
       // Düzenleme modu veya yeni yorum modu
@@ -186,15 +192,16 @@ class _ReviewFormState extends State<ReviewForm> {
         // DÜZENLEME MODU
         debugPrint('=== YORUM DÜZENLENİYOR ===');
         debugPrint('Review ID: ${widget.existingReview!.id}');
-        
+
         // Yeni resimler yüklendi mi kontrol et
         List<String> allImageUrls = List<String>.from(_existingImageUrls);
-        
+
         // Önce yeni fotoğrafları gerçek review ID ile yükle
         List<String> newImageUrls = [];
         if (_selectedImages.isNotEmpty) {
           try {
-            debugPrint('Düzenleme modu: Fotoğraf yükleniyor: ${_selectedImages.length} adet');
+            debugPrint(
+                'Düzenleme modu: Fotoğraf yükleniyor: ${_selectedImages.length} adet');
             newImageUrls = await _storageService.uploadReviewImages(
               _selectedImages,
               widget.existingReview!.id, // Gerçek review ID
@@ -203,11 +210,12 @@ class _ReviewFormState extends State<ReviewForm> {
               allImageUrls.addAll(newImageUrls);
             }
           } catch (uploadError) {
-            debugPrint('✗ Düzenleme modu - Fotoğraf yükleme hatası: $uploadError');
+            debugPrint(
+                '✗ Düzenleme modu - Fotoğraf yükleme hatası: $uploadError');
             // Hata olsa bile devam et (sadece mevcut fotoğraflar)
           }
         }
-        
+
         // Yorumu güncelle
         final success = await ReviewService.updateReview(
           reviewId: widget.existingReview!.id,
@@ -215,26 +223,27 @@ class _ReviewFormState extends State<ReviewForm> {
           comment: commentText,
           imageUrls: allImageUrls,
         );
-        
+
         if (!success) {
           throw Exception('Yorum güncellenirken hata oluştu');
         }
-        
+
         debugPrint('✓ Yorum başarıyla güncellendi!');
-        
+
         if (!mounted) return;
-        
+
         // Başarı mesajını göster
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white, size: 20),
+                Icon(Icons.check_circle,
+                    color: AppDesignSystem.textOnPrimary, size: 20),
                 SizedBox(width: 8),
                 Text('Yorumunuz başarıyla güncellendi!'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppDesignSystem.success,
             duration: Duration(seconds: 3),
           ),
         );
@@ -243,7 +252,7 @@ class _ReviewFormState extends State<ReviewForm> {
         debugPrint('ReviewService.addReview çağrılıyor (önce fotoğrafsız)...');
         String? reviewId;
         List<String> imageUrls = [];
-        
+
         try {
           // ÖNCE: Yorumu fotoğrafsız oluştur (review ID almak için)
           reviewId = await ReviewService.addReview(
@@ -252,27 +261,28 @@ class _ReviewFormState extends State<ReviewForm> {
             comment: commentText,
             imageUrls: [], // Önce boş, sonra fotoğrafları ekleyeceğiz
           );
-          
+
           if (!mounted) return;
-          
+
           if (reviewId == null || reviewId.isEmpty) {
             throw Exception('Yorum ID alınamadı');
           }
-          
+
           debugPrint('✓ Yorum başarıyla eklendi! Review ID: $reviewId');
-          debugPrint('Seçili fotoğraf kontrolü: ${_selectedImages.length} adet');
-          
+          debugPrint(
+              'Seçili fotoğraf kontrolü: ${_selectedImages.length} adet');
+
           // SONRA: Fotoğrafları gerçek review ID ile yükle
           if (_selectedImages.isNotEmpty && reviewId.isNotEmpty) {
             debugPrint('=== FOTOĞRAF YÜKLEME BAŞLIYOR ===');
             debugPrint('Fotoğraf sayısı: ${_selectedImages.length}');
             debugPrint('Review ID: $reviewId');
             debugPrint('Mounted: $mounted');
-            
+
             // Loading state göster (kullanıcıya bilgi ver)
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Row(
                     children: [
                       SizedBox(
@@ -280,7 +290,8 @@ class _ReviewFormState extends State<ReviewForm> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                              AppDesignSystem.textOnPrimary),
                         ),
                       ),
                       SizedBox(width: 12),
@@ -290,83 +301,93 @@ class _ReviewFormState extends State<ReviewForm> {
                     ],
                   ),
                   duration: Duration(seconds: 30), // Uzun sürebilir
-                  backgroundColor: Colors.blue,
+                  backgroundColor: AppDesignSystem.info,
                 ),
               );
             }
-            
+
             try {
               debugPrint('StorageService.uploadReviewImages çağrılıyor...');
-              debugPrint('Gönderilecek dosya sayısı: ${_selectedImages.length}');
-              
+              debugPrint(
+                  'Gönderilecek dosya sayısı: ${_selectedImages.length}');
+
               // XFile listesini direkt gönder (storage_service artık XFile kabul ediyor)
               imageUrls = await _storageService.uploadReviewImages(
                 _selectedImages,
                 reviewId, // Gerçek review ID kullan
               );
-              
+
               debugPrint('✓ uploadReviewImages tamamlandı');
               debugPrint('  Alınan URL sayısı: ${imageUrls.length}');
-              
+
               // SnackBar'ı kapat
               if (mounted) {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
               }
-              
+
               if (!mounted) {
                 debugPrint('⚠ Widget unmounted, fotoğraf güncelleme atlandı');
                 return;
               }
-              
+
               if (imageUrls.isEmpty) {
-                debugPrint('⚠ UYARI: Fotoğraflar yüklendi ama URL listesi boş!');
+                debugPrint(
+                    '⚠ UYARI: Fotoğraflar yüklendi ama URL listesi boş!');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
+                    SnackBar(
                       content: Row(
                         children: [
-                          Icon(Icons.warning, color: Colors.white, size: 20),
+                          Icon(Icons.warning,
+                              color: AppDesignSystem.textOnPrimary, size: 20),
                           SizedBox(width: 8),
                           Expanded(
-                            child: Text('Fotoğraflar yüklendi ancak URL alınamadı'),
+                            child: Text(
+                                'Fotoğraflar yüklendi ancak URL alınamadı'),
                           ),
                         ],
                       ),
-                      backgroundColor: Colors.orange,
+                      backgroundColor: AppDesignSystem.warning,
                       duration: Duration(seconds: 3),
                     ),
                   );
                 }
               } else {
-                debugPrint('✓ Fotoğraflar başarıyla yüklendi: ${imageUrls.length} adet');
+                debugPrint(
+                    '✓ Fotoğraflar başarıyla yüklendi: ${imageUrls.length} adet');
                 for (int i = 0; i < imageUrls.length; i++) {
                   debugPrint('  Fotoğraf ${i + 1}: ${imageUrls[i]}');
                 }
-                
+
                 // Yorumu güncelle - fotoğraf URL'lerini ekle
-                debugPrint('Yorum güncelleniyor - fotoğraf URL\'leri ekleniyor...');
+                debugPrint(
+                    'Yorum güncelleniyor - fotoğraf URL\'leri ekleniyor...');
                 final updateSuccess = await ReviewService.updateReviewImages(
                   reviewId: reviewId,
                   imageUrls: imageUrls,
                 );
-                
+
                 if (updateSuccess) {
-                  debugPrint('✓ Yorum başarıyla güncellendi - fotoğraflar eklendi');
+                  debugPrint(
+                      '✓ Yorum başarıyla güncellendi - fotoğraflar eklendi');
                 } else {
-                  debugPrint('⚠ UYARI: Yorum güncellenemedi ama fotoğraflar yüklendi');
+                  debugPrint(
+                      '⚠ UYARI: Yorum güncellenemedi ama fotoğraflar yüklendi');
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         content: Row(
                           children: [
-                            Icon(Icons.warning, color: Colors.white, size: 20),
+                            Icon(Icons.warning,
+                                color: AppDesignSystem.textOnPrimary, size: 20),
                             SizedBox(width: 8),
                             Expanded(
-                              child: Text('Fotoğraflar yüklendi ancak yorum güncellenemedi'),
+                              child: Text(
+                                  'Fotoğraflar yüklendi ancak yorum güncellenemedi'),
                             ),
                           ],
                         ),
-                        backgroundColor: Colors.orange,
+                        backgroundColor: AppDesignSystem.warning,
                         duration: Duration(seconds: 3),
                       ),
                     );
@@ -376,20 +397,21 @@ class _ReviewFormState extends State<ReviewForm> {
             } catch (uploadError, stackTrace) {
               debugPrint('✗ Fotoğraf yükleme hatası: $uploadError');
               debugPrint('Stack trace: $stackTrace');
-              
+
               // SnackBar'ı kapat
               if (mounted) {
                 ScaffoldMessenger.of(context).hideCurrentSnackBar();
               }
-              
+
               if (!mounted) return;
-              
+
               // Fotoğraf yükleme hatasını kullanıcıya göster ama yorum zaten oluşturuldu
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Row(
                     children: [
-                      Icon(Icons.warning, color: Colors.white, size: 20),
+                      Icon(Icons.warning,
+                          color: AppDesignSystem.textOnPrimary, size: 20),
                       SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -398,13 +420,14 @@ class _ReviewFormState extends State<ReviewForm> {
                       ),
                     ],
                   ),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: AppDesignSystem.warning,
                   duration: const Duration(seconds: 5),
                   action: SnackBarAction(
                     label: 'Detaylar',
-                    textColor: Colors.white,
+                    textColor: AppDesignSystem.textOnPrimary,
                     onPressed: () {
-                      debugPrint('Fotoğraf yükleme hatası detayları: $uploadError');
+                      debugPrint(
+                          'Fotoğraf yükleme hatası detayları: $uploadError');
                       debugPrint('Stack trace: $stackTrace');
                     },
                   ),
@@ -414,7 +437,8 @@ class _ReviewFormState extends State<ReviewForm> {
               // Devam et - yorum başarıyla oluşturuldu
             }
           } else {
-            debugPrint('Fotoğraf seçilmedi, yorum sadece metin olarak gönderilecek');
+            debugPrint(
+                'Fotoğraf seçilmedi, yorum sadece metin olarak gönderilecek');
           }
 
           if (!mounted) return;
@@ -428,7 +452,7 @@ class _ReviewFormState extends State<ReviewForm> {
               _isSubmitting = false;
             });
           }
-          
+
           // Başarı mesajını göster (fotoğraf durumunu belirt)
           if (mounted) {
             final hasImages = imageUrls.isNotEmpty;
@@ -436,18 +460,19 @@ class _ReviewFormState extends State<ReviewForm> {
               SnackBar(
                 content: Row(
                   children: [
-                    Icon(Icons.check_circle, color: Colors.white, size: 20),
+                    Icon(Icons.check_circle,
+                        color: AppDesignSystem.textOnPrimary, size: 20),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        hasImages 
-                          ? 'Yorumunuz ve fotoğraflar başarıyla paylaşıldı!'
-                          : 'Yorumunuz başarıyla paylaşıldı!',
+                        hasImages
+                            ? 'Yorumunuz ve fotoğraflar başarıyla paylaşıldı!'
+                            : 'Yorumunuz başarıyla paylaşıldı!',
                       ),
                     ),
                   ],
                 ),
-                backgroundColor: Colors.green,
+                backgroundColor: AppDesignSystem.success,
                 duration: const Duration(seconds: 3),
               ),
             );
@@ -458,12 +483,12 @@ class _ReviewFormState extends State<ReviewForm> {
           if (mounted) {
             // Firestore'un güncellenmesi için kısa bir bekleme
             await Future.delayed(const Duration(milliseconds: 800));
-            
+
             if (mounted) {
               // Hemen callback çağır - yorum listesini güncelle
               widget.onReviewAdded();
               debugPrint('✓ İlk callback çağrıldı');
-              
+
               // Firestore'un propagate olması için bir kere daha güncelle
               await Future.delayed(const Duration(milliseconds: 1000));
               if (mounted) {
@@ -486,14 +511,17 @@ class _ReviewFormState extends State<ReviewForm> {
     } catch (e, stackTrace) {
       debugPrint('✗ YORUM GÖNDERME HATASI: $e');
       debugPrint('Stack trace: $stackTrace');
-      
+
       if (!mounted) return;
-      
+
       // Eğer sadece fotoğraf yükleme hatası ise, yorumu fotoğrafsız gönder
       final firstErrorStr = e.toString().toLowerCase();
-      if (firstErrorStr.contains('fotoğraf') || firstErrorStr.contains('image') || firstErrorStr.contains('upload')) {
-        debugPrint('Fotoğraf yükleme hatası tespit edildi, yorum fotoğrafsız gönderiliyor...');
-        
+      if (firstErrorStr.contains('fotoğraf') ||
+          firstErrorStr.contains('image') ||
+          firstErrorStr.contains('upload')) {
+        debugPrint(
+            'Fotoğraf yükleme hatası tespit edildi, yorum fotoğrafsız gönderiliyor...');
+
         // Yorumu fotoğrafsız gönder
         try {
           if (widget.existingReview != null) {
@@ -516,22 +544,23 @@ class _ReviewFormState extends State<ReviewForm> {
               imageUrls: [], // Fotoğraf olmadan
             );
           }
-          
+
           // Başarı mesajı
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+            SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white, size: 20),
+                  Icon(Icons.check_circle,
+                      color: AppDesignSystem.textOnPrimary, size: 20),
                   SizedBox(width: 8),
                   Text('Yorumunuz paylaşıldı (fotoğrafsız)'),
                 ],
               ),
-              backgroundColor: Colors.green,
+              backgroundColor: AppDesignSystem.success,
               duration: Duration(seconds: 3),
             ),
           );
-          
+
           // Formu temizle ve callback çağır
           _commentController.clear();
           if (mounted) {
@@ -540,24 +569,25 @@ class _ReviewFormState extends State<ReviewForm> {
               _selectedImages.clear();
             });
           }
-          
+
           await Future.delayed(const Duration(milliseconds: 1500));
           if (mounted) {
             widget.onReviewAdded();
           }
-          
+
           return; // Başarılı, çık
         } catch (retryError) {
           debugPrint('Fotoğrafsız gönderme hatası: $retryError');
           // Normal hata göster
         }
       }
-      
+
       String errorMessage = 'Yorum eklenirken hata oluştu';
       IconData errorIcon = Icons.error_outline;
-      
+
       final finalErrorStr = e.toString().toLowerCase();
-      if (finalErrorStr.contains('kullanıcı giriş') || finalErrorStr.contains('giriş yapmamış')) {
+      if (finalErrorStr.contains('kullanıcı giriş') ||
+          finalErrorStr.contains('giriş yapmamış')) {
         errorMessage = 'Yorum yapmak için giriş yapmanız gerekiyor';
         errorIcon = Icons.login;
       } else if (finalErrorStr.contains('satın al')) {
@@ -566,28 +596,29 @@ class _ReviewFormState extends State<ReviewForm> {
       } else if (finalErrorStr.contains('zaten yorum')) {
         errorMessage = 'Bu ürün için zaten yorum yaptınız';
         errorIcon = Icons.info_outline;
-      } else if (finalErrorStr.contains('network') || finalErrorStr.contains('internet')) {
+      } else if (finalErrorStr.contains('network') ||
+          finalErrorStr.contains('internet')) {
         errorMessage = 'İnternet bağlantınızı kontrol edin';
         errorIcon = Icons.wifi_off;
       } else {
         errorMessage = 'Yorum eklenirken hata oluştu. Lütfen tekrar deneyin.';
         errorIcon = Icons.error_outline;
       }
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
-              Icon(errorIcon, color: Colors.white, size: 20),
+              Icon(errorIcon, color: AppDesignSystem.textOnPrimary, size: 20),
               const SizedBox(width: 8),
               Expanded(child: Text(errorMessage)),
             ],
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: AppDesignSystem.error,
           duration: const Duration(seconds: 4),
           action: SnackBarAction(
             label: 'Tekrar Dene',
-            textColor: Colors.white,
+            textColor: AppDesignSystem.textOnPrimary,
             onPressed: () {
               if (mounted) {
                 _submitReview();
@@ -606,7 +637,7 @@ class _ReviewFormState extends State<ReviewForm> {
 
   Future<void> _pickImages() async {
     if (!mounted || _isSubmitting) return;
-    
+
     try {
       // Kullanıcıya kamera veya galeri seçeneği sun
       final ImageSource? source = await showModalBottomSheet<ImageSource>(
@@ -648,9 +679,9 @@ class _ReviewFormState extends State<ReviewForm> {
             });
           } else if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
+              SnackBar(
                 content: Text('Maksimum 5 fotoğraf ekleyebilirsiniz'),
-                backgroundColor: Colors.orange,
+                backgroundColor: AppDesignSystem.warning,
                 duration: Duration(seconds: 2),
               ),
             );
@@ -664,28 +695,29 @@ class _ReviewFormState extends State<ReviewForm> {
           if (remainingSlots <= 0) {
             if (mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Maksimum 5 fotoğraf ekleyebilirsiniz'),
-                  backgroundColor: Colors.orange,
+                  backgroundColor: AppDesignSystem.warning,
                   duration: Duration(seconds: 2),
                 ),
               );
             }
             return;
           }
-          
+
           final imagesToAdd = images.take(remainingSlots).toList();
           if (mounted) {
             setState(() {
               _selectedImages.addAll(imagesToAdd);
             });
           }
-          
+
           if (images.length > remainingSlots && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('Sadece $remainingSlots fotoğraf eklendi (Maksimum: 5)'),
-                backgroundColor: Colors.orange,
+                content: Text(
+                    'Sadece $remainingSlots fotoğraf eklendi (Maksimum: 5)'),
+                backgroundColor: AppDesignSystem.warning,
                 duration: const Duration(seconds: 2),
               ),
             );
@@ -698,12 +730,15 @@ class _ReviewFormState extends State<ReviewForm> {
           SnackBar(
             content: Row(
               children: [
-                const Icon(Icons.error_outline, color: Colors.white, size: 20),
+                Icon(Icons.error_outline,
+                    color: AppDesignSystem.textOnPrimary, size: 20),
                 const SizedBox(width: 8),
-                Expanded(child: Text('Fotoğraf seçilirken hata oluştu: ${e.toString()}')),
+                Expanded(
+                    child: Text(
+                        'Fotoğraf seçilirken hata oluştu: ${e.toString()}')),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppDesignSystem.error,
             duration: const Duration(seconds: 3),
           ),
         );
@@ -713,7 +748,7 @@ class _ReviewFormState extends State<ReviewForm> {
 
   void _removeImage(int index) {
     if (!mounted || index < 0 || index >= _selectedImages.length) return;
-    
+
     setState(() {
       _selectedImages.removeAt(index);
     });
@@ -729,19 +764,20 @@ class _ReviewFormState extends State<ReviewForm> {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.orange[50],
+          color: AppDesignSystem.warningLight,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.orange[200]!),
+          border: Border.all(
+              color: AppDesignSystem.warning.withValues(alpha: 0.28)),
         ),
         child: Row(
           children: [
-            Icon(Icons.shopping_cart, color: Colors.orange[600]),
+            Icon(Icons.shopping_cart, color: AppDesignSystem.warning),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 'Bu ürünü satın aldıktan sonra yorum yapabilirsiniz',
                 style: TextStyle(
-                  color: Colors.orange[700],
+                  color: AppDesignSystem.warning,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -754,36 +790,36 @@ class _ReviewFormState extends State<ReviewForm> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: AppDesignSystem.infoLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
+        border: Border.all(color: AppDesignSystem.info.withValues(alpha: 0.28)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.edit, color: Colors.blue[600], size: 20),
+              Icon(Icons.edit, color: AppDesignSystem.info, size: 20),
               const SizedBox(width: 8),
               Text(
                 'Yorum Yap',
                 style: TextStyle(
                   fontSize: isSmallScreen ? 16 : 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue[700],
+                  color: AppDesignSystem.info,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          
+
           // Puan seçimi
           Text(
             'Puanınız:',
             style: TextStyle(
               fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[700],
+              color: AppDesignSystem.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -795,14 +831,14 @@ class _ReviewFormState extends State<ReviewForm> {
             },
           ),
           const SizedBox(height: 16),
-          
+
           // Yorum metni
           Text(
             'Yorumunuz:',
             style: TextStyle(
               fontSize: isSmallScreen ? 14 : 16,
               fontWeight: FontWeight.w500,
-              color: Colors.grey[700],
+              color: AppDesignSystem.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -812,49 +848,51 @@ class _ReviewFormState extends State<ReviewForm> {
             maxLength: 500,
             decoration: InputDecoration(
               hintText: 'Ürün hakkında düşüncelerinizi paylaşın...',
-              hintStyle: TextStyle(color: Colors.grey[500]),
+              hintStyle: TextStyle(color: AppDesignSystem.textTertiary),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey[300]!),
+                borderSide: BorderSide(color: AppDesignSystem.borderMedium),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.blue[400]!),
+                borderSide: BorderSide(color: AppDesignSystem.info),
               ),
               contentPadding: const EdgeInsets.all(12),
             ),
           ),
           const SizedBox(height: 16),
-          
+
           // Fotoğraf seçimi
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: AppDesignSystem.surfaceVariant,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: AppDesignSystem.borderMedium),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    Icon(Icons.photo_library, size: 18, color: Colors.blue[700]),
+                    Icon(Icons.photo_library,
+                        size: 18, color: AppDesignSystem.info),
                     const SizedBox(width: 8),
                     Text(
                       'Fotoğraf Ekle',
                       style: TextStyle(
                         fontSize: isSmallScreen ? 14 : 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.grey[800],
+                        color: AppDesignSystem.textPrimary,
                       ),
                     ),
                     const Spacer(),
                     if (_selectedImages.length > 0)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: Colors.blue[100],
+                          color: AppDesignSystem.infoLight,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -862,7 +900,7 @@ class _ReviewFormState extends State<ReviewForm> {
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: Colors.blue[700],
+                            color: AppDesignSystem.info,
                           ),
                         ),
                       ),
@@ -873,26 +911,31 @@ class _ReviewFormState extends State<ReviewForm> {
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _selectedImages.length < 5 ? _pickImages : null,
+                        onPressed:
+                            _selectedImages.length < 5 ? _pickImages : null,
                         icon: Icon(
                           Icons.add_photo_alternate,
                           size: 20,
-                          color: _selectedImages.length < 5 ? Colors.blue[700] : Colors.grey,
+                          color: _selectedImages.length < 5
+                              ? AppDesignSystem.info
+                              : AppDesignSystem.textTertiary,
                         ),
                         label: Text(
-                          _selectedImages.length < 5 
-                            ? 'Fotoğraf Seç' 
-                            : 'Maksimum 5 fotoğraf',
+                          _selectedImages.length < 5
+                              ? 'Fotoğraf Seç'
+                              : 'Maksimum 5 fotoğraf',
                           style: TextStyle(
-                            color: _selectedImages.length < 5 ? Colors.blue[700] : Colors.grey,
+                            color: _selectedImages.length < 5
+                                ? AppDesignSystem.info
+                                : AppDesignSystem.textTertiary,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(
-                            color: _selectedImages.length < 5 
-                              ? Colors.blue[300]! 
-                              : Colors.grey[300]!,
+                            color: _selectedImages.length < 5
+                                ? AppDesignSystem.info.withValues(alpha: 0.45)
+                                : AppDesignSystem.borderMedium,
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
@@ -906,7 +949,7 @@ class _ReviewFormState extends State<ReviewForm> {
                     'Fotoğraflarınızı ekleyerek yorumunuzu daha etkili hale getirin',
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.grey[600],
+                      color: AppDesignSystem.textSecondary,
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -914,7 +957,7 @@ class _ReviewFormState extends State<ReviewForm> {
               ],
             ),
           ),
-          
+
           // Mevcut fotoğraflar (düzenleme modunda)
           if (_existingImageUrls.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -923,7 +966,7 @@ class _ReviewFormState extends State<ReviewForm> {
               style: TextStyle(
                 fontSize: isSmallScreen ? 12 : 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: AppDesignSystem.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -947,8 +990,9 @@ class _ReviewFormState extends State<ReviewForm> {
                             errorBuilder: (context, error, stack) => Container(
                               width: 80,
                               height: 80,
-                              color: Colors.grey[200],
-                              child: Icon(Icons.error, color: Colors.grey[400]),
+                              color: AppDesignSystem.borderLight,
+                              child: Icon(Icons.error,
+                                  color: AppDesignSystem.textTertiary),
                             ),
                           ),
                         ),
@@ -964,10 +1008,14 @@ class _ReviewFormState extends State<ReviewForm> {
                             child: Container(
                               padding: const EdgeInsets.all(4),
                               decoration: BoxDecoration(
-                                color: Colors.red,
+                                color: AppDesignSystem.error,
                                 shape: BoxShape.circle,
                               ),
-                              child: Icon(Icons.close, size: 16, color: Colors.white),
+                              child: Icon(
+                                Icons.close,
+                                size: 16,
+                                color: AppDesignSystem.textOnPrimary,
+                              ),
                             ),
                           ),
                         ),
@@ -978,7 +1026,7 @@ class _ReviewFormState extends State<ReviewForm> {
               ),
             ),
           ],
-          
+
           // Seçilen fotoğraflar
           if (_selectedImages.isNotEmpty) ...[
             const SizedBox(height: 12),
@@ -987,7 +1035,7 @@ class _ReviewFormState extends State<ReviewForm> {
               style: TextStyle(
                 fontSize: isSmallScreen ? 12 : 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[600],
+                color: AppDesignSystem.textSecondary,
               ),
             ),
             const SizedBox(height: 8),
@@ -1003,7 +1051,8 @@ class _ReviewFormState extends State<ReviewForm> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: _buildImageWidget(_selectedImages[index], index),
+                          child:
+                              _buildImageWidget(_selectedImages[index], index),
                         ),
                         Positioned(
                           top: 4,
@@ -1012,13 +1061,13 @@ class _ReviewFormState extends State<ReviewForm> {
                             onTap: () => _removeImage(index),
                             child: Container(
                               padding: const EdgeInsets.all(4),
-                              decoration: const BoxDecoration(
-                                color: Colors.red,
+                              decoration: BoxDecoration(
+                                color: AppDesignSystem.error,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(
+                              child: Icon(
                                 Icons.close,
-                                color: Colors.white,
+                                color: AppDesignSystem.textOnPrimary,
                                 size: 16,
                               ),
                             ),
@@ -1031,21 +1080,23 @@ class _ReviewFormState extends State<ReviewForm> {
               ),
             ),
           ],
-          
+
           const SizedBox(height: 16),
-          
+
           // Gönder butonu
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: _isSubmitting ? null : _submitReview,
               icon: _isSubmitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppDesignSystem.textOnPrimary,
+                        ),
                       ),
                     )
                   : const Icon(Icons.send, size: 18),
@@ -1054,8 +1105,8 @@ class _ReviewFormState extends State<ReviewForm> {
                 style: TextStyle(fontSize: isSmallScreen ? 14 : 16),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[600],
-                foregroundColor: Colors.white,
+                backgroundColor: AppDesignSystem.info,
+                foregroundColor: AppDesignSystem.textOnPrimary,
                 padding: EdgeInsets.symmetric(
                   vertical: isSmallScreen ? 12 : 16,
                 ),
@@ -1065,15 +1116,15 @@ class _ReviewFormState extends State<ReviewForm> {
               ),
             ),
           ),
-          
+
           const SizedBox(height: 8),
-          
+
           // Bilgi metni
           Text(
             'Yorumunuz başarıyla paylaşıldı.',
             style: TextStyle(
               fontSize: isSmallScreen ? 11 : 12,
-              color: Colors.grey[600],
+              color: AppDesignSystem.textSecondary,
               fontStyle: FontStyle.italic,
             ),
           ),

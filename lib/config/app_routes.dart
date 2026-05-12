@@ -109,7 +109,7 @@ class AppRoutes {
             );
           }
         }
-        // URL query parametreleri ile (tuningapp://product/{productId})
+        // URL query parametreleri ile (tunex://product/{productId})
         else if (settings.arguments is String) {
           final productId = settings.arguments as String;
           return MaterialPageRoute(
@@ -120,7 +120,7 @@ class AppRoutes {
             settings: settings,
           );
         }
-        // Route name'den productId çıkarma (tuningapp://product/123 -> /product-detail?productId=123)
+        // Route name'den productId çıkarma (tunex://product/123 -> /product-detail?productId=123)
         else if (settings.name?.contains('product') == true) {
           // URL parse ederek productId çıkar
           final uri = Uri.tryParse(settings.name ?? '');

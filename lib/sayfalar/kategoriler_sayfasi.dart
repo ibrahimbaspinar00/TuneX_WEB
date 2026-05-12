@@ -228,7 +228,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
     
     return Scaffold(
       resizeToAvoidBottomInset: false,
-      backgroundColor: const Color(0xFFFAFBFC),
+      backgroundColor: const Color(0xFF0B0D10),
       appBar: AppBar(
         title: Text(
           'Kategoriler',
@@ -383,7 +383,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                   style: GoogleFonts.inter(
                     fontSize: isSmallScreen ? 12 : isDesktop ? 14 : 13,
                     fontWeight: FontWeight.w600,
-                    color: const Color(0xFFFF6000),
+                    color: const Color(0xFFFF6A00),
                   ),
                 ),
               ),
@@ -411,22 +411,22 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                   decoration: InputDecoration(
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+                      borderSide: const BorderSide(color: Color(0xFF2A3340)),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+                      borderSide: const BorderSide(color: Color(0xFF2A3340)),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFFF6000), width: 2),
+                      borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 2),
                     ),
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: isSmallScreen ? 12 : isDesktop ? 18 : 16,
                       vertical: isSmallScreen ? 10 : isDesktop ? 14 : 12,
                     ),
                     filled: true,
-                    fillColor: const Color(0xFFFAFBFC),
+                    fillColor: const Color(0xFF0B0D10),
                   ),
                   items: [
                     const DropdownMenuItem(
@@ -475,22 +475,22 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+                borderSide: const BorderSide(color: Color(0xFF2A3340)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE8E8E8)),
+                borderSide: const BorderSide(color: Color(0xFF2A3340)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFFF6000), width: 2),
+                borderSide: const BorderSide(color: Color(0xFFFF6A00), width: 2),
               ),
               contentPadding: EdgeInsets.symmetric(
                 horizontal: isSmallScreen ? 12 : isDesktop ? 18 : 16,
                 vertical: isSmallScreen ? 10 : isDesktop ? 14 : 12,
               ),
               filled: true,
-              fillColor: const Color(0xFFFAFBFC),
+              fillColor: const Color(0xFF0B0D10),
             ),
             items: _sortOptions.map((option) {
               return DropdownMenuItem(
@@ -532,9 +532,9 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                 child: Container(
                   padding: EdgeInsets.all(isSmallScreen ? 8 : isDesktop ? 14 : 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAFBFC),
+                    color: const Color(0xFF0B0D10),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE8E8E8)),
+                    border: Border.all(color: const Color(0xFF2A3340)),
                   ),
                   child: Text(
                     '${_minPrice.toInt()}₺',
@@ -556,7 +556,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                   style: GoogleFonts.inter(
                     fontSize: isDesktop ? 20 : 18,
                     fontWeight: FontWeight.w700,
-                    color: const Color(0xFF6A6A6A),
+                    color: const Color(0xFFC7CDD6),
                   ),
                 ),
               ),
@@ -564,9 +564,9 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                 child: Container(
                   padding: EdgeInsets.all(isSmallScreen ? 8 : isDesktop ? 14 : 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFAFBFC),
+                    color: const Color(0xFF0B0D10),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE8E8E8)),
+                    border: Border.all(color: const Color(0xFF2A3340)),
                   ),
                   child: Text(
                     '${_maxPrice.toInt()}₺',
@@ -589,8 +589,8 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
             min: 0,
             max: 10000,
             divisions: 100,
-            activeColor: const Color(0xFFFF6000),
-            inactiveColor: const Color(0xFFE8E8E8),
+            activeColor: const Color(0xFFFF6A00),
+            inactiveColor: const Color(0xFF2A3340),
             labels: RangeLabels(
               '${_minPrice.toInt()}₺',
               '${_maxPrice.toInt()}₺',
@@ -667,7 +667,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(ResponsiveHelper.responsiveBorderRadius(context, mobile: 6.0, desktop: 8.0)),
           border: Border.all(
-            color: const Color(0xFFE8E8E8),
+            color: const Color(0xFF2A3340),
             width: 1,
           ),
           boxShadow: [
@@ -784,7 +784,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                                 ),
                                 child: Icon(
                                   isFavorite ? Icons.favorite : Icons.favorite_border,
-                                  color: isFavorite ? const Color(0xFFEF4444) : const Color(0xFF6A6A6A),
+                                  color: isFavorite ? const Color(0xFFEF4444) : const Color(0xFFC7CDD6),
                                   size: ResponsiveHelper.responsiveIconSize(
                                     context,
                                     mobile: 16.0,
@@ -862,7 +862,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                                 mobile: 10.0,
                                 desktop: 11.0,
                               ),
-                              color: const Color(0xFF6A6A6A),
+                              color: const Color(0xFFC7CDD6),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -886,7 +886,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                               desktop: 16.0,
                             ),
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF10B981),
+                            color: const Color(0xFF18C964),
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -904,7 +904,7 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                                 desktop: 12.0,
                               ),
                               decoration: TextDecoration.lineThrough,
-                              color: const Color(0xFF6A6A6A),
+                              color: const Color(0xFFC7CDD6),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -998,8 +998,8 @@ class _KategorilerSayfasiState extends State<KategorilerSayfasi> {
                       onPressed: () => widget.onAddToCart(product),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: inCart 
-                            ? const Color(0xFF10B981) 
-                            : const Color(0xFFD4AF37),
+                            ? const Color(0xFF18C964) 
+                            : const Color(0xFFFF6A00),
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(
                           horizontal: ResponsiveHelper.responsiveSpacing(context, mobile: 4.0, desktop: 8.0),

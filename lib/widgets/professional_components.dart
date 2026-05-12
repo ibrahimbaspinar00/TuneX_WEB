@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_design_system.dart';
+
 class ProfessionalComponents {
-  // Professional App Bar
   static PreferredSizeWidget createAppBar({
     required String title,
     List<Widget>? actions,
@@ -28,7 +29,6 @@ class ProfessionalComponents {
     );
   }
 
-  // Professional Card
   static Widget createCard({
     required Widget child,
     EdgeInsetsGeometry? padding,
@@ -38,29 +38,26 @@ class ProfessionalComponents {
     BorderRadius? borderRadius,
     BoxShadow? shadow,
   }) {
-    return Container(
-      margin: margin,
-      decoration: BoxDecoration(
-        color: color ?? Colors.white,
-        borderRadius: borderRadius ?? BorderRadius.circular(12),
-        boxShadow: shadow != null 
-            ? [shadow]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-      ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(16),
-        child: child,
-      ),
+    return Builder(
+      builder: (context) {
+        final colors = context.appTheme;
+        return Container(
+          margin: margin,
+          decoration: BoxDecoration(
+            color: color ?? colors.surfaceElevated,
+            borderRadius: borderRadius ?? BorderRadius.circular(16),
+            border: Border.all(color: colors.borderSubtle),
+            boxShadow: shadow != null ? [shadow] : colors.softShadow,
+          ),
+          child: Padding(
+            padding: padding ?? const EdgeInsets.all(16),
+            child: child,
+          ),
+        );
+      },
     );
   }
 
-  // Professional Button
   static Widget createButton({
     required String text,
     required VoidCallback? onPressed,
@@ -70,114 +67,81 @@ class ProfessionalComponents {
     bool isLoading = false,
     bool isFullWidth = false,
   }) {
-    Color backgroundColor;
-    Color foregroundColor;
-    EdgeInsetsGeometry padding;
-    double borderRadius;
+    return Builder(
+      builder: (context) {
+        final colors = context.appTheme;
+        final config = _buttonColors(colors, type);
+        final padding = _buttonPadding(size);
+        final radius = _buttonRadius(size);
 
-    switch (type) {
-      case ButtonType.primary:
-        backgroundColor = Colors.blue[600]!;
-        foregroundColor = Colors.white;
-        break;
-      case ButtonType.secondary:
-        backgroundColor = Colors.grey[200]!;
-        foregroundColor = Colors.black87;
-        break;
-      case ButtonType.success:
-        backgroundColor = Colors.green[600]!;
-        foregroundColor = Colors.white;
-        break;
-      case ButtonType.danger:
-        backgroundColor = Colors.red[600]!;
-        foregroundColor = Colors.white;
-        break;
-      case ButtonType.outline:
-        backgroundColor = Colors.transparent;
-        foregroundColor = Colors.blue[600]!;
-        break;
-    }
-
-    switch (size) {
-      case ButtonSize.small:
-        padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
-        borderRadius = 6;
-        break;
-      case ButtonSize.medium:
-        padding = const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
-        borderRadius = 8;
-        break;
-      case ButtonSize.large:
-        padding = const EdgeInsets.symmetric(horizontal: 24, vertical: 16);
-        borderRadius = 10;
-        break;
-    }
-
-    Widget buttonChild = Row(
-      mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        if (isLoading) ...[
-          const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+        final buttonChild = Row(
+          mainAxisSize: isFullWidth ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (isLoading) ...[
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(config.foreground),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ] else if (icon != null) ...[
+              Icon(icon, size: 18),
+              const SizedBox(width: 8),
+            ],
+            Flexible(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: size == ButtonSize.small ? 12 : 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-        ] else if (icon != null) ...[
-          Icon(icon, size: 18),
-          const SizedBox(width: 8),
-        ],
-        Flexible(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: size == ButtonSize.small ? 12 : 14,
-              fontWeight: FontWeight.w600,
+          ],
+        );
+
+        if (type == ButtonType.outline) {
+          return OutlinedButton(
+            onPressed: isLoading ? null : onPressed,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: config.foreground,
+              backgroundColor: config.background,
+              padding: padding,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(radius),
+              ),
+              side: BorderSide(color: config.border),
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
-            overflow: TextOverflow.ellipsis,
-          ),
-        ),
-      ],
-    );
+            child: buttonChild,
+          );
+        }
 
-    if (type == ButtonType.outline) {
-      return OutlinedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: padding,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(borderRadius),
+        return ElevatedButton(
+          onPressed: isLoading ? null : onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: config.background,
+            foregroundColor: config.foreground,
+            padding: padding,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(radius),
+            ),
+            elevation: 0,
+            minimumSize: Size.zero,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          side: BorderSide(color: foregroundColor),
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: buttonChild,
-      );
-    }
-
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor,
-        foregroundColor: foregroundColor,
-        padding: padding,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-        elevation: 2,
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: buttonChild,
+          child: buttonChild,
+        );
+      },
     );
   }
 
-  // Professional Input Field
   static Widget createInputField({
     required String label,
     String? hint,
@@ -190,90 +154,73 @@ class ProfessionalComponents {
     int? maxLines,
     bool enabled = true,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: validator,
-          obscureText: obscureText,
-          keyboardType: keyboardType,
-          maxLines: maxLines ?? 1,
-          enabled: enabled,
-          decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: prefixIcon,
-            suffixIcon: suffixIcon,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+    return Builder(
+      builder: (context) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: controller,
+              validator: validator,
+              obscureText: obscureText,
+              keyboardType: keyboardType,
+              maxLines: maxLines ?? 1,
+              enabled: enabled,
+              decoration: AppDesignSystem.inputDecoration(
+                context: context,
+                label: label,
+                hint: hint,
+                prefixIcon: prefixIcon,
+                suffixIcon: suffixIcon,
+              ).copyWith(labelText: null),
             ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.blue, width: 2),
-            ),
-            errorBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.red),
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 
-  // Professional Loading Indicator
   static Widget createLoadingIndicator({
     String? message,
     double size = 40,
     Color? color,
   }) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(
-                color ?? Colors.blue[600]!,
+    return Builder(
+      builder: (context) {
+        final colors = context.appTheme;
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: size,
+                height: size,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    color ?? colors.accent,
+                  ),
+                ),
               ),
-            ),
+              if (message != null) ...[
+                const SizedBox(height: 16),
+                Text(
+                  message,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+              ],
+            ],
           ),
-          if (message != null) ...[
-            const SizedBox(height: 16),
-            Text(
-              message,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black54,
-              ),
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
-  // Professional Empty State
   static Widget createEmptyState({
     required String title,
     required String message,
@@ -281,220 +228,307 @@ class ProfessionalComponents {
     String? buttonText,
     VoidCallback? onButtonPressed,
   }) {
-    return SingleChildScrollView(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(
-          minHeight: 300,
-        ),
-        child: IntrinsicHeight(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (icon != null) ...[
-                    Icon(
-                      icon,
-                      size: 64,
-                      color: Colors.grey[300],
+    return Builder(
+      builder: (context) {
+        final colors = context.appTheme;
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 300),
+            child: IntrinsicHeight(
+              child: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Container(
+                    constraints: const BoxConstraints(maxWidth: 480),
+                    decoration: AppDesignSystem.cardDecoration(
+                      context: context,
+                      shadows: colors.mediumShadow,
                     ),
-                    const SizedBox(height: 24),
-                  ],
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF1A1A1A),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    message,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF6A6A6A),
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  if (buttonText != null && onButtonPressed != null) ...[
-                    const SizedBox(height: 32),
-                    // Daha küçük buton
-                    SizedBox(
-                      width: 200,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: onButtonPressed,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF3B82F6),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (icon != null) ...[
+                            Icon(
+                              icon,
+                              size: 64,
+                              color: colors.textMuted,
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                          Text(
+                            title,
+                            style: Theme.of(context).textTheme.headlineSmall,
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        child: Text(
-                          buttonText,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 8),
+                          Text(
+                            message,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            textAlign: TextAlign.center,
                           ),
-                        ),
+                          if (buttonText != null && onButtonPressed != null) ...[
+                            const SizedBox(height: 32),
+                            SizedBox(
+                              width: 220,
+                              height: 44,
+                              child: ElevatedButton(
+                                onPressed: onButtonPressed,
+                                child: Text(buttonText),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                     ),
-                  ],
-                ],
+                  ),
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  // Professional Status Badge
   static Widget createStatusBadge({
     required String text,
     StatusType type = StatusType.info,
     bool isSmall = false,
   }) {
-    Color backgroundColor;
-    Color textColor;
-
-    switch (type) {
-      case StatusType.success:
-        backgroundColor = Colors.green[100]!;
-        textColor = Colors.green[800]!;
-        break;
-      case StatusType.warning:
-        backgroundColor = Colors.orange[100]!;
-        textColor = Colors.orange[800]!;
-        break;
-      case StatusType.error:
-        backgroundColor = Colors.red[100]!;
-        textColor = Colors.red[800]!;
-        break;
-      case StatusType.info:
-        backgroundColor = Colors.blue[100]!;
-        textColor = Colors.blue[800]!;
-        break;
-    }
-
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isSmall ? 8 : 12,
-        vertical: isSmall ? 4 : 6,
-      ),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(isSmall ? 12 : 16),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: isSmall ? 10 : 12,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
+    return Builder(
+      builder: (context) {
+        final colors = context.appTheme;
+        final config = _statusConfig(colors, type);
+        return Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: isSmall ? 8 : 12,
+            vertical: isSmall ? 4 : 6,
+          ),
+          decoration: BoxDecoration(
+            color: config.background,
+            borderRadius: BorderRadius.circular(isSmall ? 12 : 16),
+            border: Border.all(color: config.border),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: isSmall ? 10 : 12,
+              fontWeight: FontWeight.w600,
+              color: config.foreground,
+            ),
+          ),
+        );
+      },
     );
   }
 
-  // Professional Divider
   static Widget createDivider({
     String? text,
     double thickness = 1,
     Color? color,
     EdgeInsetsGeometry? margin,
   }) {
-    if (text != null) {
-      return Container(
-        margin: margin ?? const EdgeInsets.symmetric(vertical: 16),
-        child: Row(
-          children: [
-            Expanded(
-              child: Divider(
-                thickness: thickness,
-                color: color ?? Colors.grey[300],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w500,
+    return Builder(
+      builder: (context) {
+        final colors = context.appTheme;
+        final dividerColor = color ?? colors.divider;
+        if (text != null) {
+          return Container(
+            margin: margin ?? const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    thickness: thickness,
+                    color: dividerColor,
+                  ),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Text(
+                    text,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    thickness: thickness,
+                    color: dividerColor,
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: Divider(
-                thickness: thickness,
-                color: color ?? Colors.grey[300],
-              ),
-            ),
-          ],
-        ),
-      );
-    }
+          );
+        }
 
-    return Container(
-      margin: margin ?? const EdgeInsets.symmetric(vertical: 8),
-      child: Divider(
-        thickness: thickness,
-        color: color ?? Colors.grey[300],
-      ),
+        return Container(
+          margin: margin ?? const EdgeInsets.symmetric(vertical: 8),
+          child: Divider(
+            thickness: thickness,
+            color: dividerColor,
+          ),
+        );
+      },
     );
   }
 
-  // Professional Section Header
   static Widget createSectionHeader({
     required String title,
     String? subtitle,
     Widget? action,
     EdgeInsetsGeometry? padding,
   }) {
-    return Container(
-      padding: padding ?? const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Colors.black54,
+    return Builder(
+      builder: (context) {
+        return Container(
+          padding: padding ?? const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                  ),
-                ],
-              ],
-            ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (action != null) action,
+            ],
           ),
-          if (action != null) action,
-        ],
-      ),
+        );
+      },
     );
+  }
+
+  static _ButtonColors _buttonColors(AppThemeColors colors, ButtonType type) {
+    switch (type) {
+      case ButtonType.primary:
+        return _ButtonColors(
+          background: colors.accent,
+          foreground: colors.textInverse,
+          border: colors.accent,
+        );
+      case ButtonType.secondary:
+        return _ButtonColors(
+          background: colors.surfaceInteractive,
+          foreground: colors.textPrimary,
+          border: colors.borderSubtle,
+        );
+      case ButtonType.success:
+        return _ButtonColors(
+          background: colors.success,
+          foreground: colors.textInverse,
+          border: colors.success,
+        );
+      case ButtonType.danger:
+        return _ButtonColors(
+          background: colors.error,
+          foreground: colors.textInverse,
+          border: colors.error,
+        );
+      case ButtonType.outline:
+        return _ButtonColors(
+          background: Colors.transparent,
+          foreground: colors.accent,
+          border: colors.borderStrong,
+        );
+    }
+  }
+
+  static _StatusColors _statusConfig(AppThemeColors colors, StatusType type) {
+    switch (type) {
+      case StatusType.success:
+        return _StatusColors(
+          background: colors.success.withValues(alpha: colors.isDark ? 0.18 : 0.12),
+          foreground: colors.success,
+          border: colors.success.withValues(alpha: 0.32),
+        );
+      case StatusType.warning:
+        return _StatusColors(
+          background: colors.warning.withValues(alpha: colors.isDark ? 0.18 : 0.12),
+          foreground: colors.warning,
+          border: colors.warning.withValues(alpha: 0.32),
+        );
+      case StatusType.error:
+        return _StatusColors(
+          background: colors.error.withValues(alpha: colors.isDark ? 0.18 : 0.12),
+          foreground: colors.error,
+          border: colors.error.withValues(alpha: 0.32),
+        );
+      case StatusType.info:
+        return _StatusColors(
+          background: colors.accent.withValues(alpha: colors.isDark ? 0.18 : 0.10),
+          foreground: colors.accent,
+          border: colors.accent.withValues(alpha: 0.28),
+        );
+    }
+  }
+
+  static EdgeInsetsGeometry _buttonPadding(ButtonSize size) {
+    switch (size) {
+      case ButtonSize.small:
+        return const EdgeInsets.symmetric(horizontal: 12, vertical: 8);
+      case ButtonSize.medium:
+        return const EdgeInsets.symmetric(horizontal: 16, vertical: 12);
+      case ButtonSize.large:
+        return const EdgeInsets.symmetric(horizontal: 24, vertical: 16);
+    }
+  }
+
+  static double _buttonRadius(ButtonSize size) {
+    switch (size) {
+      case ButtonSize.small:
+        return 8;
+      case ButtonSize.medium:
+        return 12;
+      case ButtonSize.large:
+        return 16;
+    }
   }
 }
 
+class _ButtonColors {
+  const _ButtonColors({
+    required this.background,
+    required this.foreground,
+    required this.border,
+  });
+
+  final Color background;
+  final Color foreground;
+  final Color border;
+}
+
+class _StatusColors {
+  const _StatusColors({
+    required this.background,
+    required this.foreground,
+    required this.border,
+  });
+
+  final Color background;
+  final Color foreground;
+  final Color border;
+}
+
 enum ButtonType { primary, secondary, success, danger, outline }
+
 enum ButtonSize { small, medium, large }
+
 enum StatusType { success, warning, error, info }
