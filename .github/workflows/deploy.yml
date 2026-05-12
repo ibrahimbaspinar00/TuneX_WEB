@@ -45,7 +45,7 @@ jobs:
           echo "Analyzing code..."
           flutter analyze --no-fatal-infos || true
           echo "Building web..."
-          flutter build web --release --base-href "/$REPO_NAME/" --web-renderer canvaskit
+          flutter build web --release --base-href "/$REPO_NAME/"
           echo "Build successful!"
 
       - name: Verify build output
