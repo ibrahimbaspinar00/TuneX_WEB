@@ -54,7 +54,36 @@ jobs:
           echo "Building web..."
           flutter build web --release --base-href "$BASE_HREF"
           touch build/web/.nojekyll
-          cp build/web/index.html build/web/404.html
+          cat > build/web/404.html <<EOF
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <meta name="robots" content="noindex">
+            <title>TuneX</title>
+            <script>
+              (function () {
+                var baseHref = "$BASE_HREF";
+                var path = window.location.pathname;
+                var route = "/";
+
+                if (baseHref !== "/" && path.indexOf(baseHref) === 0) {
+                  route = path.slice(baseHref.length - 1) || "/";
+                } else if (baseHref === "/") {
+                  route = path || "/";
+                }
+
+                var target = baseHref + "#" + route + window.location.search + window.location.hash;
+                window.location.replace(target);
+              }());
+            </script>
+          </head>
+          <body>
+            <a href="$BASE_HREF">TuneX'e don</a>
+          </body>
+          </html>
+          EOF
           echo "Build successful!"
 
       - name: Verify build output
@@ -76,6 +105,7 @@ jobs:
           test -f build/web/.nojekyll
           test -f build/web/flutter_bootstrap.js
           grep -q "<base href=\"$BASE_HREF\">" build/web/index.html
+          grep -q "window.location.replace" build/web/404.html
           grep -q '"scope": "."' build/web/manifest.json
           echo "build/web directory exists"
           ls -la build/web/ | head -20
