@@ -8,7 +8,7 @@
     "description": "TuneX - Premium tuning marketplace",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
-    "scope": "/",
+    "scope": ".",
     "icons": [
         {
             "src": "icons/Icon-192.png",

@@ -39,21 +39,44 @@ jobs:
         run: |
           set -e
           REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          OWNER_NAME="${{ github.repository_owner }}"
+          if [ "$REPO_NAME" = "$OWNER_NAME.github.io" ]; then
+            BASE_HREF="/"
+          else
+            BASE_HREF="/$REPO_NAME/"
+          fi
           echo "Building for repository: $REPO_NAME"
+          echo "Using base href: $BASE_HREF"
           echo "Flutter version:"
           flutter --version
           echo "Analyzing code..."
           flutter analyze --no-fatal-infos || true
           echo "Building web..."
-          flutter build web --release --base-href "/$REPO_NAME/"
+          flutter build web --release --base-href "$BASE_HREF"
+          touch build/web/.nojekyll
+          cp build/web/index.html build/web/404.html
           echo "Build successful!"
 
       - name: Verify build output
         run: |
+          set -e
+          REPO_NAME=$(echo "${{ github.repository }}" | cut -d'/' -f2)
+          OWNER_NAME="${{ github.repository_owner }}"
+          if [ "$REPO_NAME" = "$OWNER_NAME.github.io" ]; then
+            BASE_HREF="/"
+          else
+            BASE_HREF="/$REPO_NAME/"
+          fi
           if [ ! -d "build/web" ]; then
             echo "build/web directory not found!"
             exit 1
           fi
+          test -f build/web/index.html
+          test -f build/web/404.html
+          test -f build/web/.nojekyll
+          test -f build/web/flutter_bootstrap.js
+          grep -q "<base href=\"$BASE_HREF\">" build/web/index.html
+          grep -q '"scope": "."' build/web/manifest.json
           echo "build/web directory exists"
           ls -la build/web/ | head -20
           echo "File count: $(find build/web -type f | wc -l)"
